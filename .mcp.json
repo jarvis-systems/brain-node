@@ -1,0 +1,31 @@
+{
+    "mcpServers": {
+        "context7": {
+            "type": "stdio",
+            "command": "npx",
+            "args": [
+                "-y",
+                "@upstash/context7-mcp",
+                "--api-key",
+                "ctx7sk-d066fdcb-bd7e-4e10-acf4-522c7621e2c4"
+            ]
+        },
+        "sequential-thinking": {
+            "type": "stdio",
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-sequential-thinking"
+            ]
+        },
+        "vector-memory": {
+            "type": "stdio",
+            "command": "uvx",
+            "args": [
+                "vector-memory-mcp",
+                "--working-dir",
+                "/Users/xsaven/PhpstormProjects/jarvis-brain-node"
+            ]
+        }
+    }
+}

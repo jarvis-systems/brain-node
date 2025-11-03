@@ -23,6 +23,8 @@
   },
   "require": {
     "php": "^8.2",
-    "jarvis-brain/core": "^v0.0.1"
+    "jarvis-brain/core": "^v0.0.1",
+    "symfony/yaml": "^7.3",
+    "yosymfony/toml": "^1.0"
   }
 }
