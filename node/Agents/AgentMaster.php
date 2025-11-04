@@ -18,11 +18,8 @@ use BrainCore\Includes\Agent\ArchitectTemplateSystem;
 use BrainCore\Includes\Agent\DocumentationFirstPolicy;
 use BrainCore\Includes\Agent\TemporalContextAwareness;
 use BrainCore\Includes\Universal\QualityGates;
-use BrainCore\Includes\Universal\ErrorRecovery;
 use BrainCore\Includes\Universal\CoreConstraints;
-use BrainCore\Includes\Universal\ResponseFormatting;
 use BrainCore\Includes\Universal\AgentLifecycleFramework;
-use BrainCore\Includes\Universal\InstructionWritingStandards;
 use BrainCore\Includes\Universal\VectorMasterStorageStrategy;
 use BrainCore\Includes\Universal\SequentialReasoningCapability;
 
@@ -43,12 +40,9 @@ PURPOSE
 // === UNIVERSAL ===
 #[Includes(CoreConstraints::class)]
 #[Includes(QualityGates::class)]
-#[Includes(InstructionWritingStandards::class)]
-#[Includes(ErrorRecovery::class)]
 #[Includes(AgentLifecycleFramework::class)]
 #[Includes(SequentialReasoningCapability::class)]
 #[Includes(VectorMasterStorageStrategy::class)]
-#[Includes(ResponseFormatting::class)]
 
 // === AGENT CORE ===
 #[Includes(AgentIdentity::class)]
