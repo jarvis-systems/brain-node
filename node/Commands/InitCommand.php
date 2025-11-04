@@ -46,17 +46,17 @@ class InitCommand extends CommandArchetype
 
         // Usage
         $this->guideline('when-to-use')
-            ->text('Run repeatedly: new stack added OR {{ BRAIN_FILE }} updated OR .docs/ updated OR periodic audit. Format: /init (no arguments needed)');
+            ->text('Run repeatedly: new stack added OR .docs/ updated OR periodic audit. Format: /init (no arguments needed)');
 
         // Workflow Overview
         $this->guideline('workflow-overview')
-            ->text('Critical flow: Read {{ BRAIN_FILE }} + .docs/ → Detect stack needs → Inventory existing agents → Gap analysis → Generate missing agents via brain make:master → Compile')
+            ->text('Critical flow: Delegate context analysis → Inventory agents → Gap analysis → Generate missing via brain make:master → Compile')
             ->example()
                 ->phase('step-1', 'Bash: Get current date/year for temporal context')
                 ->phase('step-2', 'Bash: brain master:list → Parse existing agents from {{ NODE_DIRECTORY }}Agents/')
-                ->phase('step-3', 'Read: {{ BRAIN_FILE }} → Extract Brain architecture requirements')
-                ->phase('step-4', 'Read: .docs/ → Extract project technology stack and domain requirements')
-                ->phase('step-5', 'Task(@agent-agent-master, "Gap analysis: Compare {{ BRAIN_FILE }} + .docs/ requirements vs existing agents. Return: {covered_domains, missing_agents: [{name, purpose, capabilities}]}")')
+                ->phase('step-3', 'Task(@agent-agent-master, "Analyze Brain architecture from context. Return requirements.")')
+                ->phase('step-4', 'Task(@agent-explore, "Explore .docs/ directory. Return tech stack and domain requirements.")')
+                ->phase('step-5', 'Task(@agent-agent-master, "Gap analysis: Compare requirements vs existing agents. Return missing agents list.")')
                 ->phase('step-6', 'FOR EACH missing agent: Bash: brain make:master {AgentName} → Create in {{ NODE_DIRECTORY }}Agents/')
                 ->phase('step-7', 'Bash: brain compile → Compile all agents to {{ AGENTS_FOLDER }}')
                 ->phase('step-8', 'Report: agents_generated + coverage + next_steps');
@@ -76,21 +76,21 @@ class InitCommand extends CommandArchetype
                 ->phase('store-1', 'Store as $EXISTING_AGENTS = [{id, name, description}, ...]')
                 ->phase('note-1', 'Agents located in {{ NODE_DIRECTORY }}Agents/*.php');
 
-        // Phase 3: Read Brain Requirements
-        $this->guideline('phase3-read-brain-requirements')
-            ->text('Goal: Extract Brain architecture and orchestration requirements')
+        // Phase 3: Extract Brain Requirements (from context)
+        $this->guideline('phase3-extract-brain-requirements')
+            ->text('Goal: Extract Brain architecture requirements via @agent-agent-master')
             ->example()
-                ->phase('action-1', 'Read: {{ BRAIN_FILE }} → Extract system architecture requirements')
-                ->phase('store-1', 'Store as $BRAIN_REQUIREMENTS = {orchestration, delegation, validation, ...}');
+                ->phase('action-1', 'Task(@agent-agent-master, "Analyze Brain architecture from loaded context. Extract: orchestration model, delegation hierarchy, validation requirements, agent types. Return $BRAIN_REQUIREMENTS.")')
+                ->phase('store-1', 'Store as $BRAIN_REQUIREMENTS = {orchestration, delegation, validation, agent_types}');
 
-        // Phase 4: Read Project Stack
+        // Phase 4: Extract Project Stack (DELEGATED)
         $this->guideline('phase4-read-project-stack')
-            ->text('Goal: Extract project technology stack and domain requirements from .docs/')
+            ->text('Goal: Extract project technology stack via @agent-explore (DELEGATE exploration, never Glob/Read directly)')
             ->example()
-                ->phase('action-1', 'Glob: .docs/**/*.md → Find all documentation files')
-                ->phase('action-2', 'Read .docs/ files → Extract: technologies, frameworks, services, domain requirements')
-                ->phase('store-1', 'Store as $PROJECT_STACK = {technologies: [...], domain_requirements: [...]}')
-                ->phase('fallback-1', 'If no .docs/ found → Use {{ BRAIN_FILE }} requirements only');
+                ->phase('action-1', 'Task(@agent-explore, "Explore .docs/ directory. Find all *.md files. Extract: technologies, frameworks, services, domain requirements. Return structured $PROJECT_STACK.")')
+                ->phase('store-1', 'Store as $PROJECT_STACK = {technologies: [...], frameworks: [...], services: [...], domain_requirements: [...]}')
+                ->phase('fallback-1', 'If no .docs/ found → Use Brain context requirements only')
+                ->phase('note-1', 'NEVER use Glob/Read directly - delegate to Explore agent');
 
         // Phase 5: Gap Analysis
         $this->guideline('phase5-gap-analysis')
@@ -171,7 +171,7 @@ class InitCommand extends CommandArchetype
         $this->guideline('error-recovery')
             ->text('Error handling scenarios')
             ->example()
-                ->phase('no-docs', 'IF no .docs/ found → Use {{ BRAIN_FILE }} requirements only → Continue with gap analysis')
+                ->phase('no-docs', 'IF no .docs/ found → Use Brain context only → Continue with gap analysis')
                 ->phase('agent-exists', 'IF agent already exists → SKIP generation → LOG as preserved → Continue with next agent')
                 ->phase('brain-make-fails', 'IF brain make:master fails → LOG error → Skip this agent → Continue with remaining agents')
                 ->phase('compilation-fails', 'IF brain compile fails → Report compilation errors → Manual intervention required')
@@ -183,11 +183,10 @@ class InitCommand extends CommandArchetype
             ->text('Quality validation checkpoints')
             ->example('Gate 1: Temporal context retrieved (date/year)')
             ->example('Gate 2: brain master:list executed successfully')
-            ->example('Gate 3: {{ BRAIN_FILE }} readable and parseable')
-            ->example('Gate 4: Gap analysis completed with valid output structure')
-            ->example('Gate 5: brain make:master creates valid PHP archetype')
-            ->example('Gate 6: brain compile completes without errors')
-            ->example('Gate 7: Generated agents appear in {{ AGENTS_FOLDER }}');
+            ->example('Gate 3: Gap analysis completed with valid output structure')
+            ->example('Gate 4: brain make:master creates valid PHP archetype')
+            ->example('Gate 5: brain compile completes without errors')
+            ->example('Gate 6: Generated agents appear in {{ AGENTS_FOLDER }}');
 
         // Examples
         $this->guideline('example-1')
@@ -209,7 +208,7 @@ class InitCommand extends CommandArchetype
         $this->guideline('example-3')
             ->text('Scenario: Full coverage, all required agents exist')
             ->example()
-                ->phase('input', '{{ BRAIN_FILE }} + .docs/ requirements')
+                ->phase('input', 'Brain context + .docs/ requirements')
                 ->phase('analysis', 'All domains covered by existing agents')
                 ->phase('result', 'Report: "No gaps detected → System ready" with agent list');
 
