@@ -12,6 +12,10 @@
       "role": "Developer/Maintainer"
     }
   ],
+  "repositories": [{
+    "type": "path",
+    "url": "core"
+  }],
   "autoload": {
     "psr-4": {
       "BrainNode\\": "node/"
