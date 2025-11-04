@@ -6,3 +6,4 @@ memory
 .claude
 .mcp.json
 node/Mcp/*
+composer.lock
