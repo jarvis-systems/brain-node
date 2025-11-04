@@ -6,45 +6,32 @@ namespace BrainNode;
 
 use BrainCore\Attributes\Meta;
 use BrainCore\Attributes\Includes;
-use BrainCore\Includes\Brain\BrainCore;
-use BrainCore\Includes\Brain\EdgeCases;
 use BrainCore\Archetypes\BrainArchetype;
-use BrainCore\Includes\Brain\AgentDelegation;
-use BrainCore\Includes\Universal\QualityGates;
-use BrainCore\Includes\Brain\CompactionRecovery;
+use BrainCore\Includes\Brain\BrainCore;
+use BrainCore\Includes\Brain\CognitiveArchitecture;
 use BrainCore\Includes\Brain\DelegationProtocols;
 use BrainCore\Includes\Brain\PreActionValidation;
-use BrainCore\Includes\Universal\CoreConstraints;
-use BrainCore\Includes\Brain\CognitiveArchitecture;
-use BrainCore\Includes\Universal\ResponseFormatting;
-use BrainCore\Includes\Brain\AgentResponseValidation;
 use BrainCore\Includes\Universal\AgentLifecycleFramework;
-use BrainCore\Includes\Universal\InstructionWritingStandards;
-use BrainCore\Includes\Universal\VectorMasterStorageStrategy;
-use BrainCore\Includes\Brain\CollectiveIntelligencePhilosophy;
+use BrainCore\Includes\Universal\CoreConstraints;
+use BrainCore\Includes\Universal\ErrorHandling;
+use BrainCore\Includes\Universal\QualityGates;
 use BrainCore\Includes\Universal\SequentialReasoningCapability;
 
 #[Meta('id', 'brain-core')]
 
-// === UNIVERSAL (спільні для всіх) ===
-#[Includes(CoreConstraints::class)]                     // Системні обмеження (фундамент)
-#[Includes(QualityGates::class)]                        // Якісні вимоги
-#[Includes(InstructionWritingStandards::class)]         // Стандарти документації
-#[Includes(AgentLifecycleFramework::class)]             // Життєвий цикл агентів
-#[Includes(SequentialReasoningCapability::class)]       // Фреймворк міркування
-#[Includes(VectorMasterStorageStrategy::class)]         // Архітектура пам'яті
-#[Includes(ResponseFormatting::class)]                  // Валідація відповідей
+// === UNIVERSAL (shared across Brain + Agents) ===
+#[Includes(CoreConstraints::class)]                     // System constraints + MCP policy + compaction
+#[Includes(QualityGates::class)]                        // Quality gates + agent response validation
+#[Includes(AgentLifecycleFramework::class)]             // Agent lifecycle phases
+#[Includes(SequentialReasoningCapability::class)]       // Reasoning framework
+#[Includes(ErrorHandling::class)]                       // Unified error handling
 
-// === BRAIN SPECIFIC (тільки для Brain) ===
-#[Includes(BrainCore::class)]                           // Базові правила та мета-дані
-#[Includes(CollectiveIntelligencePhilosophy::class)]    // Філософські принципи системи
-#[Includes(PreActionValidation::class)]                 // Валідація перед діями
-#[Includes(DelegationProtocols::class)]                 // Протоколи делегування
-#[Includes(AgentDelegation::class)]                     // Легкий референс делегування
-#[Includes(CognitiveArchitecture::class)]               // Когнітивна архітектура (використовує всі попередні)
-#[Includes(AgentResponseValidation::class)]             // Валідація відповідей агентів
-#[Includes(CompactionRecovery::class)]                  // Компакція та відновлення контексту
-#[Includes(EdgeCases::class)]                           // Обробка граничних випадків
+// === BRAIN ORCHESTRATION (Brain-specific) ===
+#[Includes(BrainCore::class)]                           // Foundation + meta
+#[Includes(PreActionValidation::class)]                 // Pre-action safety gate
+#[Includes(DelegationProtocols::class)]                 // Delegation protocols
+#[Includes(CognitiveArchitecture::class)]               // Cognitive orchestration
+
 class Brain extends BrainArchetype
 {
     /**
@@ -54,6 +41,6 @@ class Brain extends BrainArchetype
      */
     protected function handle(): void
     {
-        // Architecture logic goes here
+        // Orchestration logic
     }
 }

@@ -1714,7 +1714,7 @@
             "dist": {
                 "type": "path",
                 "url": "core",
-                "reference": "1ba5aca41e52fbfc8725d224ddd9dff472b38e0e"
+                "reference": "0f99fd0d50e45acf7b268ad12803b994433a9677"
             },
             "require": {
                 "bfg/dto": "^1.9",
