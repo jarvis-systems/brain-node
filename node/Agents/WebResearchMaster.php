@@ -4,21 +4,21 @@ declare(strict_types=1);
 
 namespace BrainNode\Agents;
 
+use BrainCore\Archetypes\AgentArchetype;
+use BrainCore\Attributes\Includes;
 use BrainCore\Attributes\Meta;
 use BrainCore\Attributes\Purpose;
-use BrainCore\Attributes\Includes;
-use BrainCore\Archetypes\AgentArchetype;
 use BrainCore\Includes\Agent\AgentIdentity;
-use BrainCore\Includes\Agent\SkillsUsagePolicy;
 use BrainCore\Includes\Agent\AgentVectorMemory;
+use BrainCore\Includes\Agent\SkillsUsagePolicy;
+use BrainCore\Includes\Agent\TemporalContextAwareness;
 use BrainCore\Includes\Agent\ToolsOnlyExecution;
 use BrainCore\Includes\Agent\WebRecursiveResearch;
-use BrainCore\Includes\Agent\TemporalContextAwareness;
-use BrainCore\Includes\Universal\QualityGates;
-use BrainCore\Includes\Universal\CoreConstraints;
 use BrainCore\Includes\Universal\AgentLifecycleFramework;
-use BrainCore\Includes\Universal\VectorMasterStorageStrategy;
+use BrainCore\Includes\Universal\CoreConstraints;
+use BrainCore\Includes\Universal\QualityGates;
 use BrainCore\Includes\Universal\SequentialReasoningCapability;
+use BrainCore\Includes\Universal\VectorMasterStorageStrategy;
 
 #[Meta('id', 'web-research-master')]
 #[Meta('model', 'sonnet')]
@@ -77,6 +77,13 @@ class WebResearchMaster extends AgentArchetype
                 ->phase('step-5', 'Docs → context7 (resolve → get)')
                 ->phase('step-6', 'Validate → compare, add counter-search if needed')
                 ->phase('step-7', 'Store → vector memory (learning/links)');
+
+        // Project Documentation priority
+        $this->guideline('project-documentation-priority')
+            ->text('Prioritize project documentation and authoritative sources in research.')
+            ->example('Project docs > Official docs > GitHub repos > Community articles')
+            ->example('Always check for project documentation first')
+            ->example('Validate community sources against project docs');
 
         // Tool integration
         $this->guideline('tool-integration')
