@@ -4,24 +4,24 @@ declare(strict_types=1);
 
 namespace BrainNode\Agents;
 
+use BrainCore\Archetypes\AgentArchetype;
+use BrainCore\Attributes\Includes;
 use BrainCore\Attributes\Meta;
 use BrainCore\Attributes\Purpose;
-use BrainCore\Attributes\Includes;
-use BrainCore\Archetypes\AgentArchetype;
 use BrainCore\Includes\Agent\AgentIdentity;
-use BrainCore\Includes\Agent\SkillsUsagePolicy;
 use BrainCore\Includes\Agent\AgentVectorMemory;
-use BrainCore\Includes\Agent\ToolsOnlyExecution;
 use BrainCore\Includes\Agent\ArchitectLifecycle;
-use BrainCore\Includes\Agent\WebRecursiveResearch;
 use BrainCore\Includes\Agent\ArchitectTemplateSystem;
 use BrainCore\Includes\Agent\DocumentationFirstPolicy;
+use BrainCore\Includes\Agent\SkillsUsagePolicy;
 use BrainCore\Includes\Agent\TemporalContextAwareness;
-use BrainCore\Includes\Universal\QualityGates;
-use BrainCore\Includes\Universal\CoreConstraints;
+use BrainCore\Includes\Agent\ToolsOnlyExecution;
+use BrainCore\Includes\Agent\WebRecursiveResearch;
 use BrainCore\Includes\Universal\AgentLifecycleFramework;
-use BrainCore\Includes\Universal\VectorMasterStorageStrategy;
+use BrainCore\Includes\Universal\CoreConstraints;
+use BrainCore\Includes\Universal\QualityGates;
 use BrainCore\Includes\Universal\SequentialReasoningCapability;
+use BrainCore\Includes\Universal\VectorMasterStorageStrategy;
 
 #[Meta('id', 'agent-master')]
 #[Meta('model', 'sonnet')]
