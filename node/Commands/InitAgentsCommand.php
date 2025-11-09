@@ -20,10 +20,10 @@ use BrainNode\Agents\DocumentationMaster;
 use BrainNode\Agents\ExploreMaster;
 use BrainNode\Mcp\VectorMemoryMcp;
 
-#[Meta('id', 'init')]
+#[Meta('id', 'init-agents')]
 #[Meta('description', 'Incremental Agent Gap Analyzer - Auto-generates missing domain agents')]
 #[Purpose('Auto-analyze CLAUDE.md and existing agents → identify gaps → generate missing agents via brain make:master → safe for repeated runs.')]
-class InitCommand extends CommandArchetype
+class InitAgentsCommand extends CommandArchetype
 {
     /**
      * Handle the command logic.
