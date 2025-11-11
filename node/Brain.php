@@ -27,7 +27,6 @@ use BrainCore\Includes\Universal\BrainCoreConstraints;
 #[Includes(BrainDelegationWorkflow::class)]             // Simplified delegation workflow
 #[Includes(BrainResponseValidation::class)]             // Agent response validation
 #[Includes(BrainBasicErrorHandling::class)]             // Basic error handling
-
 class Brain extends BrainArchetype
 {
     /**
@@ -37,6 +36,6 @@ class Brain extends BrainArchetype
      */
     protected function handle(): void
     {
-        // Orchestration logic
+        $this->purpose('<enter-brain-purpose-here>');
     }
 }

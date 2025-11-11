@@ -8,17 +8,16 @@ use BrainCore\Attributes\Meta;
 use BrainCore\Attributes\Purpose;
 use BrainCore\Attributes\Includes;
 use BrainCore\Archetypes\AgentArchetype;
-use BrainCore\Includes\Agent\AgentIdentity;
+use BrainCore\Includes\Agent\AgentCoreIdentity;
 use BrainCore\Includes\Agent\SkillsUsagePolicy;
 use BrainCore\Includes\Agent\AgentVectorMemory;
 use BrainCore\Includes\Agent\ToolsOnlyExecution;
 use BrainCore\Includes\Agent\DocumentationFirstPolicy;
-use BrainCore\Includes\Agent\TemporalContextAwareness;
+use BrainCore\Includes\Universal\BaseConstraints;
 use BrainCore\Includes\Universal\QualityGates;
-use BrainCore\Includes\Universal\CoreConstraints;
 use BrainCore\Includes\Universal\AgentLifecycleFramework;
-use BrainCore\Includes\Universal\VectorMasterStorageStrategy;
 use BrainCore\Includes\Universal\SequentialReasoningCapability;
+use BrainCore\Includes\Universal\VectorMemoryMCP;
 
 #[Meta('id', 'vector-master')]
 #[Meta('model', 'sonnet')]
@@ -27,21 +26,22 @@ use BrainCore\Includes\Universal\SequentialReasoningCapability;
 #[Purpose('Vector Memory Executor responsible for direct execution of memory tools (search_memories, store_memory, list_recent_memories). This agent performs evidence-based memory research and storage with strict tools-only compliance (no delegation).')]
 
 // === UNIVERSAL ===
-#[Includes(CoreConstraints::class)]
+#[Includes(BaseConstraints::class)]
 #[Includes(QualityGates::class)]
 #[Includes(AgentLifecycleFramework::class)]
-#[Includes(SequentialReasoningCapability::class)]
-#[Includes(VectorMasterStorageStrategy::class)]
+#[Includes(VectorMemoryMCP::class)]
 
 // === AGENT CORE ===
-#[Includes(AgentIdentity::class)]
-#[Includes(ToolsOnlyExecution::class)]
-#[Includes(TemporalContextAwareness::class)]
+#[Includes(AgentCoreIdentity::class)]
 #[Includes(AgentVectorMemory::class)]
 
 // === EXECUTION POLICIES ===
 #[Includes(SkillsUsagePolicy::class)]
+#[Includes(ToolsOnlyExecution::class)]
+
+// === COMPILATION SYSTEM KNOWLEDGE ===
 #[Includes(DocumentationFirstPolicy::class)]
+#[Includes(SequentialReasoningCapability::class)]
 class VectorMaster extends AgentArchetype
 {
     /**
