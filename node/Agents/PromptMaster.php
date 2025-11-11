@@ -8,17 +8,18 @@ use BrainCore\Archetypes\AgentArchetype;
 use BrainCore\Attributes\Includes;
 use BrainCore\Attributes\Meta;
 use BrainCore\Attributes\Purpose;
-use BrainCore\Includes\Agent\AgentIdentity;
+use BrainCore\Includes\Agent\AgentCoreIdentity;
 use BrainCore\Includes\Agent\AgentVectorMemory;
+use BrainCore\Includes\Agent\CompilationSystemKnowledge;
 use BrainCore\Includes\Agent\SkillsUsagePolicy;
-use BrainCore\Includes\Agent\TemporalContextAwareness;
 use BrainCore\Includes\Agent\ToolsOnlyExecution;
 use BrainCore\Includes\Agent\WebBasicResearch;
+use BrainCore\Includes\Agent\WorkflowPseudoSyntax;
 use BrainCore\Includes\Universal\AgentLifecycleFramework;
-use BrainCore\Includes\Universal\CoreConstraints;
+use BrainCore\Includes\Universal\BaseConstraints;
 use BrainCore\Includes\Universal\QualityGates;
 use BrainCore\Includes\Universal\SequentialReasoningCapability;
-use BrainCore\Includes\Universal\VectorMasterStorageStrategy;
+use BrainCore\Includes\Universal\VectorMemoryMCP;
 
 #[Meta('id', 'prompt-master')]
 #[Meta('model', 'sonnet')]
@@ -27,23 +28,26 @@ use BrainCore\Includes\Universal\VectorMasterStorageStrategy;
 #[Purpose('Command orchestrator that initializes temporal context and generates commands including correct agent delegations using names from the agents registry. Executes only tools itself but embeds agent calls (with @agent-* prefixes) inside generated commands.')]
 
 // === UNIVERSAL ===
-#[Includes(CoreConstraints::class)]
+#[Includes(BaseConstraints::class)]
 #[Includes(QualityGates::class)]
 #[Includes(AgentLifecycleFramework::class)]
-#[Includes(SequentialReasoningCapability::class)]
-#[Includes(VectorMasterStorageStrategy::class)]
+#[Includes(VectorMemoryMCP::class)]
 
 // === AGENT CORE ===
-#[Includes(AgentIdentity::class)]
-#[Includes(ToolsOnlyExecution::class)]
-#[Includes(TemporalContextAwareness::class)]
+#[Includes(AgentCoreIdentity::class)]
 #[Includes(AgentVectorMemory::class)]
 
 // === EXECUTION POLICIES ===
 #[Includes(SkillsUsagePolicy::class)]
+#[Includes(ToolsOnlyExecution::class)]
 
 // === SPECIALIZED CAPABILITIES ===
 #[Includes(WebBasicResearch::class)]
+
+// === COMPILATION SYSTEM KNOWLEDGE ===
+#[Includes(CompilationSystemKnowledge::class)]
+#[Includes(WorkflowPseudoSyntax::class)]
+#[Includes(SequentialReasoningCapability::class)]
 class PromptMaster extends AgentArchetype
 {
     /**

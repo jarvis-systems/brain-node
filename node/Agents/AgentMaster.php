@@ -8,20 +8,18 @@ use BrainCore\Archetypes\AgentArchetype;
 use BrainCore\Attributes\Includes;
 use BrainCore\Attributes\Meta;
 use BrainCore\Attributes\Purpose;
-use BrainCore\Includes\Agent\AgentIdentity;
+use BrainCore\Includes\Agent\AgentCoreIdentity;
 use BrainCore\Includes\Agent\AgentVectorMemory;
-use BrainCore\Includes\Agent\ArchitectLifecycle;
-use BrainCore\Includes\Agent\ArchitectTemplateSystem;
+use BrainCore\Includes\Agent\CompilationSystemKnowledge;
 use BrainCore\Includes\Agent\DocumentationFirstPolicy;
 use BrainCore\Includes\Agent\SkillsUsagePolicy;
-use BrainCore\Includes\Agent\TemporalContextAwareness;
 use BrainCore\Includes\Agent\ToolsOnlyExecution;
-use BrainCore\Includes\Agent\WebRecursiveResearch;
+use BrainCore\Includes\Agent\WorkflowPseudoSyntax;
 use BrainCore\Includes\Universal\AgentLifecycleFramework;
-use BrainCore\Includes\Universal\CoreConstraints;
+use BrainCore\Includes\Universal\BaseConstraints;
 use BrainCore\Includes\Universal\QualityGates;
 use BrainCore\Includes\Universal\SequentialReasoningCapability;
-use BrainCore\Includes\Universal\VectorMasterStorageStrategy;
+use BrainCore\Includes\Universal\VectorMemoryMCP;
 
 #[Meta('id', 'agent-master')]
 #[Meta('model', 'sonnet')]
@@ -38,26 +36,24 @@ PURPOSE
 )]
 
 // === UNIVERSAL ===
-#[Includes(CoreConstraints::class)]
+#[Includes(BaseConstraints::class)]
 #[Includes(QualityGates::class)]
 #[Includes(AgentLifecycleFramework::class)]
-#[Includes(SequentialReasoningCapability::class)]
-#[Includes(VectorMasterStorageStrategy::class)]
+#[Includes(VectorMemoryMCP::class)]
 
 // === AGENT CORE ===
-#[Includes(AgentIdentity::class)]
-#[Includes(ToolsOnlyExecution::class)]
-#[Includes(TemporalContextAwareness::class)]
+#[Includes(AgentCoreIdentity::class)]
 #[Includes(AgentVectorMemory::class)]
 
 // === EXECUTION POLICIES ===
 #[Includes(SkillsUsagePolicy::class)]
-#[Includes(DocumentationFirstPolicy::class)]
-#[Includes(WebRecursiveResearch::class)]
+#[Includes(ToolsOnlyExecution::class)]
 
-// === ARCHITECT CAPABILITIES ===
-#[Includes(ArchitectLifecycle::class)]
-#[Includes(ArchitectTemplateSystem::class)]
+// === COMPILATION SYSTEM KNOWLEDGE ===
+#[Includes(DocumentationFirstPolicy::class)]
+#[Includes(CompilationSystemKnowledge::class)]
+#[Includes(WorkflowPseudoSyntax::class)]
+#[Includes(SequentialReasoningCapability::class)]
 class AgentMaster extends AgentArchetype
 {
     /**
@@ -81,10 +77,8 @@ class AgentMaster extends AgentArchetype
 
         $this->guideline('naming-convention')
             ->text('Strict naming convention for agent files.')
-            ->example('Pattern: {Domain}Master.php (e.g., DatabaseMaster.php, LaravelMaster.php)')->key('pattern')
-            ->example('NEVER use "Agent" prefix or "Expert" suffix')->key('forbidden')
-            ->example('Use PascalCase for class names')->key('case')
-            ->example('File name must match class name exactly')->key('consistency');
+            ->example('Pattern: {Domain}Master.php (e.g., DatabaseMaster.php, LaravelMaster.php) in PascalCase')->key('pattern')
+            ->example('NEVER use "Agent" prefix or "Expert" suffix')->key('forbidden');
 
         $this->guideline('architecture-design')
             ->text('Agent architecture follows modern PHP DTO-based archetype system.')
@@ -109,67 +103,27 @@ class AgentMaster extends AgentArchetype
             ->example('Use ->example(value)->key(name) for key-value documentation')->key('key-values');
 
         $this->guideline('execution-structure')
-            ->text('4-phase cognitive architecture for agent reasoning.')
+            ->text('Cognitive architecture for agent reasoning.')
             ->example()
-                ->phase('phase-1', 'Knowledge Retrieval: Search vector memory, templates, and docs for prior implementations')
-                ->phase('phase-2', 'Internal Reasoning: Define domain, tools, structure, personality, and complexity')
-                ->phase('phase-3', 'Conditional Research: Execute tools or perform web research based on knowledge gaps')
-                ->phase('phase-4', 'Synthesis & Validation: Ensure structure compliance, compile validation, and store insights');
-
-        $this->guideline('color-system')
-            ->text('Color categorization based on agent domain.')
-            ->example('blue: Development and code-focused agents')->key('blue')
-            ->example('purple: Documentation and content agents')->key('purple')
-            ->example('orange: AI, ML, and agent architecture agents')->key('orange')
-            ->example('green: PM, planning, and organizational agents')->key('green')
-            ->example('cyan: DevOps, infrastructure, and deployment agents')->key('cyan')
-            ->example('red: Security, audit, and compliance agents')->key('red')
-            ->example('yellow: Testing, QA, and validation agents')->key('yellow')
-            ->example('pink: Frontend, UI, and design agents')->key('pink');
+                ->phase('phase-1', 'Knowledge & Reasoning: Search memory/docs, define domain/tools/structure')
+                ->phase('phase-2', 'Research & Synthesis: Execute tools, validate compliance, store insights');
 
         $this->guideline('model-selection')
-            ->text('Strategic model selection based on agent complexity.')
-            ->example('Use "sonnet" for standard agents (default)')->key('default')
-            ->example('Use "opus" only for complex reasoning requiring deep analysis')->key('complex')
-            ->example('Avoid "haiku" for architect-level agents')->key('avoid');
+            ->text('Use "sonnet" for standard agents (default), "opus" only for complex reasoning.');
 
-        $this->guideline('validation-delivery')
-            ->text('Agent validation and deployment workflow.')
+        $this->guideline('agent-lifecycle')
+            ->text('Agent creation, validation, and optimization workflow.')
             ->example()
-                ->phase('step-1', 'Write agent file to {{ BRAIN_DIRECTORY }}/Agents/{Domain}Master.php')
-                ->phase('step-2', 'Run compilation: brain compile [target]')
-                ->phase('step-3', 'Verify compilation completes without errors')
-                ->phase('step-4', 'Output will be in {{ AGENTS_FOLDER }}/{domain}-master.md')
-                ->phase('step-5', 'Inform user to restart AI platform for agent activation')
-                ->phase('validation-1', 'Agent compiles without errors')
-                ->phase('validation-2', 'All includes resolve correctly');
-
-        $this->guideline('optimization-workflow')
-            ->text('Process for optimizing existing agents.')
-            ->example()
-                ->phase('step-1', 'Read source agent file from {{ NODE_DIRECTORY }}/Agents/')
-                ->phase('step-2', 'Identify inefficiencies, redundancies, or gaps')
-                ->phase('step-3', 'Refactor includes and consolidate duplicate logic')
-                ->phase('step-4', 'Optimize Builder API usage for clarity and performance')
-                ->phase('step-5', 'Validate changes and recompile')
-                ->phase('validation-1', 'Performance improves without functionality loss')
-                ->phase('validation-2', 'Quality gates pass after optimization');
+                ->phase('create', 'Write to {{ BRAIN_DIRECTORY }}/Agents/{Domain}Master.php with proper includes')
+                ->phase('compile', 'Run brain compile and verify no errors')
+                ->phase('deploy', 'Output to {{ AGENTS_FOLDER }}/{domain}-master.md, inform user to restart platform')
+                ->phase('optimize', 'Read source, identify inefficiencies, refactor includes, recompile');
 
         $this->guideline('multi-agent-orchestration')
             ->text('Coordination strategies for multi-agent workflows.')
-            ->example('Independent tasks: Launch agents in parallel (max 3 concurrent)')->key('parallel')
-            ->example('Dependent tasks: Execute agents sequentially with result passing')->key('sequential')
-            ->example('Mixed workflows: Use hybrid staged execution')->key('hybrid')
-            ->example('Always validate agent compatibility before orchestration')->key('validation');
+            ->example('Independent tasks: Launch agents in parallel (max 3)')->key('parallel')
+            ->example('Dependent tasks: Execute sequentially with result passing')->key('sequential');
 
-        $this->guideline('ecosystem-health')
-            ->text('Metrics and targets for maintaining healthy agent ecosystem.')
-            ->example('No duplicate agent functionality')->key('uniqueness')
-            ->example('100% archetype template compliance')->key('compliance')
-            ->example('Include reuse rate > 70%')->key('reuse')
-            ->example('Average response latency < 30s')->key('performance')
-            ->example('Tool success rate > 90%')->key('reliability')
-            ->example('Clear activation criteria for all agents')->key('clarity');
 
         $this->rule('temporal-context-required')->high()
             ->text('All agent creation sessions must begin with temporal context initialization.')
@@ -208,24 +162,6 @@ class AgentMaster extends AgentArchetype
             ->example('brain make:master command to scaffold new agents')->key('scaffolding')
             ->example('search_memories for prior implementations')->key('memory')
             ->example('WebSearch for external knowledge and best practices')->key('research');
-
-        $this->guideline('compilation-variables')
-            ->text('Platform-agnostic variables available during compilation for cross-platform compatibility.')
-            ->example('PROJECT_DIRECTORY - Root project directory path')->key('project-dir')
-            ->example('BRAIN_DIRECTORY - Brain directory (.brain/)')->key('brain-dir')
-            ->example('NODE_DIRECTORY - Brain source directory (.brain/node/)')->key('brain-node-dir')
-            ->example('BRAIN_FILE - Compiled brain instructions file path')->key('brain-file')
-            ->example('BRAIN_FOLDER - Compiled brain output folder')->key('brain-folder')
-            ->example('AGENTS_FOLDER - Compiled agents output folder')->key('agents-folder')
-            ->example('COMMANDS_FOLDER - Compiled commands output folder')->key('commands-folder')
-            ->example('SKILLS_FOLDER - Compiled skills output folder')->key('skills-folder')
-            ->example('MCP_FILE - MCP configuration file path')->key('mcp-file')
-            ->example('AGENT - Current compilation target (claude/codex/qwen/gemini)')->key('agent-target')
-            ->example('DATE - Current date (YYYY-MM-DD)')->key('date')
-            ->example('YEAR - Current year')->key('year')
-            ->example('TIMESTAMP - Unix timestamp')->key('timestamp')
-            ->example('UNIQUE_ID - Unique identifier for compilation session')->key('unique-id')
-            ->example('Usage: Wrap variable name in double curly braces like {{ VARIABLE_NAME }}')->key('usage');
 
         $this->guideline('directive')
             ->text('Core operational directive for AgentMaster.')
