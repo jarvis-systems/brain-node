@@ -7,6 +7,7 @@ namespace BrainNode;
 use BrainCore\Attributes\Meta;
 use BrainCore\Attributes\Includes;
 use BrainCore\Archetypes\BrainArchetype;
+use BrainCore\Attributes\Purpose;
 use BrainCore\Includes\Brain\BrainBasicErrorHandling;
 use BrainCore\Includes\Brain\BrainCore;
 use BrainCore\Includes\Brain\BrainDelegationWorkflow;
@@ -16,6 +17,7 @@ use BrainCore\Includes\Brain\PreActionValidation;
 use BrainCore\Includes\Universal\BrainCoreConstraints;
 
 #[Meta('id', 'brain-core')]
+#[Purpose('<!-- Specify the primary purpose of this Brain here -->')]
 
 // === UNIVERSAL (Brain runtime essentials) ===
 #[Includes(BrainCoreConstraints::class)]                // Simplified constraints for Brain orchestration
