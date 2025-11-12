@@ -52,17 +52,17 @@ class InitAgentsCommand extends CommandArchetype
             ->why('Idempotent operation safe for repeated execution')
             ->onViolation('Wasted computation and potential conflicts');
 
-        $this->rule('command-executes-web-search')->high()
-            ->text('Command MUST execute WebSearchTool directly for best practices, NOT just delegate everything to agents')
-            ->why('Reduces unnecessary agent overhead and provides direct access to industry standards')
-            ->onViolation('Missing industry validation and slower execution');
+        $this->rule('delegates-web-research')->high()
+            ->text('Brain MUST delegate all web research to WebResearchMaster, never execute WebSearch directly')
+            ->why('Maintains delegation hierarchy and prevents Brain from performing execution-level tasks')
+            ->onViolation('Delegation protocol violation - escalate to Architect Agent');
 
         $this->rule('cache-web-results')->high()
             ->text('Store web research patterns in vector memory for 30 days to speed up repeated runs')
             ->why('Avoids redundant web searches and improves performance')
             ->onViolation('Unnecessary web API calls and slower execution');
 
-        // Phase 0: Arguments Processing (NEW)
+        // Phase 0: Arguments Processing
         $this->guideline('phase0-arguments-processing')
             ->goal('Process optional user arguments to narrow search scope and improve targeting')
             ->example()
@@ -80,7 +80,7 @@ class InitAgentsCommand extends CommandArchetype
             ]))
             ->phase('Store search mode for use in subsequent phases');
 
-        // Phase 1: Get Temporal Context + Parallel Web Search (ENHANCED)
+        // Phase 1: Get Temporal Context + Parallel Web Search
         $this->guideline('phase1-temporal-context-and-web-cache')
             ->goal('Get current date/year for temporal context AND check vector memory cache for recent patterns')
             ->example()
@@ -90,34 +90,47 @@ class InitAgentsCommand extends CommandArchetype
             ->phase(VectorMemoryMcp::call('search_memories', '{query: "multi-agent architecture patterns", category: "learning", limit: 3}'))
             ->phase(Operator::if('cache_hit AND cache_age < 30 days', [
                 Store::as('CACHED_PATTERNS', 'Cached industry patterns from vector memory'),
-                'Log: "Using cached patterns (age: {days} days)"',
-                'Set web_search_required = false for basic patterns'
+                Store::as('CACHE_VALID', 'true'),
+                Store::as('CACHE_AGE', '{days}'),
+                'Log: "Using cached patterns (age: {days} days)"'
             ]))
             ->phase(Operator::if('no_cache OR cache_old', [
-                'Set web_search_required = true',
+                Store::as('CACHE_VALID', 'false'),
                 'Log: "Fresh web search required"'
             ]));
 
-        // Phase 1.5: Web Search - Best Practices (NEW - COMMAND EXECUTES)
+        // Phase 1.5: Web Search - Best Practices (DELEGATED TO WebResearchMaster)
         $this->guideline('phase1.5-web-search-best-practices')
-            ->goal('Command directly searches for multi-agent system best practices and current industry standards')
-            ->note('COMMAND executes WebSearchTool - NOT delegated to agents')
+            ->goal('Delegate industry best practices research to WebResearchMaster with cache awareness')
+            ->note('Delegated to WebResearchMaster for industry research')
             ->example()
-            ->phase(Operator::if('web_search_required === true OR search_mode === "discovery"', [
-                WebSearchTool::describe('multi-agent system architecture best practices {CURRENT_YEAR}'),
-                Store::as('INDUSTRY_PATTERNS.architecture'),
-                WebSearchTool::describe('AI agent orchestration patterns {CURRENT_YEAR}'),
-                Store::as('INDUSTRY_PATTERNS.orchestration'),
-                WebSearchTool::describe('domain-driven agent design principles {CURRENT_YEAR}'),
-                Store::as('INDUSTRY_PATTERNS.domain_design'),
-                'Cache results: Store industry patterns in vector memory with 30-day TTL',
+            ->phase(Operator::if('search_mode === "discovery"', [
+                WebResearchMaster::call(
+                    Operator::input(
+                        Store::get('CURRENT_YEAR'),
+                        Store::get('CACHED_PATTERNS'),
+                        Store::get('CACHE_VALID'),
+                        Store::get('CACHE_AGE'),
+                    ),
+                    Operator::task(
+                        'IF(cache_valid === true) → THEN → Use cached patterns, skip web search → END-IF',
+                        'IF(cache_valid === false) → THEN → [',
+                        '  Research: multi-agent system architecture best practices {year}',
+                        '  Research: AI agent orchestration patterns {year}',
+                        '  Research: domain-driven agent design principles {year}',
+                        '  Synthesize findings into unified patterns',
+                        '] → END-IF',
+                    ),
+                    Operator::output('{architecture: [...], orchestration: [...], domain_design: [...], sources: [...], cache_used: true|false}'),
+                    Store::as('INDUSTRY_PATTERNS')
+                ),
+                'IF(fresh research performed) → Store results in vector memory',
                 VectorMemoryMcp::call('store_memory', '{content: $INDUSTRY_PATTERNS, category: "learning", tags: ["agent-patterns", "best-practices", "{CURRENT_YEAR}"]}')
             ]))
-            ->phase(Operator::if('web_search_required === false', [
-                'Use $CACHED_PATTERNS from phase 1',
-                'Log: "Skipped web search - using cached patterns"'
-            ]))
-            ->phase('Merge cached and fresh patterns into unified INDUSTRY_PATTERNS store');
+            ->phase(Operator::if('search_mode === "targeted"', [
+                'Use $CACHED_PATTERNS from phase 1 if available',
+                'Log: "Targeted mode - using cached patterns, skipping general research"'
+            ]));
 
         // Phase 2: Inventory Existing Agents
         $this->guideline('phase2-inventory-agents')
@@ -147,20 +160,36 @@ class InitAgentsCommand extends CommandArchetype
                 ]))
             );
 
-        // Phase 3.5: Stack-Specific Web Search (NEW - COMMAND EXECUTES)
+        // Phase 3.5: Stack-Specific Web Search (DELEGATED TO WebResearchMaster)
         $this->guideline('phase3.5-stack-specific-search')
-            ->goal('Command directly searches for technology-specific agent patterns based on discovered stack')
-            ->note('COMMAND executes WebSearchTool for each major technology - NOT delegated')
+            ->goal('Delegate technology-specific research to WebResearchMaster based on discovered stack')
+            ->note('Delegated to WebResearchMaster for technology-specific patterns')
             ->example()
             ->phase('Extract primary technologies from $PROJECT_STACK (max 3 most important)')
-            ->phase(Operator::forEach('technology in $PROJECT_STACK.technologies (limit 3)', [
-                Operator::if('technology is major framework/language', [
-                    WebSearchTool::describe('{technology} specialized agents best practices {CURRENT_YEAR}'),
-                    Store::as('TECH_PATTERNS[{technology}]', 'Technology-specific agent patterns'),
-                    WebSearchTool::describe('{technology} multi-agent architecture examples {CURRENT_YEAR}'),
-                    Store::as('TECH_EXAMPLES[{technology}]', 'Real-world examples')
-                ])
-            ]))
+            ->phase(
+                WebResearchMaster::call(
+                    Operator::input(
+                        Store::get('PROJECT_STACK.technologies'),
+                        Store::get('CURRENT_YEAR'),
+                        Store::get('SEARCH_FILTER'),
+                        Store::get('SEARCH_MODE'),
+                    ),
+                    Operator::task(
+                        'Extract top 3 most important technologies from stack',
+                        'IF(search_mode === "targeted") → THEN → Focus on $SEARCH_FILTER tech → END-IF',
+                        'FOREACH(technology in top_3_technologies) → [',
+                        '  IF(technology is major framework/language) → THEN → [',
+                        '    Research: {technology} specialized agents best practices {year}',
+                        '    Research: {technology} multi-agent architecture examples {year}',
+                        '    Extract: common patterns, agent types, use cases',
+                        '  ] → END-IF',
+                        '] → END-FOREACH',
+                        'Synthesize per-technology patterns',
+                    ),
+                    Operator::output('{tech_patterns: {Laravel: [...], React: [...]}, tech_examples: {...}}'),
+                    Store::as('TECH_PATTERNS')
+                )
+            )
             ->phase('Cache technology patterns in vector memory')
             ->phase(VectorMemoryMcp::call('store_memory', '{content: $TECH_PATTERNS, category: "learning", tags: ["tech-patterns", $PROJECT_STACK.primary_stack, "{CURRENT_YEAR}"]}'))
             ->phase(Operator::if('search_mode === "targeted"', [
@@ -168,7 +197,7 @@ class InitAgentsCommand extends CommandArchetype
                 'Boost relevance score for matching patterns'
             ]));
 
-        // Phase 4: Enhanced Gap Analysis with Industry Validation (ENHANCED)
+        // Phase 4: Enhanced Gap Analysis with Industry Validation
         $this->guideline('phase4-gap-analysis-enhanced')
             ->goal('Identify missing domain agents with industry best practices validation and confidence scoring')
             ->example()
@@ -223,27 +252,9 @@ class InitAgentsCommand extends CommandArchetype
             ->phase('Filter: Only include agents with confidence >= 0.75 AND industry_alignment >= 0.7')
             ->phase('Sort by: priority DESC, confidence DESC, industry_alignment DESC');
 
-        // Phase 4.5: Validate Against Industry Standards (NEW)
-        $this->guideline('phase4.5-industry-validation')
-            ->goal('Final validation layer: Cross-check proposed agents against industry standards')
-            ->example()
-            ->phase('Validate gap analysis quality metrics')
-            ->phase(Operator::verify(
-                '$GAP_ANALYSIS.industry_coverage_score >= 0.8',
-                'Each missing_agent.confidence >= 0.75',
-                'Each missing_agent.industry_alignment >= 0.7',
-            ))
-            ->phase(Operator::if('validation_fails', [
-                'Log warning: "Gap analysis below quality threshold"',
-                'Request additional web research for low-confidence agents',
-                Operator::forEach('agent with confidence < 0.75', [
-                    WebSearchTool::describe('{agent.name} use cases and best practices {CURRENT_YEAR}'),
-                    'Re-evaluate confidence score',
-                    Operator::if('still low confidence', 'Mark as optional, not critical')
-                ])
-            ]))
-            ->phase('Final filter: Remove agents with adjusted confidence < 0.7')
-            ->phase('Log: "Industry validation complete. {count} agents validated, {removed} filtered out"');
+        // Phase 4.5: Validate Against Industry Standards (REMOVED - integrated into phase4)
+        // This validation is now part of the AgentMaster delegation in phase4
+        // AgentMaster can use WebSearchTool internally as part of its workflow
 
         // Phase 5: Generate Missing Agents (ENHANCED with confidence tracking)
         $this->guideline('phase5-generate-agents')
@@ -291,7 +302,7 @@ class InitAgentsCommand extends CommandArchetype
             ))
             ->phase('Log: "Compilation complete. New agents available in {AGENTS_FOLDER}"');
 
-        // Phase 7: Report with Confidence Metrics (ENHANCED)
+        // Phase 7: Report with Confidence Metrics
         $this->guideline('phase7-report-enhanced')
             ->goal('Report generation results with confidence scores, industry alignment, and caching status')
             ->example()
@@ -307,7 +318,7 @@ class InitAgentsCommand extends CommandArchetype
             ])
             ->phase('Include cache performance metrics: {cache_hits}, {web_searches_performed}');
 
-        // Response Format - Option A: Agents Generated (ENHANCED)
+        // Response Format - Option A: Agents Generated
         $this->guideline('response-format-a-enhanced')
             ->text('Response when Agents Generated')
             ->example('Init Gap Analysis Complete')
@@ -327,7 +338,7 @@ class InitAgentsCommand extends CommandArchetype
             ->example('Preserved: {existing_agents_count} existing agents')
             ->example('Performance:')
             ->phase('Cache hits: {cache_hits}')
-            ->phase('Web searches: {web_searches_count}')
+            ->phase('Web searches: {web_searches_count} (delegated to WebResearchMaster)')
             ->phase('Skipped agents: {skipped_count} (low confidence or medium priority)')
             ->example('Next Steps:')
             ->phase(['Review generated agents in', Runtime::NODE_DIRECTORY('Agents/')])
@@ -335,7 +346,7 @@ class InitAgentsCommand extends CommandArchetype
             ->phase('Recompile: brain compile (if customized)')
             ->phase(['Agents are ready to use via', TaskTool::agent('{name}', '...')]);
 
-        // Response Format - Option B: Full Coverage (ENHANCED)
+        // Response Format - Option B: Full Coverage
         $this->guideline('response-format-b-enhanced')
             ->text('Response when Full Coverage (no gaps detected)')
             ->example('Init Gap Analysis Complete')
@@ -354,11 +365,11 @@ class InitAgentsCommand extends CommandArchetype
             ->phase('Best practices compliance: {compliance_score}')
             ->example('Performance:')
             ->phase('Cache hits: {cache_hits}')
-            ->phase('Web searches: {web_searches_count}')
+            ->phase('Web searches: {web_searches_count} (delegated to WebResearchMaster)')
             ->example()
             ->do('No new agents needed', 'System ready');
 
-        // Memory Optimization (NEW)
+        // Memory Optimization
         $this->guideline('memory-optimization')
             ->text('Cache web research results for faster repeated runs')
             ->example()
@@ -367,19 +378,20 @@ class InitAgentsCommand extends CommandArchetype
             ->phase('Cache TTL: 30 days for industry patterns, 14 days for technology patterns')
             ->phase(Operator::if('cache_hit AND cache_age < TTL', [
                 'Use cached patterns',
+                'Pass cache context to WebResearchMaster',
                 'Log: "Cache hit: {pattern_type} (age: {days} days)"',
-                'Skip corresponding web search'
+                'WebResearchMaster skips web search'
             ]))
             ->phase(Operator::if('cache_miss OR cache_expired', [
-                'Perform fresh web search',
+                'Delegate to WebResearchMaster for fresh research',
                 'Store results with category: "learning"',
                 'Tag: ["agent-patterns", "best-practices", "{tech}", "{CURRENT_YEAR}"]',
-                'Log: "Cache miss: performing web search"'
+                'Log: "Cache miss: performing web search via WebResearchMaster"'
             ]))
             ->phase('Post-analysis: Store gap analysis results for project context')
             ->phase(VectorMemoryMcp::call('store_memory', '{content: "Gap analysis for {project}: {summary}", category: "architecture", tags: ["gap-analysis", "{technologies}"]}'));
 
-        // Error Recovery (ENHANCED)
+        // Error Recovery
         $this->guideline('error-recovery-enhanced')
             ->text('Error handling scenarios with graceful degradation')
             ->example()
@@ -389,12 +401,14 @@ class InitAgentsCommand extends CommandArchetype
             ->phase()->if([BrainCLI::COMPILE, 'fails'], ['Report compilation errors', 'List failed agents', 'Manual intervention required'])
             ->phase()->if([AgentMaster::id(), 'fails'], ['Report error', 'Suggest manual agent creation', 'Continue with next agent'])
             ->phase()->if('web search timeout', [
-                'Fall back to vector memory cached patterns',
-                'Continue with available data',
-                'Mark analysis as "partial" in report',
+                'WebResearchMaster handles timeout internally',
+                'Falls back to vector memory cached patterns',
+                'Continues with available data',
+                'Marks analysis as "partial" in report',
                 'Log: "Web search timeout - using cached data only"'
             ])
             ->phase()->if('no internet connection', [
+                'WebResearchMaster reports unavailable',
                 'Skip all web search phases',
                 'Use local project analysis only',
                 'Use cached patterns from vector memory',
@@ -403,7 +417,7 @@ class InitAgentsCommand extends CommandArchetype
             ])
             ->phase()->if('vector memory unavailable', [
                 'Skip caching operations',
-                'Perform all web searches (no cache hits)',
+                'WebResearchMaster performs all web searches (no cache hits)',
                 'Continue without storing results',
                 'Log: "Vector memory unavailable - no caching"'
             ])
@@ -414,13 +428,13 @@ class InitAgentsCommand extends CommandArchetype
             ])
             ->phase()->report('{successful_count}/{total_count} agents generated (avg confidence: {avg_confidence})');
 
-        // Quality Gates (ENHANCED)
+        // Quality Gates
         $this->guideline('quality-gates-enhanced')
             ->text('Quality validation checkpoints with confidence thresholds')
             ->example('Gate 1: Temporal context retrieved (date/year)')
             ->example('Gate 2: Vector memory cache checked for recent patterns')
             ->example('Gate 3: brain master:list executed successfully')
-            ->example('Gate 4: Web search for industry patterns completed OR cache hit')
+            ->example('Gate 4: Web research delegated to WebResearchMaster OR cache hit')
             ->example('Gate 5: Gap analysis completed with valid output structure')
             ->example('Gate 6: Gap analysis includes confidence scores >= 0.75 for critical agents')
             ->example('Gate 7: Industry alignment scores >= 0.7 for all proposed agents')
@@ -435,17 +449,17 @@ class InitAgentsCommand extends CommandArchetype
             ->example()
             ->phase('input', '$ARGUMENTS = "missing agent for Laravel"')
             ->phase('parse', 'target_domain = "Laravel", search_mode = "targeted"')
-            ->phase('analysis', 'Focus web search on Laravel-specific agent patterns')
+            ->phase('delegation', 'WebResearchMaster: Focus on Laravel-specific agent patterns')
             ->phase('result', 'Gap detected: Laravel expertise missing (confidence: 0.92, industry_alignment: 0.88)')
             ->phase()->name('action')
             ->do(BrainCLI::MAKE_MASTER('LaravelMaster'), ['Edit Purpose with industry patterns', 'Guidelines from best practices'], 'Compile')
             ->phase('output', 'LaravelMaster agent available (confidence: 0.92)');
 
         $this->guideline('example-2-discovery-mode')
-            ->scenario('No arguments → Full discovery mode with web research')
+            ->scenario('No arguments → Full discovery mode with web research delegation')
             ->example()
             ->phase('input', '$ARGUMENTS empty, search_mode = "discovery"')
-            ->phase('web_search', 'Industry patterns: multi-agent architecture best practices 2025')
+            ->phase('delegation', 'WebResearchMaster: Industry patterns for multi-agent architecture (2025)')
             ->phase('analysis', 'Project uses React + Node.js, no React agent exists')
             ->phase('validation', 'Industry patterns confirm: Frontend specialization needed (confidence: 0.87)')
             ->phase('action', Operator::do(BrainCLI::MAKE_MASTER('ReactMaster'), 'Compile'))
@@ -456,23 +470,25 @@ class InitAgentsCommand extends CommandArchetype
             ->example()
             ->phase('input', 'Second run within 30 days')
             ->phase('cache', 'Cache hit: "multi-agent architecture patterns" (age: 5 days)')
-            ->phase('performance', 'Skipped 3 web searches, used cached data')
+            ->phase('delegation', 'WebResearchMaster: Skip web search, use cached patterns')
+            ->phase('performance', 'No web searches needed, used cached data')
             ->phase('analysis', 'All domains covered by existing agents')
             ->phase()
             ->name('result')
-            ->report('"No gaps detected → System ready" with agent list (cache_hits: 3, web_searches: 0)');
+            ->report('"No gaps detected → System ready" with agent list (cache_hits: 1, web_searches: 0, delegation_count: 2)');
 
         $this->guideline('example-4-low-confidence-filter')
             ->scenario('Gap analysis with low confidence agents filtered out')
             ->example()
             ->phase('input', 'Full discovery mode')
+            ->phase('delegation', 'WebResearchMaster + AgentMaster: Comprehensive gap analysis')
             ->phase('analysis', 'Found 5 potential gaps: 3 high confidence (>0.75), 2 low confidence (<0.75)')
             ->phase('filter', 'Removed 2 low-confidence agents')
             ->phase('generation', 'Generated 3 agents with avg confidence: 0.84')
-            ->phase('output', 'Report: "3 agents generated, 2 skipped (low confidence)"');
+            ->phase('output', 'Report: "3 agents generated, 2 skipped (low confidence), delegation_count: 3"');
 
         // Directive
         $this->guideline('directive')
-            ->text('Generate ONLY missing agents! Preserve existing! Use brain make:master ONLY! Execute web search directly! Cache patterns! Validate with industry standards! Report confidence scores! Compile after generation!');
+            ->text('Generate ONLY missing agents! Preserve existing! Use brain make:master ONLY! Delegate web research to WebResearchMaster! Cache patterns! Validate with industry standards! Report confidence scores! Compile after generation!');
     }
 }
