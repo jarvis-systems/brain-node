@@ -15,7 +15,7 @@ use BrainCore\Compilation\Tools\TaskTool;
 
 #[Meta('id', 'do')]
 #[Meta('description', 'Multi-agent orchestration command for sequential task execution with user approval gates')]
-#[Purpose('Coordinates sequential agent execution with approval checkpoints. Accepts $ARGUMENTS task description. Zero distractions, atomic tasks only, strict plan adherence.')]
+#[Purpose('Coordinates sequential agent execution with approval checkpoints and comprehensive vector memory integration. Agents communicate through vector memory for knowledge continuity. Accepts $ARGUMENTS task description. Zero distractions, atomic tasks only, strict plan adherence.')]
 class DoCommand extends CommandArchetype
 {
     /**
@@ -49,209 +49,181 @@ class DoCommand extends CommandArchetype
             ->why('Ensures clear progress tracking and error isolation')
             ->onViolation('Queue remaining tasks. Execute current task to completion first.');
 
-        // Phase 1: Agent Discovery
+        $this->rule('vector-memory-mandatory')->high()
+            ->text('ALL agents MUST search vector memory BEFORE task execution AND store learnings AFTER completion. Vector memory is the primary communication channel between sequential agents.')
+            ->why('Enables knowledge sharing between agents, prevents duplicate work, maintains execution continuity across steps')
+            ->onViolation('Include explicit vector memory instructions in agent Task() delegation.');
+
+        // Phase 1: Agent Discovery with Vector Memory
         $this->guideline('phase1-agent-discovery')
-            ->goal('Discover available agents and select relevant ones for task')
+            ->goal('Discover agents and leverage past similar task solutions from vector memory')
             ->example()
-            ->phase('Parse $ARGUMENTS to understand task domain and requirements')
             ->phase(Store::as('TASK_DESCRIPTION', 'User task from $ARGUMENTS'))
+            ->phase('Search vector memory: mcp__vector-memory__search_memories(query: "similar task: {$TASK_DESCRIPTION}", limit: 5, category: "code-solution,architecture")')
+            ->phase(Store::as('PAST_SOLUTIONS', 'Past similar tasks, approaches, and agents used'))
             ->phase(BashTool::describe(BrainCLI::MASTER_LIST, 'Execute brain master:list'))
-            ->phase(Store::as('AVAILABLE_AGENTS', 'List of all agents with capabilities'))
-            ->phase('Analyze: Which agents are relevant for $TASK_DESCRIPTION?')
-            ->phase('Match task domain to agent expertise areas')
-            ->phase(Store::as('RELEVANT_AGENTS', '[{agent_name, capability_match, rationale}, ...]'))
+            ->phase(Store::as('AVAILABLE_AGENTS', 'List of all agents'))
+            ->phase('Match task to agents considering: task domain + past successful approaches from $PAST_SOLUTIONS')
+            ->phase(Store::as('RELEVANT_AGENTS', '[{agent_name, capability_match, used_before: boolean, rationale}, ...]'))
             ->phase(Operator::output([
                 '=== PHASE 1: AGENT DISCOVERY ===',
                 'Task: {$TASK_DESCRIPTION}',
-                'Available Agents: {count}',
-                'Relevant Agents Selected:',
-                '  - {agent_name}: {rationale}',
-                '  - ...',
-            ]))
-            ->phase('Present agent selection to user (informational, no approval needed at this stage)');
+                'Past Similar Tasks: {count from $PAST_SOLUTIONS}',
+                'Selected Agents: {list with rationale including past experience}',
+            ]));
 
-        // Phase 2: Requirements Analysis with Approval Gate
+        // Phase 2: Requirements Analysis with Vector Memory + Approval Gate
         $this->guideline('phase2-requirements-analysis-approval')
-            ->goal('Create detailed requirements analysis plan and GET USER APPROVAL before proceeding')
+            ->goal('Create requirements plan leveraging past patterns and GET USER APPROVAL')
             ->example()
-            ->phase('Analyze $TASK_DESCRIPTION deeply')
-            ->phase('Identify what information/context each selected agent will need')
-            ->phase('Determine if web research would improve solution quality')
+            ->phase('Search vector memory: mcp__vector-memory__search_memories(query: "implementation patterns for {task_domain}", limit: 5, category: "learning,architecture")')
+            ->phase(Store::as('IMPLEMENTATION_PATTERNS', 'Past implementation approaches and learnings'))
+            ->phase('Analyze task considering: $TASK_DESCRIPTION + $PAST_SOLUTIONS + $IMPLEMENTATION_PATTERNS')
+            ->phase('Identify context needs for each agent')
             ->phase(Operator::if('task is non-trivial AND external knowledge beneficial', [
-                'Recommend web-research-master for industry best practices',
                 Store::as('WEB_RESEARCH_NEEDED', 'true'),
             ]))
-            ->phase('Create detailed scanning plan: what to look for, where to look, why')
-            ->phase(Store::as('REQUIREMENTS_PLAN', '{scan_targets: [...], context_needed: [...], web_research: boolean, rationale: "..."}'))
+            ->phase(Operator::if('task references features/architecture AND .docs exists', [
+                Store::as('DOCS_SCAN_NEEDED', 'true'),
+            ]))
+            ->phase(Store::as('REQUIREMENTS_PLAN', '{scan_targets, context_needed, web_research, docs_scan, learned_from_memory, rationale}'))
             ->phase(Operator::output([
                 '',
-                '=== PHASE 2: REQUIREMENTS ANALYSIS PLAN ===',
-                'Scanning Strategy:',
-                '  1. {scan_target}: {what_to_extract}',
-                '  2. ...',
-                'Context Requirements:',
-                '  - {context_type}: {why_needed}',
-                'Web Research: {recommended/not_needed} - {rationale}',
+                '=== PHASE 2: REQUIREMENTS ANALYSIS ===',
+                'Learned from Memory:',
+                '  • {key_pattern_1}',
+                '  • {key_pattern_2}',
+                'Scanning: {targets}',
+                'Context: {needs}',
+                'Web Research: {status} | Docs Scan: {status}',
                 '',
                 '⚠️  APPROVAL CHECKPOINT #1',
-                '📋 Please review the requirements analysis plan above.',
-                '✅ Type "approved" or "yes" to proceed with material gathering.',
-                '❌ Type "no" or provide modifications to adjust the plan.',
+                '✅ Type "approved" or "yes" to proceed.',
+                '❌ Type "no" or provide modifications.',
             ]))
             ->phase('WAIT for user approval')
             ->phase(Operator::verify('User confirmed approval'))
-            ->phase(Operator::if('user rejected or requested changes', [
-                'Log: "Requirements plan rejected - awaiting modifications"',
-                'Accept user modifications',
-                'Update $REQUIREMENTS_PLAN',
-                'Re-present plan for approval',
-                'WAIT for approval again',
+            ->phase(Operator::if('user rejected', [
+                'Accept modifications → Update plan → Re-present → WAIT',
             ]));
 
-        // Phase 3: Material Gathering
+        // Phase 3: Material Gathering with Vector Storage
         $this->guideline('phase3-material-gathering')
-            ->goal('Collect necessary materials and context according to approved requirements plan')
+            ->goal('Collect materials per plan and store to vector memory')
             ->example()
-            ->phase('Execute approved $REQUIREMENTS_PLAN')
             ->phase(Operator::forEach('scan_target in $REQUIREMENTS_PLAN.scan_targets', [
-                'Gather materials from {scan_target}',
-                TaskTool::describe('Delegate to appropriate agent for context extraction'),
+                TaskTool::describe('Delegate to agent for context extraction from {scan_target}'),
                 Store::as('GATHERED_MATERIALS[{target}]', 'Extracted context'),
             ]))
-            ->phase(Operator::if('$WEB_RESEARCH_NEEDED === true', [
-                'Delegate to @agent-web-research-master',
-                'Task: Research industry best practices for {$TASK_DESCRIPTION}',
-                Store::as('WEB_RESEARCH_FINDINGS', 'External knowledge and patterns'),
+            ->phase(Operator::if('$DOCS_SCAN_NEEDED === true', [
+                TaskTool::describe('@agent-documentation-master: Scan .docs for {$TASK_DESCRIPTION}'),
+                Store::as('DOCS_SCAN_FINDINGS', 'Project documentation'),
             ]))
-            ->phase('Package agent-specific context')
-            ->phase(Store::as('CONTEXT_PACKAGES', '{agent_name: {context: ..., materials: ...}, ...}'))
+            ->phase(Operator::if('$WEB_RESEARCH_NEEDED === true', [
+                TaskTool::describe('@agent-web-research-master: Research best practices for {$TASK_DESCRIPTION}'),
+                Store::as('WEB_RESEARCH_FINDINGS', 'External knowledge'),
+            ]))
+            ->phase(Store::as('CONTEXT_PACKAGES', '{agent_name: {context, materials, task_domain}, ...}'))
+            ->phase('Store gathered context: mcp__vector-memory__store_memory(content: "Context for {$TASK_DESCRIPTION}\\n\\nMaterials: {summary}", category: "tool-usage", tags: ["do-command", "context-gathering"])')
             ->phase(Operator::output([
-                '',
-                '=== PHASE 3: MATERIAL GATHERING COMPLETE ===',
-                'Gathered Materials:',
-                '  ✓ {material_type}: {count} items',
-                '  ✓ ...',
-                'Web Research: {completed/skipped}',
-                'Context Packages Ready: {count} agents',
+                '=== PHASE 3: MATERIALS GATHERED ===',
+                'Materials: {count} | Docs: {status} | Web: {status}',
+                'Context stored to vector memory ✓',
             ]));
 
-        // Phase 4: Execution Planning with Approval Gate
+        // Phase 4: Execution Planning with Vector Memory + Approval Gate
         $this->guideline('phase4-execution-planning-approval')
-            ->goal('Create granular atomic execution plan and GET USER APPROVAL before execution')
+            ->goal('Create atomic plan leveraging past execution patterns and GET USER APPROVAL')
             ->example()
-            ->phase('Create granular execution plan with agent assignments')
-            ->phase('Each step MUST be atomic: 1-2 files maximum per agent task')
-            ->phase('Define specific file scope for each step')
-            ->phase('Sequence steps in logical dependency order')
-            ->phase(Store::as('EXECUTION_PLAN', '{steps: [{step_number, agent_name, task_description, file_scope: [file1.php, file2.php], dependencies: [...], expected_outcome}, ...], total_steps: N, estimated_duration: "..."}'))
-            ->phase(Operator::verify('Each step has maximum 2 files in file_scope'))
+            ->phase('Search vector memory: mcp__vector-memory__search_memories(query: "execution approach for {task_type}", limit: 5, category: "code-solution")')
+            ->phase(Store::as('EXECUTION_PATTERNS', 'Past successful execution approaches'))
+            ->phase('Create plan: atomic steps (≤2 files each), logical order, informed by $EXECUTION_PATTERNS')
+            ->phase(Store::as('EXECUTION_PLAN', '{steps: [{step_number, agent_name, task_description, file_scope: [≤2 files], memory_search_query, expected_outcome}, ...], total_steps: N}'))
+            ->phase(Operator::verify('Each step has ≤ 2 files'))
             ->phase(Operator::output([
                 '',
                 '=== PHASE 4: EXECUTION PLAN ===',
-                'Task: {$TASK_DESCRIPTION}',
-                'Total Steps: {$EXECUTION_PLAN.total_steps}',
+                'Task: {$TASK_DESCRIPTION} | Steps: {N}',
+                'Learned from: {$EXECUTION_PATTERNS summary}',
                 '',
-                'Sequential Execution Steps:',
-                '  Step 1: @agent-{name}',
-                '    Task: {task_description}',
-                '    Files: {file1.php}, {file2.php}',
-                '    Expected: {expected_outcome}',
-                '',
-                '  Step 2: @agent-{name}',
-                '    Task: {task_description}',
-                '    Files: {file1.php}',
-                '    Expected: {expected_outcome}',
-                '',
-                '  ...',
+                '{Step-by-step breakdown with files and memory search queries}',
                 '',
                 '⚠️  APPROVAL CHECKPOINT #2',
-                '📋 Please review the execution plan above.',
-                '✅ Type "approved" or "yes" to begin sequential execution.',
-                '❌ Type "no" or provide modifications to adjust the plan.',
+                '✅ Type "approved" or "yes" to begin.',
+                '❌ Type "no" or provide modifications.',
             ]))
             ->phase('WAIT for user approval')
             ->phase(Operator::verify('User confirmed approval'))
-            ->phase(Operator::if('user rejected or requested changes', [
-                'Log: "Execution plan rejected - awaiting modifications"',
-                'Accept user modifications',
-                'Update $EXECUTION_PLAN',
-                'Re-verify atomic task constraints',
-                'Re-present plan for approval',
-                'WAIT for approval again',
+            ->phase(Operator::if('user rejected', [
+                'Accept modifications → Update plan → Verify atomic → Re-present → WAIT',
             ]));
 
-        // Phase 5: Sequential Execution
+        // Phase 5: Sequential Execution with MANDATORY Vector Memory Integration
         $this->guideline('phase5-sequential-execution')
-            ->goal('Execute approved plan sequentially - ONE agent at a time, NO improvisation')
+            ->goal('Execute plan sequentially with agents communicating through vector memory')
             ->example()
-            ->phase('Initialize: current_step = 1, total_steps = {$EXECUTION_PLAN.total_steps}')
-            ->phase(Operator::forEach('step in $EXECUTION_PLAN.steps (sequential, one by one)', [
-                'Log: "Executing Step {current_step}/{total_steps}: {step.agent_name}"',
+            ->phase('Initialize: current_step = 1')
+            ->phase(Operator::forEach('step in $EXECUTION_PLAN.steps (sequential)', [
                 Operator::output([
-                    '',
                     '▶️  Step {current_step}/{total_steps}: @agent-{step.agent_name}',
-                    '📝 Task: {step.task_description}',
-                    '📁 Files: {step.file_scope}',
+                    '📝 {step.task_description} | 📁 {step.file_scope}',
                 ]),
-                'Delegate to {step.agent_name} with:',
-                '  - Task: {step.task_description}',
-                '  - Context: {$CONTEXT_PACKAGES[step.agent_name]}',
-                '  - File scope: {step.file_scope}',
-                '  - Expected outcome: {step.expected_outcome}',
-                TaskTool::describe('Task(@agent-{name}, {task_with_context})'),
-                Store::as('STEP_RESULTS[{current_step}]', 'Agent execution result'),
-                Operator::verify('Step completed successfully'),
-                Operator::output([
-                    '✅ Step {current_step} complete',
-                    '   Result: {outcome_summary}',
-                ]),
-                'Increment: current_step++',
-                Operator::if('current_step < total_steps', [
-                    'Continue to next step immediately',
-                ]),
+                'Delegate via Task() with MANDATORY vector memory instructions:',
+                '',
+                '  📥 BEFORE: You MUST execute: mcp__vector-memory__search_memories(query: "{step.memory_search_query}", limit: 5, category: "code-solution,learning") and review results',
+                '  🔧 DURING: Execute task: {step.task_description} | Context: {$CONTEXT_PACKAGES} | Files: {step.file_scope} (ATOMIC - no expansion)',
+                '  📤 AFTER: You MUST execute: mcp__vector-memory__store_memory(content: "Step {N}: {outcome}\\n\\nApproach: {what_worked}\\n\\nLearnings: {insights}", category: "code-solution", tags: ["do-command", "step-{N}"])',
+                '',
+                TaskTool::describe('Task(@agent-{name}, {task_with_MANDATORY_memory_instructions})'),
+                Store::as('STEP_RESULTS[{N}]', 'Result with memory trace'),
+                Operator::verify('Step completed AND memory stored'),
+                Operator::output(['✅ Step {N} complete | Memory updated ✓']),
+                'current_step++',
             ]))
-            ->phase(Operator::if('any step fails', [
-                'Log: "Execution stopped at Step {current_step} - failure detected"',
-                'Report: {error_details}',
-                'Offer: retry current step OR abort remaining steps',
-                'WAIT for user decision',
-            ]))
-            ->phase('All steps completed successfully');
+            ->phase(Operator::if('step fails', [
+                'mcp__vector-memory__store_memory(content: "Failure at step {N}: {error}", category: "debugging", tags: ["do-command", "failure"])',
+                'Offer: Retry / Skip / Abort → WAIT',
+            ]));
 
-        // Phase 6: Completion Report
+        // Phase 6: Completion with Vector Memory Storage
         $this->guideline('phase6-completion-report')
-            ->goal('Report execution results and final status')
+            ->goal('Report results and store comprehensive learnings to vector memory')
             ->example()
-            ->phase('Aggregate results from all steps')
-            ->phase(Store::as('COMPLETION_SUMMARY', '{completed_steps, failed_steps, files_modified, outcomes: [...]}'))
+            ->phase(Store::as('COMPLETION_SUMMARY', '{completed_steps, files_modified, outcomes, learnings}'))
+            ->phase('Store final summary: mcp__vector-memory__store_memory(content: "Completed: {$TASK_DESCRIPTION}\\n\\nApproach: {summary}\\n\\nSteps: {outcomes}\\n\\nLearnings: {insights}\\n\\nFiles: {list}", category: "code-solution", tags: ["do-command", "completed"])')
             ->phase(Operator::output([
                 '',
                 '=== EXECUTION COMPLETE ===',
-                'Task: {$TASK_DESCRIPTION}',
-                'Status: {SUCCESS/PARTIAL/FAILED}',
-                '',
-                'Execution Summary:',
-                '  ✓ Steps Completed: {completed_steps}/{total_steps}',
-                '  📁 Files Modified: {files_modified_count}',
-                '  ⏱️  Duration: {execution_duration}',
-                '',
-                'Step-by-Step Results:',
-                '  Step 1: {agent_name} - {outcome} ✓',
-                '  Step 2: {agent_name} - {outcome} ✓',
-                '  ...',
-                '',
-                'Final Outcome:',
-                '  {final_status_description}',
+                'Task: {$TASK_DESCRIPTION} | Status: {SUCCESS/PARTIAL/FAILED}',
+                '✓ Steps: {completed}/{total} | 📁 Files: {count} | 💾 Learnings stored to memory',
+                '{step_outcomes}',
             ]))
-            ->phase(Operator::if('all steps succeeded', [
-                'Log: "Task completed successfully - all objectives met"',
-                'Store task completion in vector memory',
-            ]))
-            ->phase(Operator::if('partial completion', [
-                'Log: "Task partially completed - {completed}/{total} steps"',
-                'List remaining steps',
-                'Suggest: /do to resume or manual intervention',
+            ->phase(Operator::if('partial', [
+                'Store partial state → List remaining → Suggest resumption',
             ]));
+
+        // Agent Vector Memory Instructions Template
+        $this->guideline('agent-memory-instructions')
+            ->text('MANDATORY vector memory pattern for ALL agents')
+            ->example()
+            ->phase('BEFORE TASK:')
+            ->do([
+                'Execute: mcp__vector-memory__search_memories(query: "{relevant}", limit: 5)',
+                'Review: Analyze results for patterns, solutions, learnings',
+                'Apply: Incorporate insights into approach',
+            ])
+            ->phase('DURING TASK:')
+            ->do([
+                'Focus: Execute ONLY assigned task within file scope',
+                'Atomic: Respect 1-2 file limit strictly',
+            ])
+            ->phase('AFTER TASK:')
+            ->do([
+                'Document: Summarize what was done, how it worked, key insights',
+                'Execute: mcp__vector-memory__store_memory(content: "{what+how+insights}", category: "{appropriate}", tags: [...])',
+                'Verify: Confirm storage successful',
+            ])
+            ->phase('CRITICAL: Vector memory is the communication channel between agents. Your learnings enable the next agent!');
 
         // Error Handling
         $this->guideline('error-handling')
@@ -280,6 +252,11 @@ class DoCommand extends CommandArchetype
                 '  2. Skip and continue',
                 '  3. Abort remaining steps',
                 'WAIT for user decision',
+            ])
+            ->phase()->if('documentation scan fails', [
+                'Log: "Documentation scan failed or .docs folder not found"',
+                'Proceed without documentation context',
+                'Note: "Documentation context unavailable"',
             ])
             ->phase()->if('web research timeout', [
                 'Log: "Web research timed out - continuing without external knowledge"',
@@ -352,6 +329,23 @@ class DoCommand extends CommandArchetype
             ->phase('phase5', 'Execute revised plan')
             ->phase('phase6', 'Report: Completed with revised plan ✓');
 
+        $this->guideline('example-4-documentation-scan')
+            ->scenario('Task requiring project documentation context')
+            ->example()
+            ->phase('input', '$ARGUMENTS = "Implement feature based on architecture described in .docs"')
+            ->phase('phase1', 'Agent Discovery: Selected @agent-documentation-master, @agent-code-master')
+            ->phase('phase2', 'Requirements Plan: Scan .docs for architecture, identify feature requirements')
+            ->phase('approval1', 'User approves (including documentation scan)')
+            ->phase('phase3', 'Gather: Documentation scan findings from .docs, related code files')
+            ->phase('phase4', 'Execution Plan:')
+            ->do([
+                'Step 1: @agent-code-master - Create FeatureService.php based on docs',
+                'Step 2: @agent-code-master - Integrate with existing architecture',
+            ])
+            ->phase('approval2', 'User approves execution plan')
+            ->phase('phase5', 'Sequential execution: Steps 1→2')
+            ->phase('phase6', 'Report: 2/2 steps complete - feature implemented per documentation ✓');
+
         // Response Format
         $this->guideline('response-format')
             ->text('Structured output format for each phase')
@@ -366,6 +360,6 @@ class DoCommand extends CommandArchetype
 
         // Directive
         $this->guideline('directive')
-            ->text('Execute ONLY specified task! Get approvals at checkpoints! Atomic tasks ONLY! Sequential execution! NO improvisation! Zero distractions! Strict plan adherence!');
+            ->text('Execute ONLY specified task! Get approvals at checkpoints! Atomic tasks ONLY! Sequential execution! Vector memory MANDATORY for ALL agents! NO improvisation! Zero distractions! Strict plan adherence!');
     }
 }
