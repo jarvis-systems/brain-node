@@ -36,6 +36,6 @@ class Brain extends BrainArchetype
      */
     protected function handle(): void
     {
-        $this->purpose('<enter-brain-purpose-here>');
+        // Brain orchestration logic can be added here if needed
     }
 }
