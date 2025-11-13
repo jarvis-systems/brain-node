@@ -15,12 +15,14 @@ use BrainCore\Includes\Brain\BrainResponseValidation;
 use BrainCore\Includes\Brain\DelegationProtocols;
 use BrainCore\Includes\Brain\PreActionValidation;
 use BrainCore\Includes\Universal\BrainCoreConstraints;
+use BrainCore\Includes\Universal\VectorMemoryMCP;
 
 #[Meta('id', 'brain-core')]
 #[Purpose('<!-- Specify the primary purpose of this Brain here -->')]
 
 // === UNIVERSAL (Brain runtime essentials) ===
 #[Includes(BrainCoreConstraints::class)]                // Simplified constraints for Brain orchestration
+#[Includes(VectorMemoryMCP::class)]                     // Vector memory primary knowledge base
 
 // === BRAIN ORCHESTRATION (Brain-specific) ===
 #[Includes(BrainCore::class)]                           // Foundation + meta
