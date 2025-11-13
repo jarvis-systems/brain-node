@@ -64,7 +64,8 @@ class DoCommand extends CommandArchetype
             ->phase(BashTool::describe(BrainCLI::MASTER_LIST, 'Execute brain master:list'))
             ->phase(Store::as('AVAILABLE_AGENTS', 'List of all agents'))
             ->phase('Match task to agents considering: task domain + past successful approaches from $PAST_SOLUTIONS')
-            ->phase(Store::as('RELEVANT_AGENTS', '[{agent_name, capability_match, used_before: boolean, rationale}, ...]'))
+            ->phase(Store::as('RELEVANT_AGENTS',
+                '[{agent_name, capability_match, used_before: boolean, rationale}, ...]'))
             ->phase(Operator::output([
                 '=== PHASE 1: AGENT DISCOVERY ===',
                 'Task: {$TASK_DESCRIPTION}',
@@ -83,10 +84,11 @@ class DoCommand extends CommandArchetype
             ->phase(Operator::if('task is non-trivial AND external knowledge beneficial', [
                 Store::as('WEB_RESEARCH_NEEDED', 'true'),
             ]))
-            ->phase(Operator::if('task references features/architecture AND .docs exists', [
+            ->phase(Operator::if('task references features/architecture/workflows AND documentation needed', [
                 Store::as('DOCS_SCAN_NEEDED', 'true'),
             ]))
-            ->phase(Store::as('REQUIREMENTS_PLAN', '{scan_targets, context_needed, web_research, docs_scan, learned_from_memory, rationale}'))
+            ->phase(Store::as('REQUIREMENTS_PLAN',
+                '{scan_targets, context_needed, web_research, docs_scan, learned_from_memory, rationale}'))
             ->phase(Operator::output([
                 '',
                 '=== PHASE 2: REQUIREMENTS ANALYSIS ===',
@@ -109,15 +111,15 @@ class DoCommand extends CommandArchetype
 
         // Phase 3: Material Gathering with Vector Storage
         $this->guideline('phase3-material-gathering')
-            ->goal('Collect materials per plan and store to vector memory')
+            ->goal('Collect materials per plan and store to vector memory. NOTE: brain docs returns file index (Path, Name, Description, etc.), then Read relevant files')
             ->example()
             ->phase(Operator::forEach('scan_target in $REQUIREMENTS_PLAN.scan_targets', [
                 TaskTool::describe('Delegate to agent for context extraction from {scan_target}'),
                 Store::as('GATHERED_MATERIALS[{target}]', 'Extracted context'),
             ]))
             ->phase(Operator::if('$DOCS_SCAN_NEEDED === true', [
-                TaskTool::describe('@agent-documentation-master: Scan .docs for {$TASK_DESCRIPTION}'),
-                Store::as('DOCS_SCAN_FINDINGS', 'Project documentation'),
+                TaskTool::describe('@agent-documentation-master: Use brain docs {keywords} to find relevant documentation, then Read files'),
+                Store::as('DOCS_SCAN_FINDINGS', 'Documentation content from brain docs'),
             ]))
             ->phase(Operator::if('$WEB_RESEARCH_NEEDED === true', [
                 TaskTool::describe('@agent-web-research-master: Research best practices for {$TASK_DESCRIPTION}'),
@@ -138,7 +140,8 @@ class DoCommand extends CommandArchetype
             ->phase('Search vector memory: mcp__vector-memory__search_memories(query: "execution approach for {task_type}", limit: 5, category: "code-solution")')
             ->phase(Store::as('EXECUTION_PATTERNS', 'Past successful execution approaches'))
             ->phase('Create plan: atomic steps (≤2 files each), logical order, informed by $EXECUTION_PATTERNS')
-            ->phase(Store::as('EXECUTION_PLAN', '{steps: [{step_number, agent_name, task_description, file_scope: [≤2 files], memory_search_query, expected_outcome}, ...], total_steps: N}'))
+            ->phase(Store::as('EXECUTION_PLAN',
+                '{steps: [{step_number, agent_name, task_description, file_scope: [≤2 files], memory_search_query, expected_outcome}, ...], total_steps: N}'))
             ->phase(Operator::verify('Each step has ≤ 2 files'))
             ->phase(Operator::output([
                 '',
@@ -254,7 +257,7 @@ class DoCommand extends CommandArchetype
                 'WAIT for user decision',
             ])
             ->phase()->if('documentation scan fails', [
-                'Log: "Documentation scan failed or .docs folder not found"',
+                'Log: "brain docs command failed or no documentation found"',
                 'Proceed without documentation context',
                 'Note: "Documentation context unavailable"',
             ])
@@ -332,11 +335,11 @@ class DoCommand extends CommandArchetype
         $this->guideline('example-4-documentation-scan')
             ->scenario('Task requiring project documentation context')
             ->example()
-            ->phase('input', '$ARGUMENTS = "Implement feature based on architecture described in .docs"')
+            ->phase('input', '$ARGUMENTS = "Implement feature based on architecture described in documentation"')
             ->phase('phase1', 'Agent Discovery: Selected @agent-documentation-master, @agent-code-master')
-            ->phase('phase2', 'Requirements Plan: Scan .docs for architecture, identify feature requirements')
+            ->phase('phase2', 'Requirements Plan: Search documentation via brain docs, identify feature requirements')
             ->phase('approval1', 'User approves (including documentation scan)')
-            ->phase('phase3', 'Gather: Documentation scan findings from .docs, related code files')
+            ->phase('phase3', 'Gather: Documentation results from brain docs, related code files')
             ->phase('phase4', 'Execution Plan:')
             ->do([
                 'Step 1: @agent-code-master - Create FeatureService.php based on docs',
