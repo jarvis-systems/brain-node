@@ -114,7 +114,7 @@ Runtime::AGENTS_FOLDER                    // → .claude/agents/
 BrainCLI::COMPILE                         // → brain compile
 BrainCLI::MAKE_MASTER('Name')            // → brain make:master Name
 BrainCLI::MASTER_LIST                     // → brain master:list
-BrainCLI::INCLUDES_LIST                     // → brain includes:list
+BrainCLI::LIST_INCLUDES                     // → brain list:includes
 ```
 
 **Agent Delegation:**

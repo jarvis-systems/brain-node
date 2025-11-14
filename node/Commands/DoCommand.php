@@ -61,7 +61,7 @@ class DoCommand extends CommandArchetype
             ->phase(Store::as('TASK_DESCRIPTION', 'User task from $ARGUMENTS'))
             ->phase('Search vector memory: mcp__vector-memory__search_memories(query: "similar task: {$TASK_DESCRIPTION}", limit: 5, category: "code-solution,architecture")')
             ->phase(Store::as('PAST_SOLUTIONS', 'Past similar tasks, approaches, and agents used'))
-            ->phase(BashTool::describe(BrainCLI::MASTER_LIST, 'Execute brain master:list'))
+            ->phase(BashTool::describe(BrainCLI::LIST_MASTERS, 'Execute brain list:masters'))
             ->phase(Store::as('AVAILABLE_AGENTS', 'List of all agents'))
             ->phase('Match task to agents considering: task domain + past successful approaches from $PAST_SOLUTIONS')
             ->phase(Store::as('RELEVANT_AGENTS',
@@ -233,7 +233,7 @@ class DoCommand extends CommandArchetype
             ->text('Graceful error handling with recovery options')
             ->example()
             ->phase()->if('no agents available', [
-                'Report: "No agents found via brain master:list"',
+                'Report: "No agents found via brain list:masters"',
                 'Suggest: Run /init-agents first',
                 'Abort command',
             ])

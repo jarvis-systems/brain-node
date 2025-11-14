@@ -14,7 +14,8 @@
   ],
   "autoload": {
     "psr-4": {
-      "BrainNode\\": "node/"
+      "BrainNode\\": "node/",
+      "BrainScripts\\": "scripts/"
     }
   },
   "require": {
