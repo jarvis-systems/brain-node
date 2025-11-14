@@ -4,21 +4,21 @@ declare(strict_types=1);
 
 namespace BrainNode;
 
-use BrainCore\Attributes\Meta;
-use BrainCore\Attributes\Includes;
 use BrainCore\Archetypes\BrainArchetype;
+use BrainCore\Attributes\Includes;
+use BrainCore\Attributes\Meta;
 use BrainCore\Attributes\Purpose;
 use BrainCore\Includes\Brain\BrainBasicErrorHandling;
 use BrainCore\Includes\Brain\BrainCore;
+use BrainCore\Includes\Brain\BrainCoreConstraints;
 use BrainCore\Includes\Brain\BrainDelegationWorkflow;
 use BrainCore\Includes\Brain\BrainResponseValidation;
 use BrainCore\Includes\Brain\DelegationProtocols;
 use BrainCore\Includes\Brain\PreActionValidation;
-use BrainCore\Includes\Universal\BrainCoreConstraints;
 use BrainCore\Includes\Universal\VectorMemoryMCP;
 
 #[Meta('id', 'brain-core')]
-#[Purpose('<!-- Specify the primary purpose of this Brain here -->')]
+#[Purpose('<!-- Specify the primary project purpose of this Brain here -->')]
 
 // === UNIVERSAL (Brain runtime essentials) ===
 #[Includes(BrainCoreConstraints::class)]                // Simplified constraints for Brain orchestration

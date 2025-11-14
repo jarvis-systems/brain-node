@@ -134,9 +134,9 @@ class InitAgentsCommand extends CommandArchetype
 
         // Phase 2: Inventory Existing Agents
         $this->guideline('phase2-inventory-agents')
-            ->goal('List all existing agents via', BrainCLI::MASTER_LIST)
+            ->goal('List all existing agents via', BrainCLI::LIST_MASTERS)
             ->example()
-            ->phase([BashTool::call(BrainCLI::MASTER_LIST), 'Parse output'])
+            ->phase([BashTool::call(BrainCLI::LIST_MASTERS), 'Parse output'])
             ->phase(Store::as('EXISTING_AGENTS', '[{id, name, description}, ...]'))
             ->phase(['Agents located in', Runtime::NODE_DIRECTORY('Agents/*.php')])
             ->phase('Count: total_agents = count($EXISTING_AGENTS)');
@@ -433,7 +433,7 @@ class InitAgentsCommand extends CommandArchetype
             ->text('Quality validation checkpoints with confidence thresholds')
             ->example('Gate 1: Temporal context retrieved (date/year)')
             ->example('Gate 2: Vector memory cache checked for recent patterns')
-            ->example('Gate 3: brain master:list executed successfully')
+            ->example('Gate 3: brain list:masters executed successfully')
             ->example('Gate 4: Web research delegated to WebResearchMaster OR cache hit')
             ->example('Gate 5: Gap analysis completed with valid output structure')
             ->example('Gate 6: Gap analysis includes confidence scores >= 0.75 for critical agents')

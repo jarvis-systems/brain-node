@@ -89,7 +89,7 @@ class LfcCommand extends CommandArchetype
         $this->guideline('phase1-agents-registry')
             ->text('Goal: Read agents registry')
             ->example()
-                ->phase('action-1', 'Bash(\'brain master:list\')');
+                ->phase('action-1', 'Bash(\'brain list:masters\')');
 
         $this->guideline('phase1-web-research')
             ->text('Goal: Optional web research (ASK first)')

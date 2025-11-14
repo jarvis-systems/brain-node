@@ -210,7 +210,7 @@ class InitBrainCommand extends CommandArchetype
             ->goal('Analyze available includes and select optimal set for project')
             ->example()
             ->phase(
-                BashTool::describe(BrainCLI::INCLUDES_LIST, Store::as('AVAILABLE_INCLUDES'))
+                BashTool::describe(BrainCLI::LIST_INCLUDES, Store::as('AVAILABLE_INCLUDES'))
             )
             ->phase(
                 AgentMaster::call(
@@ -430,7 +430,7 @@ class InitBrainCommand extends CommandArchetype
                 'Use cached knowledge from vector memory',
                 'Continue with available information',
             ])
-            ->phase()->if(BrainCLI::INCLUDES_LIST . ' fails', [
+            ->phase()->if(BrainCLI::LIST_INCLUDES . ' fails', [
                 'Use hardcoded standard includes list',
                 'Log: Include discovery failed',
             ])

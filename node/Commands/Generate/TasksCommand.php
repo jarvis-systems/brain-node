@@ -17,11 +17,11 @@ class TasksCommand extends CommandArchetype
     {
         // Role
         $this->guideline('role')
-            ->text('Dynamic agent discovery via Bash(brain master:list). Read parent Phase Issue(s) via @agent-pm-master. Iterative loop (ONE task at a time). Sequential multi-agent research chain per task. Brain synthesis with rich context (Memory IDs, .docs/ refs). Delegate execution to @agent-pm-master.');
+            ->text('Dynamic agent discovery via Bash(brain list:masters). Read parent Phase Issue(s) via @agent-pm-master. Iterative loop (ONE task at a time). Sequential multi-agent research chain per task. Brain synthesis with rich context (Memory IDs, .docs/ refs). Delegate execution to @agent-pm-master.');
 
         // Iron Rules
         $this->rule('read-agents-first')->critical()
-            ->text('Run Bash(brain master:list) first (dynamic discovery)')
+            ->text('Run Bash(brain list:masters) first (dynamic discovery)')
             ->why('Dynamic agent discovery ensures flexibility')
             ->onViolation('Missing agent discovery compromises workflow');
 
@@ -58,7 +58,7 @@ class TasksCommand extends CommandArchetype
         $this->rule('no-hardcoded-agents')->medium()
             ->text('No hardcoded agents (except pm-master)')
             ->why('Dynamic discovery maintains flexibility')
-            ->onViolation('Use Bash(brain master:list) for discovery');
+            ->onViolation('Use Bash(brain list:masters) for discovery');
 
         $this->rule('no-direct-github-ops')->high()
             ->text('No direct GitHub ops (delegate)')
@@ -77,7 +77,7 @@ class TasksCommand extends CommandArchetype
         $this->guideline('workflow-step0')
             ->text('STEP 0 - Preparation')
             ->example()
-                ->phase('action-1', 'Bash(\'brain master:list\') → discover available agents');
+                ->phase('action-1', 'Bash(\'brain list:masters\') → discover available agents');
 
         // Workflow Step 1
         $this->guideline('workflow-step1')
@@ -158,7 +158,7 @@ class TasksCommand extends CommandArchetype
         // Quality Gates
         $this->guideline('quality-gates')
             ->text('Quality validation checkpoints')
-            ->example('brain master:list executed')
+            ->example('brain list:masters executed')
             ->example('Parent Phase read via pm-master')
             ->example('ONE task at a time')
             ->example('Sequential research chain')
