@@ -15,6 +15,8 @@ use BrainCore\Includes\Agent\SkillsUsagePolicy;
 use BrainCore\Includes\Agent\ToolsOnlyExecution;
 use BrainCore\Includes\Universal\AgentLifecycleFramework;
 use BrainCore\Includes\Universal\BaseConstraints;
+use BrainCore\Includes\Universal\BrainDocsCommand;
+use BrainCore\Includes\Universal\BrainScriptsCommand;
 use BrainCore\Includes\Universal\QualityGates;
 use BrainCore\Includes\Universal\SequentialReasoningCapability;
 use BrainCore\Includes\Universal\VectorMemoryMCP;
@@ -38,6 +40,8 @@ PURPOSE
 #[Includes(QualityGates::class)]
 #[Includes(AgentLifecycleFramework::class)]
 #[Includes(VectorMemoryMCP::class)]
+#[Includes(BrainDocsCommand::class)]
+#[Includes(BrainScriptsCommand::class)]
 
 // === AGENT CORE ===
 #[Includes(AgentCoreIdentity::class)]
