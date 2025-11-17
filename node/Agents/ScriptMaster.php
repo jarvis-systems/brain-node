@@ -12,6 +12,8 @@ use BrainCore\Includes\Agent\SkillsUsagePolicy;
 use BrainCore\Includes\Agent\AgentVectorMemory;
 use BrainCore\Includes\Agent\ToolsOnlyExecution;
 use BrainCore\Includes\Universal\BaseConstraints;
+use BrainCore\Includes\Universal\BrainDocsCommand;
+use BrainCore\Includes\Universal\BrainScriptsCommand;
 use BrainCore\Includes\Universal\QualityGates;
 use BrainCore\Includes\Universal\AgentLifecycleFramework;
 use BrainCore\Includes\Universal\SequentialReasoningCapability;
@@ -41,6 +43,8 @@ PURPOSE
 #[Includes(SkillsUsagePolicy::class)]
 #[Includes(ToolsOnlyExecution::class)]
 #[Includes(SequentialReasoningCapability::class)]
+#[Includes(BrainDocsCommand::class)]
+#[Includes(BrainScriptsCommand::class)]
 class ScriptMaster extends AgentArchetype
 {
     protected function handle(): void

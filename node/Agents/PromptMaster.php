@@ -17,6 +17,8 @@ use BrainCore\Includes\Agent\WebBasicResearch;
 use BrainCore\Includes\Agent\WorkflowPseudoSyntax;
 use BrainCore\Includes\Universal\AgentLifecycleFramework;
 use BrainCore\Includes\Universal\BaseConstraints;
+use BrainCore\Includes\Universal\BrainDocsCommand;
+use BrainCore\Includes\Universal\BrainScriptsCommand;
 use BrainCore\Includes\Universal\QualityGates;
 use BrainCore\Includes\Universal\SequentialReasoningCapability;
 use BrainCore\Includes\Universal\VectorMemoryMCP;
@@ -32,6 +34,8 @@ use BrainCore\Includes\Universal\VectorMemoryMCP;
 #[Includes(QualityGates::class)]
 #[Includes(AgentLifecycleFramework::class)]
 #[Includes(VectorMemoryMCP::class)]
+#[Includes(BrainDocsCommand::class)]
+#[Includes(BrainScriptsCommand::class)]
 
 // === AGENT CORE ===
 #[Includes(AgentCoreIdentity::class)]

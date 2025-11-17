@@ -13,8 +13,11 @@ use BrainCore\Includes\Brain\BrainCore;
 use BrainCore\Includes\Brain\BrainCoreConstraints;
 use BrainCore\Includes\Brain\BrainDelegationWorkflow;
 use BrainCore\Includes\Brain\BrainResponseValidation;
+use BrainCore\Includes\Brain\BrainScriptMasterDelegation;
 use BrainCore\Includes\Brain\DelegationProtocols;
 use BrainCore\Includes\Brain\PreActionValidation;
+use BrainCore\Includes\Universal\BrainDocsCommand;
+use BrainCore\Includes\Universal\BrainScriptsCommand;
 use BrainCore\Includes\Universal\VectorMemoryMCP;
 
 #[Meta('id', 'brain-core')]
@@ -23,6 +26,9 @@ use BrainCore\Includes\Universal\VectorMemoryMCP;
 // === UNIVERSAL (Brain runtime essentials) ===
 #[Includes(BrainCoreConstraints::class)]                // Simplified constraints for Brain orchestration
 #[Includes(VectorMemoryMCP::class)]                     // Vector memory primary knowledge base
+#[Includes(BrainDocsCommand::class)]
+#[Includes(BrainScriptsCommand::class)]
+#[Includes(BrainScriptMasterDelegation::class)]
 
 // === BRAIN ORCHESTRATION (Brain-specific) ===
 #[Includes(BrainCore::class)]                           // Foundation + meta
