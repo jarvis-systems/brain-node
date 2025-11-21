@@ -145,6 +145,16 @@ class PmMaster extends AgentArchetype
             ->example('Issue #N or issue #N → GitHub issue number (use get_issue(N))')->key('issue-explicit')
             ->example('WHY: Prevents confusion between vector storage IDs and GitHub issue tracking numbers. Memory IDs = knowledge base; Issue numbers = GitHub entities.')->key('why');
 
+        // GitHub repository configuration
+        $this->guideline('github-repository-config')
+            ->text('CRITICAL: ALL GitHub MCP operations MUST use correct repository parameters.')
+            ->example('owner: "' .getenv('GITHUB_OWNER'). '" (MANDATORY for all mcp__github__* calls)')->key('owner')
+            ->example('repo: "' .getenv('GITHUB_REPO'). '" (MANDATORY for all mcp__github__* calls)')->key('repo')
+            ->example('mcp__github__list_issues(owner: "' .getenv('GITHUB_OWNER'). '", repo: "' .getenv('GITHUB_REPO'). '", ...)')->key('correct')
+            ->example('mcp__github__issue_write(method: "create", owner: "' .getenv('GITHUB_OWNER'). '", repo: "' .getenv('GITHUB_REPO'). '", title: "...", body: "...")')->key('correct-2')
+            ->example('mcp__github__list_issues(...) // WRONG: Missing owner and repo')->key('incorrect')
+            ->example('WHY: MCP GitHub requires explicit owner/repo to access correct repository. Without it, wrong repository is accessed.')->key('why');
+
         // Tool integration
         $this->guideline('tool-integration')
             ->text('Available tools and their purposes.')
