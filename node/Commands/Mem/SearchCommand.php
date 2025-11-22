@@ -8,12 +8,12 @@ use BrainCore\Archetypes\CommandArchetype;
 use BrainCore\Attributes\Includes;
 use BrainCore\Attributes\Meta;
 use BrainCore\Attributes\Purpose;
-use BrainCore\Includes\Commands\Mem\Search;
+use BrainCore\Includes\Commands\Mem\MemSearchInclude;
 
 #[Meta('id', 'mem:search')]
 #[Meta('description', 'Semantic search memories with optional filters')]
 #[Purpose('Searches memories using semantic similarity from $ARGUMENTS query. Supports filters: category, limit, offset, tags. Displays results with similarity scores.')]
-#[Includes(Search::class)]
+#[Includes(MemSearchInclude::class)]
 class SearchCommand extends CommandArchetype
 {
     /**

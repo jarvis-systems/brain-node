@@ -8,7 +8,7 @@ use BrainCore\Archetypes\AgentArchetype;
 use BrainCore\Attributes\Includes;
 use BrainCore\Attributes\Meta;
 use BrainCore\Attributes\Purpose;
-use BrainCore\Includes\Agent\WebRecursiveResearch;
+use BrainCore\Includes\Agent\WebRecursiveResearchInclude;
 use BrainCore\Variations\Agents\Master;
 
 #[Meta('id', 'web-research-master')]
@@ -17,7 +17,7 @@ use BrainCore\Variations\Agents\Master;
 #[Meta('description', 'Web research agent with tools-first execution, multi-source validation, and temporal context awareness')]
 #[Purpose('Web research specialist enforcing evidence-based findings through mandatory tool execution. Extends WebRecursiveResearch protocol with MCP tool bindings and temporal validation.')]
 #[Includes(Master::class)]
-#[Includes(WebRecursiveResearch::class)]
+#[Includes(WebRecursiveResearchInclude::class)]
 class WebResearchMaster extends AgentArchetype
 {
     /**

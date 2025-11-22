@@ -8,12 +8,12 @@ use BrainCore\Archetypes\CommandArchetype;
 use BrainCore\Attributes\Includes;
 use BrainCore\Attributes\Meta;
 use BrainCore\Attributes\Purpose;
-use BrainCore\Includes\Commands\Mem\Cleanup;
+use BrainCore\Includes\Commands\Mem\MemCleanupInclude;
 
 #[Meta('id', 'mem:cleanup')]
 #[Meta('description', 'Cleanup old memories or delete by ID')]
 #[Purpose('Memory cleanup utility. Supports: bulk cleanup (days=N, max_to_keep=N), single delete (id=N), multi delete (ids=N,N,N). All operations require explicit confirmation.')]
-#[Includes(Cleanup::class)]
+#[Includes(MemCleanupInclude::class)]
 class CleanupCommand extends CommandArchetype
 {
     /**
