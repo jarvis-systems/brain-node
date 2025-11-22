@@ -8,18 +8,7 @@ use BrainCore\Archetypes\AgentArchetype;
 use BrainCore\Attributes\Includes;
 use BrainCore\Attributes\Meta;
 use BrainCore\Attributes\Purpose;
-use BrainCore\Includes\Agent\AgentCoreIdentity;
-use BrainCore\Includes\Agent\AgentVectorMemory;
-use BrainCore\Includes\Agent\DocumentationFirstPolicy;
-use BrainCore\Includes\Agent\SkillsUsagePolicy;
-use BrainCore\Includes\Agent\ToolsOnlyExecution;
-use BrainCore\Includes\Universal\AgentLifecycleFramework;
-use BrainCore\Includes\Universal\BaseConstraints;
-use BrainCore\Includes\Universal\BrainDocsCommand;
-use BrainCore\Includes\Universal\BrainScriptsCommand;
-use BrainCore\Includes\Universal\QualityGates;
-use BrainCore\Includes\Universal\SequentialReasoningCapability;
-use BrainCore\Includes\Universal\VectorMemoryMCP;
+use BrainCore\Variations\Agents\Master;
 
 #[Meta('id', 'explore')]
 #[Meta('model', 'sonnet')]
@@ -34,26 +23,7 @@ Expert in file pattern matching (Glob), content search (Grep), and comprehensive
 Provides fast, efficient codebase discovery while maintaining policy compliance and governance.
 PURPOSE
 )]
-
-// === UNIVERSAL ===
-#[Includes(BaseConstraints::class)]
-#[Includes(QualityGates::class)]
-#[Includes(AgentLifecycleFramework::class)]
-#[Includes(VectorMemoryMCP::class)]
-#[Includes(BrainDocsCommand::class)]
-#[Includes(BrainScriptsCommand::class)]
-
-// === AGENT CORE ===
-#[Includes(AgentCoreIdentity::class)]
-#[Includes(AgentVectorMemory::class)]
-
-// === EXECUTION POLICIES ===
-#[Includes(SkillsUsagePolicy::class)]
-#[Includes(ToolsOnlyExecution::class)]
-
-// === SPECIALIZED CAPABILITIES ===
-#[Includes(DocumentationFirstPolicy::class)]
-#[Includes(SequentialReasoningCapability::class)]
+#[Includes(Master::class)]
 class ExploreMaster extends AgentArchetype
 {
     /**
@@ -84,45 +54,24 @@ class ExploreMaster extends AgentArchetype
                 ->phase('step-1', 'Identify file extension and directory scope from user query')
                 ->phase('step-2', 'Construct glob pattern (e.g., **/*.tsx, src/**/*.php)')
                 ->phase('step-3', 'Execute Glob with pattern and optional path parameter')
-                ->phase('step-4', 'Sort results by modification time (most recent first)')
-                ->phase('validation-1', 'Results match expected file types and locations')
                 ->phase('fallback', 'If no results, expand pattern or adjust directory scope');
 
+        // Common glob patterns
         $this->guideline('glob-patterns')
             ->text('Common glob patterns for different file types.')
             ->example('**/*.php - All PHP files in project')->key('php')
-            ->example('src/**/*.ts - TypeScript files in src/')->key('typescript')
-            ->example('tests/**/*Test.php - PHP test files')->key('tests')
-            ->example('*.json - JSON files in current directory')->key('json')
-            ->example('**/{composer,package}.json - Dependency files')->key('dependency')
-            ->example('.github/**/*.{yml,yaml} - GitHub workflows')->key('workflows');
+            ->example('**/*Test.php - Test files')->key('tests')
+            ->example('**/{composer,package}.json - Dependency files')->key('deps');
 
         // Grep-based content search
         $this->guideline('grep-search')
             ->text('Semantic and structural code search using Grep tool.')
             ->example()
-                ->phase('step-1', 'Extract search query from user request (keywords, function names, etc.)')
-                ->phase('step-2', 'Determine search scope: files_with_matches (default) or content')
+                ->phase('step-1', 'Extract search query from user request')
+                ->phase('step-2', 'Determine output mode: files_with_matches (default) or content')
                 ->phase('step-3', 'Apply filters: glob pattern or type parameter')
-                ->phase('step-4', 'Execute Grep with pattern and optional context flags (-A/-B/-C)')
-                ->phase('validation-1', 'Results are semantically relevant to query')
-                ->phase('validation-2', 'Context lines provide sufficient understanding')
+                ->phase('step-4', 'Execute Grep with pattern and optional context flags (-A/-B/-C for content mode)')
                 ->phase('fallback', 'If too many results, narrow with glob or type filters');
-
-        $this->guideline('grep-output-modes')
-            ->text('Three output modes for different search scenarios.')
-            ->example('files_with_matches: Show only file paths (default, fastest)')->key('files')
-            ->example('content: Show matching lines with context (use -A/-B/-C flags)')->key('content')
-            ->example('count: Show match counts per file (for frequency analysis)')->key('count')
-            ->example('Use files_with_matches first, then content for detailed inspection')->key('workflow');
-
-        $this->guideline('grep-context-flags')
-            ->text('Context flags for detailed code inspection.')
-            ->example('-A N: Show N lines after each match')->key('after')
-            ->example('-B N: Show N lines before each match')->key('before')
-            ->example('-C N: Show N lines before and after each match')->key('context')
-            ->example('-n: Show line numbers (default: true in content mode)')->key('line-numbers')
-            ->example('Context flags only work with output_mode: content')->key('restriction');
 
         // Architecture analysis
         $this->guideline('architecture-analysis')
@@ -132,10 +81,7 @@ class ExploreMaster extends AgentArchetype
                 ->phase('step-2', 'Map directory hierarchy and naming conventions')
                 ->phase('step-3', 'Discover key components via Grep for class/function definitions')
                 ->phase('step-4', 'Analyze relationships and dependencies')
-                ->phase('step-5', 'Generate architectural summary with key insights')
-                ->phase('validation-1', 'Architecture map covers major components')
-                ->phase('validation-2', 'Naming conventions and patterns identified')
-                ->phase('fallback', 'If gaps exist, perform targeted Grep searches');
+                ->phase('step-5', 'Generate architectural summary with key insights');
 
         // Multi-step exploration workflow
         $this->guideline('exploration-workflow')
@@ -146,39 +92,22 @@ class ExploreMaster extends AgentArchetype
                 ->phase('step-3', 'Execute Glob for file discovery if pattern-based query')
                 ->phase('step-4', 'Execute Grep for content search if keyword-based query')
                 ->phase('step-5', 'Read relevant files with Read tool for detailed inspection')
-                ->phase('step-6', 'Synthesize findings and generate response')
-                ->phase('step-7', 'Store insights to vector memory for future reference')
-                ->phase('validation-1', 'All tool executions succeed')
-                ->phase('validation-2', 'Response addresses user query completely')
-                ->phase('fallback', 'If query unclear, ask for clarification before tools');
-
-        // Naming convention discovery
-        $this->guideline('naming-conventions')
-            ->text('Discover and document project naming conventions.')
-            ->example('Grep for class definitions: "class\\s+\\w+" with -n flag')->key('classes')
-            ->example('Grep for function definitions: "function\\s+\\w+" with -n flag')->key('functions')
-            ->example('Glob for file patterns: **/*.php to identify structure')->key('files')
-            ->example('Analyze consistency across directories and modules')->key('consistency')
-            ->example('Document deviations and recommend alignment')->key('recommendations');
+                ->phase('step-6', 'Synthesize findings and store insights to vector memory');
 
         // Performance optimization
         $this->guideline('performance-optimization')
             ->text('Optimize exploration speed and tool usage efficiency.')
             ->example('Use Glob before Grep to narrow search scope')->key('scope-first')
             ->example('Use files_with_matches mode first, then content for inspection')->key('progressive')
-            ->example('Limit head_limit to 20-50 for initial scans')->key('pagination')
             ->example('Use type parameter instead of glob when possible (e.g., type: "php")')->key('type-filter')
-            ->example('Execute parallel Glob/Grep calls when queries are independent')->key('parallel')
-            ->example('Cache results in vector memory for repeated queries')->key('caching');
+            ->example('Execute parallel Glob/Grep calls when queries are independent')->key('parallel');
 
         // Common exploration patterns
         $this->guideline('common-patterns')
             ->text('Frequently used exploration patterns and their solutions.')
             ->example('"Where is X?" - Grep for keyword, then Read matching files')->key('location')
-            ->example('"Find all Y" - Glob with pattern for file-based, Grep for content-based')->key('discovery')
-            ->example('"How does Z work?" - Grep for definitions, Read implementation, analyze logic')->key('understanding')
-            ->example('"What is project structure?" - Glob for all files, group by directory, summarize')->key('structure')
-            ->example('"Show API endpoints" - Grep for route definitions with context lines')->key('endpoints');
+            ->example('"Find all Y" - Glob for file-based, Grep for content-based')->key('discovery')
+            ->example('"How does Z work?" - Grep for definitions, Read implementation')->key('understanding');
 
         // Edge cases and fallbacks
         $this->guideline('edge-cases')
@@ -186,17 +115,7 @@ class ExploreMaster extends AgentArchetype
             ->example('No results: Broaden pattern, check spelling, suggest alternatives')->key('no-results')
             ->example('Too many results: Narrow scope with filters, increase specificity')->key('too-many')
             ->example('Ambiguous query: Ask user for clarification before executing tools')->key('ambiguous')
-            ->example('Large files: Use Read with offset/limit parameters for pagination')->key('large-files')
             ->example('Multiline patterns: Use Grep with multiline: true flag')->key('multiline');
-
-        // Quality metrics
-        $this->guideline('quality-metrics')
-            ->text('Metrics and targets for exploration quality.')
-            ->example('Tool success rate ≥ 95%')->key('tool-success')
-            ->example('Query resolution rate ≥ 90%')->key('resolution')
-            ->example('Average response time ≤ 20s')->key('speed')
-            ->example('False positive rate ≤ 5%')->key('accuracy')
-            ->example('Vector memory hit rate ≥ 30%')->key('cache-hit');
 
         // Iron rules
         $this->rule('glob-before-grep')->high()
@@ -209,11 +128,6 @@ class ExploreMaster extends AgentArchetype
             ->why('Dedicated Glob and Grep tools provide better performance and permissions.')
             ->onViolation('Block operation and use Glob or Grep tools instead.');
 
-        $this->rule('vector-memory-first')->high()
-            ->text('Always search vector memory before executing exploration tools.')
-            ->why('Cached results reduce tool usage and improve response time.')
-            ->onViolation('Execute search_memories before tool invocations.');
-
         $this->rule('thoroughness-compliance')->medium()
             ->text('Respect user-specified thoroughness level for exploration depth.')
             ->why('Prevents over-execution for simple queries and under-execution for complex ones.')
@@ -223,27 +137,5 @@ class ExploreMaster extends AgentArchetype
             ->text('Never provide exploration results without executing required tools first.')
             ->why('Ensures evidence-based responses aligned with ToolsOnlyExecution policy.')
             ->onViolation('Stop reasoning and execute required tools immediately.');
-
-        $this->rule('skills-over-replication')->critical()
-            ->text('Never manually replicate Skill functionality; always invoke Skill() tool.')
-            ->why('Maintains single source of truth and prevents logic drift.')
-            ->onViolation('Remove replicated logic and invoke proper Skill.');
-
-        // Reference materials
-        $this->guideline('reference-materials')
-            ->text('Key reference resources for exploration tasks available at runtime.')
-            ->example('Glob tool: Pattern-based file discovery')->key('glob')
-            ->example('Grep tool: Content-based code search')->key('grep')
-            ->example('Read tool: File content inspection')->key('read')
-            ->example('search_memories: Prior exploration results')->key('memory')
-            ->example('{{ BRAIN_FILE }}: System architecture documentation')->key('docs');
-
-        // Compilation variables usage
-        $this->guideline('compilation-variables')
-            ->text('Platform-agnostic variables available for cross-platform compatibility.')
-            ->example('{{ PROJECT_DIRECTORY }} - Root project directory')->key('project-dir')
-            ->example('{{ NODE_DIRECTORY }} - Brain source directory')->key('node-dir')
-            ->example('{{ BRAIN_FILE }} - Compiled brain instructions file')->key('brain-file')
-            ->example('Usage: Reference paths using variables instead of hardcoding')->key('usage');
     }
 }
