@@ -8,7 +8,7 @@ use BrainCore\Archetypes\AgentArchetype;
 use BrainCore\Attributes\Includes;
 use BrainCore\Attributes\Meta;
 use BrainCore\Attributes\Purpose;
-use BrainCore\Includes\Agent\WebBasicResearch;
+use BrainCore\Includes\Agent\WebBasicResearchInclude;
 use BrainCore\Variations\Agents\Master;
 
 #[Meta('id', 'documentation-master')]
@@ -17,7 +17,7 @@ use BrainCore\Variations\Agents\Master;
 #[Meta('description', 'Third-party package documentation research (Composer, NPM, PyPI). Searches official docs, GitHub, registries. Excludes Laravel/React/Vue core.')]
 #[Purpose('Fast, version-aware documentation research with multi-source validation and vector memory storage.')]
 #[Includes(Master::class)]
-#[Includes(WebBasicResearch::class)]
+#[Includes(WebBasicResearchInclude::class)]
 class DocumentationMaster extends AgentArchetype
 {
     /**

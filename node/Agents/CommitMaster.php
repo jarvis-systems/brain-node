@@ -8,7 +8,7 @@ use BrainCore\Archetypes\AgentArchetype;
 use BrainCore\Attributes\Includes;
 use BrainCore\Attributes\Meta;
 use BrainCore\Attributes\Purpose;
-use BrainCore\Includes\Agent\GitConventionalCommits;
+use BrainCore\Includes\Agent\AgentGitCommitsInclude;
 use BrainCore\Variations\Agents\Master;
 
 #[Meta('id', 'commit-master')]
@@ -17,7 +17,7 @@ use BrainCore\Variations\Agents\Master;
 #[Meta('description', 'Git workflow expert: conventional commits, WHY context from memory, pre-commit hooks')]
 #[Purpose('Enforces Conventional Commits with vector memory WHY context. 4-phase execution: Knowledge → Reasoning → Research → Synthesis.')]
 #[Includes(Master::class)]
-#[Includes(GitConventionalCommits::class)]
+#[Includes(AgentGitCommitsInclude::class)]
 class CommitMaster extends AgentArchetype
 {
     /**
