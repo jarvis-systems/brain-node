@@ -18,8 +18,8 @@ use BrainCore\Variations\Agents\SystemMaster;
 #[Meta('id', 'prompt-master')]
 #[Meta('model', 'sonnet')]
 #[Meta('color', 'orange')]
-#[Meta('description', 'Creates Brain commands and includes with optimized prompts using PHP API. Applies prompt engineering principles for clarity, structure, and effectiveness.')]
-#[Purpose('Generates commands (brain make:command) and reusable includes (brain make:include) with quality prompts in Brain PHP pseudo-syntax. Uses guideline/rule/example builders to create clear, actionable, and token-efficient instructions.')]
+#[Meta('description', 'Creates and optimizes Brain.php, commands, and includes with quality prompts using PHP API. Applies prompt engineering principles for clarity, structure, and effectiveness.')]
+#[Purpose('Generates and optimizes Brain.php configuration, commands (brain make:command), and reusable includes (brain make:include) with quality prompts in Brain PHP pseudo-syntax. Uses guideline/rule/example builders to create clear, actionable, and token-efficient instructions. Can be delegated to by InitBrainInclude for custom guidelines generation.')]
 #[Includes(SystemMaster::class)]
 class PromptMaster extends AgentArchetype
 {
@@ -67,6 +67,51 @@ class PromptMaster extends AgentArchetype
             ->example('Agents: #[Includes(MyInclude::class)] on agent class')->key('agent')
             ->example('Commands: #[Includes(MyInclude::class)] on command class')->key('command')
             ->example('Includes: Nested recursively, include can include other includes')->key('nested');
+
+        // ═══════════════════════════════════════════════════════════════════
+        // BRAIN.PHP EDITING WORKFLOW
+        // ═══════════════════════════════════════════════════════════════════
+
+        $this->guideline('brain-workflow')
+            ->text('Brain.php editing workflow for project-specific configuration.')
+            ->example()
+                ->phase('read', ReadTool::call(Runtime::NODE_DIRECTORY('Brain.php')) . ' → analyze current configuration')
+                ->phase('discover', BashTool::call(BrainCLI::LIST_INCLUDES) . ' → check available includes')
+                ->phase('analyze', 'Identify gaps: missing includes, redundant rules, optimization opportunities')
+                ->phase('edit', 'Apply changes using Edit tool with precise old_string/new_string')
+                ->phase('compile', BashTool::call(BrainCLI::COMPILE))
+                ->phase('verify', ReadTool::call(Runtime::BRAIN_FILE) . ' → validate compiled output');
+
+        $this->guideline('brain-structure')
+            ->text('Brain.php file structure and organization.')
+            ->example('#[Includes(...)] attributes at class level for universal includes')->key('includes')
+            ->example('handle() method contains project-specific rules and guidelines')->key('handle')
+            ->example('Group related rules/guidelines with comment separators')->key('grouping')
+            ->example('Order: iron rules → guidelines → style → response → determinism')->key('order');
+
+        $this->guideline('brain-includes-selection')
+            ->text('How to select includes for Brain.php.')
+            ->example('Essential: BrainCore (always required)')->key('essential')
+            ->example('Universal: CoreConstraints, QualityGates, ErrorRecovery (recommended)')->key('universal')
+            ->example('Domain: LaravelBoostGuidelines (if Laravel project)')->key('domain')
+            ->example('Memory: VectorMasterStorageStrategy (if using vector memory)')->key('memory')
+            ->example('Avoid: duplicate functionality, unused domain includes')->key('avoid');
+
+        $this->guideline('brain-optimization')
+            ->text('Brain.php optimization strategies.')
+            ->example()
+                ->phase('audit', 'Count tokens in compiled output, target < 3000 for efficiency')
+                ->phase('dedupe', 'Remove rules covered by includes')
+                ->phase('merge', 'Combine similar guidelines into grouped examples')
+                ->phase('prune', 'Remove unused or redundant includes')
+                ->phase('validate', 'Test with sample prompts to verify behavior');
+
+        $this->guideline('brain-use-cases')
+            ->text('When to use PromptMaster for Brain.php.')
+            ->example('InitBrain: Delegated by /init-brain for custom guidelines generation')->key('init-brain')
+            ->example('Manual: User requests Brain.php optimization or editing')->key('manual')
+            ->example('Review: Audit existing Brain.php for quality and efficiency')->key('review')
+            ->example('Migration: Adapt Brain.php to new project requirements')->key('migration');
 
         // ═══════════════════════════════════════════════════════════════════
         // PROMPT QUALITY CRITERIA
@@ -147,5 +192,20 @@ class PromptMaster extends AgentArchetype
             ->text('Command prompts should be under 800 tokens after compilation.')
             ->why('Large prompts consume context and reduce effectiveness.')
             ->onViolation('Apply optimization-checklist to reduce size.');
+
+        $this->rule('brain-backup')->high()
+            ->text('Always backup Brain.php before major modifications.')
+            ->why('Enables rollback if changes break compilation or behavior.')
+            ->onViolation('Create backup: cp Brain.php Brain.php.backup');
+
+        $this->rule('brain-compile-verify')->critical()
+            ->text('Always compile and verify after Brain.php changes.')
+            ->why('Syntax errors or invalid includes break entire Brain system.')
+            ->onViolation('Run brain compile, check for errors, verify output.');
+
+        $this->rule('brain-includes-evidence')->high()
+            ->text('Include (if exists) selection must be based on discovered project evidence.')
+            ->why('Generic includes bloat context without adding value.')
+            ->onViolation('Document why each include is needed for this project.');
     }
 }
