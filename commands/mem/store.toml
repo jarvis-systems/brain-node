@@ -1,0 +1,103 @@
+# Invoked via: /mem:store
+
+description = "Store memory with analysis, category, and tags"
+prompt = """
+<command>
+<meta>
+<id>mem:store</id>
+<description>Store memory with analysis, category, and tags</description>
+</meta>
+<purpose>Stores new memory from $ARGUMENTS content. Analyzes content, checks for duplicates, suggests category/tags, and requires user approval before storing.</purpose>
+<purpose>Memory storage specialist that analyzes content, detects duplicates, suggests category/tags, and stores after user approval.</purpose>
+<guidelines>
+<guideline id="role">
+<text>Memory storage specialist that analyzes content, checks for duplicates, suggests appropriate category and tags, and stores memory after user approval.</text>
+</guideline>
+<guideline id="workflow-step1">
+<text>STEP 1 - Parse $ARGUMENTS</text>
+<example>
+<phase name="format-1">Direct content: /mem:store "This is the memory content"</phase>
+<phase name="format-2">With params: /mem:store content="..." category=code-solution tags=php,laravel</phase>
+<phase name="extract">Extract: content (required), category (optional), tags (optional)</phase>
+<phase name="output">STORE-AS($INPUT = '{content, category?, tags?}')</phase>
+</example>
+</guideline>
+<guideline id="workflow-step2">
+<text>STEP 2 - Search for Similar Memories</text>
+<example>
+<phase name="summarize">Create short summary (20-30 words) of content for search</phase>
+<phase name="search">mcp__vector-memory__search_memories('{query: "{summary}", limit: 5}')</phase>
+<phase name="analyze">IF(similar memories found with similarity > 0.8) → THEN → [WARN: Similar memory exists (ID: {id}, similarity: {score}) → Show: "{content_preview}" → Ask: "Continue storing? (yes/no/update existing)"] → ELSE → [STORE-AS($DUPLICATES = 'none')] → END-IF</phase>
+</example>
+</guideline>
+<guideline id="workflow-step3">
+<text>STEP 3 - Analyze Content and Suggest Category/Tags</text>
+<example>
+<phase name="detect-category">IF(category not provided in $ARGUMENTS) → THEN → [Analyze content domain and type → Suggest category based on content analysis] → END-IF</phase>
+<phase name="detect-tags">IF(tags not provided in $ARGUMENTS) → THEN → [Extract key topics, technologies, concepts → Suggest 3-5 relevant tags] → END-IF</phase>
+<phase name="output">STORE-AS($SUGGESTION = '{category, tags, reasoning}')</phase>
+</example>
+</guideline>
+<guideline id="workflow-step4">
+<text>STEP 4 - Present Memory for User Approval (MANDATORY)</text>
+<example>
+<phase name="display-1">--- Memory to Store ---</phase>
+<phase name="display-2">Content: {content_preview} ({char_count} chars)</phase>
+<phase name="display-3">Category: {category}</phase>
+<phase name="display-4">Tags: {tags}</phase>
+<phase name="display-5">IF(STORE-GET($DUPLICATES) !== none) → THEN → [WARNING: Similar memories exist!] → END-IF</phase>
+<phase name="prompt">Store this memory? (yes/no/modify)</phase>
+<phase name="gate">VALIDATE(User response is YES, APPROVE, Y, or CONFIRM) → FAILS → [Wait for explicit approval. Allow modifications if requested.] → END-VALIDATE</phase>
+</example>
+</guideline>
+<guideline id="workflow-step5">
+<text>STEP 5 - Store Memory After Approval</text>
+<example>
+<phase name="store">mcp__vector-memory__store_memory('{'."\\n"
+    .'                content: "STORE-GET($INPUT).content",'."\\n"
+    .'                category: "STORE-GET($SUGGESTION).category",'."\\n"
+    .'                tags: STORE-GET($SUGGESTION).tags'."\\n"
+    .'            }')</phase>
+<phase name="confirm">Display: "Memory stored successfully"</phase>
+</example>
+</guideline>
+<guideline id="categories">
+<text>Available memory categories</text>
+<example key="code-solution">Implementations, patterns, working solutions</example>
+<example key="bug-fix">Resolved issues, root causes, fixes applied</example>
+<example key="architecture">Design decisions, system structure, trade-offs</example>
+<example key="learning">Insights, discoveries, lessons learned</example>
+<example key="tool-usage">Workflows, tool patterns, configurations</example>
+<example key="debugging">Debug approaches, troubleshooting steps</example>
+<example key="performance">Optimizations, benchmarks, metrics</example>
+<example key="security">Security patterns, vulnerabilities, fixes</example>
+<example key="other">Anything that does not fit other categories</example>
+</guideline>
+<guideline id="tag-guidelines">
+<text>Tag naming conventions</text>
+<example key="language">php, laravel, javascript, python, go</example>
+<example key="domain">api, database, auth, cache, queue</example>
+<example key="framework">react, vue, tailwind, livewire</example>
+<example key="infrastructure">docker, nginx, redis, mysql</example>
+<example key="process">testing, ci-cd, deployment, monitoring</example>
+</guideline>
+</guidelines>
+<iron_rules>
+<rule id="analyze-content" severity="critical">
+<text>MUST analyze $ARGUMENTS content before storing</text>
+<why>Content analysis ensures proper categorization and prevents garbage storage</why>
+<on_violation>Parse $ARGUMENTS, extract content, determine domain and type</on_violation>
+</rule>
+<rule id="check-duplicates" severity="high">
+<text>MUST search for similar memories before storing</text>
+<why>Prevents duplicate entries and wasted storage</why>
+<on_violation>Execute mcp__vector-memory__search_memories('{query: "{content_summary}", limit: 3}')</on_violation>
+</rule>
+<rule id="mandatory-approval" severity="critical">
+<text>MUST get user approval before storing memory</text>
+<why>User must validate content, category, and tags before committing</why>
+<on_violation>Present memory specification and wait for YES/APPROVE</on_violation>
+</rule>
+</iron_rules>
+</command>
+"""

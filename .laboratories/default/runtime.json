@@ -1,0 +1,27 @@
+{
+    "result": {
+        "0": "AGENTS.md",
+        "1": "CLAUDE.md",
+        "2": "GEMINI.md",
+        "3": "QWEN.md",
+        "4": "README.md",
+        "5": "agents",
+        "6": "ai",
+        "7": "brain.lock",
+        "8": "cli",
+        "9": "commands",
+        "10": "composer.json",
+        "11": "composer.lock",
+        "12": "core",
+        "13": "memory",
+        "14": "node",
+        "15": "scripts",
+        "16": "settings.json",
+        "17": "vendor",
+        "flie": "composer.json",
+        "e": "!ls"
+    },
+    "nextVariants": null,
+    "nextCommand": null,
+    "processes": []
+}
