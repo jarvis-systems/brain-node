@@ -1,0 +1,28 @@
+# <-- Auto-config zone -->
+model = "gpt-5.1-codex-max"
+
+[mcp_servers.context7]
+type = "stdio"
+command = "npx"
+args = ["-y", "@upstash/context7-mcp", "--api-key", "ctx7sk-d066fdcb-bd7e-4e10-acf4-522c7621e2c4"]
+
+[mcp_servers.laravel-boost]
+type = "stdio"
+command = "php"
+args = ["/Users/xsaven/PhpstormProjects/getorder/customers/artisan", "boost:mcp"]
+
+[mcp_servers.sequential-thinking]
+type = "stdio"
+command = "npx"
+args = ["-y", "@modelcontextprotocol/server-sequential-thinking"]
+
+[mcp_servers.vector-memory]
+type = "stdio"
+command = "uvx"
+args = ["vector-memory-mcp", "--working-dir", "/Users/xsaven/PhpstormProjects/jarvis-brain-node", "--memory-limit", "2000000"]
+
+[mcp_servers.vector-task]
+type = "stdio"
+command = "uvx"
+args = ["vector-task-mcp", "--working-dir", "/Users/xsaven/PhpstormProjects/jarvis-brain-node", "--timezone", "Europe/Kyiv"]
+# <-- End Auto-config zone -->

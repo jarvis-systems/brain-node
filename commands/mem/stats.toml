@@ -1,0 +1,76 @@
+# Invoked via: /mem:stats
+
+description = "Show memory statistics and health"
+prompt = """
+<command>
+<meta>
+<id>mem:stats</id>
+<description>Show memory statistics and health</description>
+</meta>
+<purpose>Displays memory statistics: total count, category breakdown, storage usage, health status. Accepts optional filters via $ARGUMENTS: category, tags, top.</purpose>
+<purpose>Displays memory statistics and health information with optional category/tag filtering.</purpose>
+<guidelines>
+<guideline id="role">
+<text>Memory statistics utility that displays storage health, category breakdown, and usage metrics.</text>
+</guideline>
+<guideline id="workflow-step1">
+<text>STEP 1 - Parse $ARGUMENTS for Filters</text>
+<example>
+<phase name="format-1">/mem:stats → full statistics overview</phase>
+<phase name="format-2">/mem:stats category=code-solution → category-specific stats</phase>
+<phase name="format-3">/mem:stats tags=php → tag-specific stats</phase>
+<phase name="format-4">/mem:stats top=10 → top accessed memories</phase>
+<phase name="output">STORE-AS($FILTER = '{type: default|category|tags|top, value?}')</phase>
+</example>
+</guideline>
+<guideline id="workflow-step2">
+<text>STEP 2 - Fetch Memory Statistics</text>
+<example>
+<phase name="fetch">mcp__vector-memory__get_memory_stats('{}')</phase>
+<phase name="store">STORE-AS($STATS = 'statistics object')</phase>
+</example>
+</guideline>
+<guideline id="workflow-step3">
+<text>STEP 3 - Display Default Overview (when no filter)</text>
+<example>
+<phase name="check">IF(STORE-GET($FILTER).type === "default") → THEN → [Display: "--- Memory Statistics ---" → Display: "Total: {total} memories" → Display: "Limit: {memory_limit} | Usage: {usage_percentage}%" → Display: "Database: {database_size_mb} MB" → Display: "" → Display: "Categories:" → ForEach category: "  {name}: {count}" → Display: "" → Display: "Health: {health_status}" → Display: "Recent week: {recent_week_count} new"] → END-IF</phase>
+</example>
+</guideline>
+<guideline id="workflow-step4">
+<text>STEP 4 - Category-Specific Stats</text>
+<example>
+<phase name="check">IF(STORE-GET($FILTER).type === "category") → THEN → [mcp__vector-memory__search_memories('{query: "*", category: "{category}", limit: 50}') → Calculate: count, avg access, date range → Display: "--- Category: {category} ---" → Display: "Count: {count} memories" → Display: "Avg access: {avg_access}x" → Display: "Date range: {oldest} to {newest}"] → END-IF</phase>
+</example>
+</guideline>
+<guideline id="workflow-step5">
+<text>STEP 5 - Tag-Specific Stats</text>
+<example>
+<phase name="check">IF(STORE-GET($FILTER).type === "tags") → THEN → [mcp__vector-memory__get_unique_tags('{}') → Display: "--- All Tags ---" → ForEach tag: "{tag}: {count} memories" → Sort by count descending] → END-IF</phase>
+</example>
+</guideline>
+<guideline id="workflow-step6">
+<text>STEP 6 - Top Accessed Memories</text>
+<example>
+<phase name="check">IF(STORE-GET($FILTER).type === "top") → THEN → [Extract top_accessed from STORE-GET($STATS) → Display: "--- Top Accessed Memories ---" → ForEach memory: "#{id} ({access_count}x) {preview}"] → END-IF</phase>
+</example>
+</guideline>
+<guideline id="output-format">
+<text>Statistics display format</text>
+<example key="header">--- Memory Statistics ---</example>
+<example key="total">Total: 37 memories</example>
+<example key="usage">Limit: 2000000 | Usage: 0%</example>
+<example key="db-size">Database: 1.65 MB</example>
+<example key="category-item">code-solution: 16</example>
+<example key="health">Health: Healthy</example>
+<example key="recent">Recent week: 5 new</example>
+</guideline>
+<guideline id="usage-examples">
+<text>Command usage patterns</text>
+<example key="default">/mem:stats → full overview</example>
+<example key="category">/mem:stats category=bug-fix → category breakdown</example>
+<example key="tags">/mem:stats tags → all tags with counts</example>
+<example key="top">/mem:stats top=5 → top 5 accessed</example>
+</guideline>
+</guidelines>
+</command>
+"""

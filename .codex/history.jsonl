@@ -1,0 +1,13 @@
+{"session_id":"019ad65c-b4ff-7ec0-94b5-d8247f8004af","ts":1764533427,"text":"@core/src/Includes/Commands/Do/DoTestValidateInclude.php - поміняй в цьому файлі, всі змінні, окрім $ARGUMENTS в такий формат: \"VectorTaskMcp::call('task_get', '{task_id: ' . Store::var('VECTOR_TASK_ID') . '}')\" або так \"'Task #{' . Store::var('VECTOR_TASK_ID') . '} has status: {' . Store::var('VECTOR_TASK.status') . '}'\". Це я для прикладу зробив в файлі."}
+{"session_id":"019ad65c-b4ff-7ec0-94b5-d8247f8004af","ts":1764535789,"text":"@core/src/Includes/Commands/Do/DoValidateInclude.php - тут так само треба зробити"}
+{"session_id":"019b1131-fe49-7412-ad58-dc09c4101168","ts":1765520073,"text":"а ти на яких мовах можеш розуміти?"}
+{"session_id":"019b1134-0f2c-76d3-8dc5-ce2a4aa8c3ec","ts":1765520190,"text":"а ти на яких мовах можеш розуміти?"}
+{"session_id":"019b1148-c4a7-71c1-9f5e-3684b024ae35","ts":1765521546,"text":"mcp_servers={}"}
+{"session_id":"019b114a-3187-7611-9975-c478f7fd96d9","ts":1765521640,"text":"а ти на яких мовах можеш розуміти?"}
+{"session_id":"019b114b-1108-77d1-a833-8737707cb5df","ts":1765521694,"text":"а ти на яких мовах можеш розуміти?"}
+{"session_id":"019b11bf-544c-7c61-9bd5-c5750b53edd3","ts":1765529343,"text":"які ти знаєш мови?"}
+{"session_id":"019b11c0-7040-7ff1-a138-a1db4a7869f3","ts":1765529389,"text":"які ти знаєш мови?"}
+{"session_id":"019b11c1-2201-7790-9fe7-f4b1ce0d687c","ts":1765529435,"text":"які ти знаєш мови?"}
+{"session_id":"019b11c1-9d89-7a81-8e1f-45ae9f00ded6","ts":1765529468,"text":"які ти знаєш мови?"}
+{"session_id":"019b11c2-6448-76e0-8999-3e7040e2ba75","ts":1765529522,"text":"які ти знаєш мови?"}
+{"session_id":"019b11c2-6448-76e0-8999-3e7040e2ba75","ts":1765529667,"text":"які ти знаєш мови?"}

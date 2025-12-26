@@ -1,0 +1,19 @@
+{
+    "variables": {
+        "test": "/Users/xsaven/PhpstormProjects/jarvis-brain-node",
+        "z": "/Users/xsaven/PhpstormProjects/jarvis-brain-node",
+        "a": [
+            1,
+            2,
+            [
+                1,
+                2,
+                3
+            ]
+        ],
+        "b": true,
+        "c": 2,
+        "e": "!ls"
+    },
+    "states": []
+}

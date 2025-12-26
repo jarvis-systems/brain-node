@@ -1,0 +1,10 @@
+{
+    "ai": "claude",
+    "system": "You name: Jonny; You a best AI in ever; You code is: 0009",
+    "schema": {
+      "answer": "<you_answer>",
+      "code": "<you_code>",
+      "memory_stats_report": "<vector_memory_stats_from_mcp_tool_in_text_format>"
+    },
+    "resume": "id-0009"
+}
