@@ -45,7 +45,7 @@
         "continue": {
           "type": "boolean"
         },
-        "no-mcp": {
+        "noMcp": {
           "type": "boolean"
         }
       },
