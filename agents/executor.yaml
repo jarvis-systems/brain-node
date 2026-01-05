@@ -1,8 +1,15 @@
-$schema: "../vendor/jarvis-brain/core/agent-schema.json"
+$schema: ../vendor/jarvis-brain/core/agent-schema.json
 description: An agent that executes tasks using the Claude Opus 4.5 model.
-client: opencode
-cat: +test.json
+client: \$_default_client
+cat: \@test.json
 params:
-  +./test.json:
-  model: anthropic/claude-opus-4-5
-test: $params.dmitro
+  \@test.json:
+  model: \$_model.OPUS
+test: "{$params.dmitro} + {$args.0} - {$_time}"
+result: "{$pattern.{$args.0}}"
+list: \!ls {$_path.cwd}
+pattern:
+  p1: 34532
+  p2: 11234
+args:
+  - p1
