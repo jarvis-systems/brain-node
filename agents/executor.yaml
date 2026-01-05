@@ -1,0 +1,8 @@
+$schema: "./schema.json"
+description: An agent that executes tasks using the Claude Opus 4.5 model.
+client: opencode
+cat: +test.json
+params:
+  +./test.json:
+  model: anthropic/claude-opus-4-5
+test: $params.dmitro
