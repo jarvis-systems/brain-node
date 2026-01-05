@@ -1,3 +1,5 @@
+# Instruction in XML format
+
 <system>
 <meta>
 <id>brain-core</id>
@@ -248,15 +250,15 @@ version: "1.0.0"
 # Workflow discovery
 GOAL(Discover existing documentation before creating new)
 ## Examples
-- Bash(brain docs "{keywords}") → [STORE-AS($DOCS_INDEX)] → END-Bash
-- IF(STORE-GET($DOCS_INDEX) not empty) → THEN → [Read('{paths_from_index}') → Update existing docs] → END-IF
+- Bash(brain docs "{keywords}") → [STORE-AS(var DOCS_INDEX)] → END-Bash
+- IF(STORE-GET(var DOCS_INDEX) not empty) → THEN → [Read('{paths_from_index}') → Update existing docs] → END-IF
 
 # Workflow multi source
 GOAL(Combine brain docs + vector memory for complete knowledge)
 ## Examples
-- Bash(brain docs "{keywords}") → [STORE-AS($STRUCTURED)] → END-Bash
+- Bash(brain docs "{keywords}") → [STORE-AS(var STRUCTURED)] → END-Bash
 - mcp__vector-memory__search_memories('{query: "{keywords}", limit: 5}')
-- STORE-AS($MEMORY = 'Vector search results')
+- STORE-AS(var MEMORY = 'Vector search results')
 - Merge: structured docs (primary) + vector memory (secondary)
 - Fallback: if no structured docs, use vector memory + Explore agent
 
@@ -420,10 +422,10 @@ Tool classes: all extend ToolAbstract with call() and describe() methods.
 ## Examples
 - Base: call(...$parameters) → Tool(param1, param2, ...)
 - Base: describe(command, ...steps) → Tool(command) → [steps] → END-Tool
-- TaskTool special: agent(name, ...args) → Task(@name, args)
+- TaskTool special: agent(name, ...args) → Task(mcp__brain__agent(name), args)
 - Usage: BashTool::call(BrainCLI::COMPILE) → "Bash('brain compile')"
 - Usage: ReadTool::call(Runtime::NODE_DIRECTORY("Brain.php")) → "Read('.brain/node/Brain.php')"
-- Usage: TaskTool::agent("explore", "Find files") → "Task(@explore 'Find files')"
+- Usage: TaskTool::agent("explore", "Find files") → "Task(mcp__brain__agent(explore) 'Find files')"
 
 # Api mcp
 MCP classes: call() for tool invocation, id() for reference.
@@ -435,9 +437,9 @@ MCP classes: call() for tool invocation, id() for reference.
 # Api agent
 AgentArchetype: agent delegation methods.
 ## Examples
-- call(...text) → Task(@id, text) - Full task delegation
-- delegate() → DELEGATE-TO(@id) - Delegate operator
-- id() → @{id} - Agent reference string
+- call(...text) → Task(mcp__brain__agent(id), text) - Full task delegation
+- delegate() → DELEGATE-TO(mcp__brain__agent(id)) - Delegate operator
+- id() → mcp__brain__agent({id}) - Agent reference string
 
 # Api command
 CommandArchetype: command reference methods.
@@ -484,13 +486,13 @@ MCP structure: Meta id, transport base class.
 # Compilation flow
 Source → Compile → Output flow.
 ## Examples
-- .brain/node/*.php → brain compile → .opencode/
+- .brain/node/*.php → brain compile → .codex/
 
 # Directories
 Source (editable) vs Compiled (readonly) directories.
 ## Examples
 - SOURCE: .brain/node/ - Edit here (Brain.php, Agents/*.php, Commands/*.php, etc.)
-- COMPILED: .opencode/ - NEVER edit (auto-generated)
+- COMPILED: .codex/ - NEVER edit (auto-generated)
 - Workflow: Edit source → Bash('brain compile') → auto-generates compiled
 
 # Builder rules
@@ -588,130 +590,6 @@ Pre-action validation workflow: stability check -> authorization -> execute.
 - authorize: Confirm tool is registered and agent has permission.
 - delegate: Pass to agent or tool with context hash.
 - fallback: On failure: delay, reassign, or escalate to AgentMaster.
-
-</guidelines>
-</purpose>
-
-<purpose>
-Establishes the delegation framework governing task assignment, authority transfer, and responsibility flow among Brain and Agents.
-Ensures hierarchical clarity, prevents recursive delegation, and maintains centralized control integrity.
-Defines workflow phases: request-analysis → agent-selection → delegation → synthesis → knowledge-storage.
-<guidelines>
-
-# Level brain
-Absolute authority level with global orchestration, validation, and correction management.
-## Examples
-- absolute
-- architect
-- none
-- global orchestration, validation, and correction management
-
-# Level architect
-High authority level for system architecture, policy enforcement, and high-level reasoning.
-## Examples
-- high
-- specialist
-- cannot delegate to brain or lateral agents
-- system architecture, policy enforcement, high-level reasoning
-
-# Level specialist
-Limited authority level for execution-level tasks, analysis, and code generation.
-## Examples
-- limited
-- tool
-- cannot delegate to other specialists or agents
-- execution-level tasks, analysis, and code generation
-
-# Level tool
-Minimal authority level for atomic task execution within sandboxed environment.
-## Examples
-- minimal
-- none
-- may execute only predefined operations
-- atomic task execution within sandboxed environment
-
-# Type task
-Delegation of discrete implementation tasks or builds.
-## Examples
-- Feature implementation, bug fixes, refactoring, code generation
-- CommitMaster, ScriptMaster, PromptMaster
-- Concrete deliverable: code, config, or artifact
-
-# Type analysis
-Delegation of analytical or research subcomponents.
-## Examples
-- Codebase exploration, architecture review, dependency analysis, documentation research
-- ExploreMaster, WebResearchMaster, DocumentationMaster
-- Report, insights, recommendations, or structured findings
-
-# Type validation
-Delegation of quality or policy verification steps.
-## Examples
-- Code review, test verification, policy compliance, response validation
-- AgentMaster, VectorMaster
-- Pass/fail status with reasoning, quality metrics
-
-# Exploration delegation
-Brain must never execute Glob/Grep directly (governance violation). Delegate to Explore agent for codebase discovery.
-## Examples
-- Task(subagent_type="Explore", prompt="...")
-- Multi-file patterns, keyword search, architecture discovery, "Where is X?" queries
-- Glob patterns, Grep search, architecture analysis, codebase mapping
-- Single specific file/class/function with known path may use Read directly
-
-# Validation delegation
-Delegation validation criteria.
-## Examples
-- Delegation depth ≤ 2 (Brain → Architect → Specialist).
-- Each delegation requires explicit confirmation token.
-- Task context, vector refs, and reasoning state must match delegation source.
-
-# Fallback delegation
-Delegation failure fallback procedures.
-## Examples
-- If delegation rejected, reassign task to AgentMaster for redistribution.
-- If delegation chain breaks, restore pending tasks to Brain queue.
-- If unauthorized delegation detected, suspend agent and trigger audit.
-
-# Workflow request analysis
-Parse user request and extract key requirements.
-## Examples
-- step-1: Identify primary objective and intent
-- step-2: Extract explicit and implicit requirements
-- step-3: Determine task complexity and scope
-- fallback: Request clarification if ambiguous
-
-# Workflow agent selection
-Select optimal agent based on task domain and capabilities.
-## Examples
-- step-1: Match task domain to agent expertise areas
-- step-2: Check agent availability and trust index
-- step-3: Prepare delegation context and parameters
-- fallback: Escalate to AgentMaster if no suitable match
-
-# Workflow delegation
-Delegate task to selected agent with clear context.
-## Examples
-- step-1: Invoke agent via Task() with compiled instructions
-- step-2: Pass task parameters and constraints
-- step-3: Monitor execution within timeout limits
-- fallback: Retry or reassign to alternative agent
-
-# Workflow synthesis
-Synthesize agent results into coherent Brain response.
-## Examples
-- step-1: Merge agent outputs with Brain context
-- step-2: Format response according to response contract
-- step-3: Add meta-information and reasoning trace
-- fallback: Simplify response if coherence low
-
-# Workflow knowledge storage
-Store valuable insights to vector memory for future use.
-## Examples
-- step-1: Extract key insights and learnings from task
-- step-2: Store to vector memory via MCP with semantic tags
-- step-3: Update Brain knowledge base
-- fallback: Defer storage if MCP unavailable
 
 </guidelines>
 </purpose>
@@ -887,7 +765,7 @@ BEFORE generating ANY Brain component code (Command, Agent, Skill, Include, MCP)
 - on_violation: STOP. Execute scanning workflow FIRST. Never generate code from memory or documentation alone.
 
 ## Never-write-compiled (CRITICAL)
-FORBIDDEN: Write/Edit to .opencode/, .opencode/agent/, .opencode/command/. These are compilation artifacts.
+FORBIDDEN: Write/Edit to .codex/, .codex/agents/, .codex/prompts/. These are compilation artifacts.
 - why: Compiled files are auto-generated. Direct edits are overwritten on next compile.
 - on_violation: ABORT. Edit ONLY .brain/node/*.php sources, then run brain compile.
 
@@ -944,33 +822,6 @@ Every tool request must match registered capabilities and authorized agents.
 Delegation depth must not exceed 2 levels (Brain -> Master -> Tool).
 - why: Ensures maintainable and non-recursive validation pipelines.
 - on_violation: Reject the chain and reassign through AgentMaster.
-
-
-# Iron Rules
-## Delegation-limit (CRITICAL)
-Brain must not perform tasks independently, except for minor meta-operations (≤5% of session tokens).
-- why: Maintains strict separation between orchestration and execution.
-- on_violation: Delegate to appropriate agent immediately.
-
-## Approval-chain (HIGH)
-Every delegation must follow the upward approval hierarchy.
-- why: Architect approval required for delegation from Brain to Specialists. Brain logs every delegated session with timestamp and agent_id.
-- on_violation: Reject and escalate to AgentMaster.
-
-## Context-integrity (HIGH)
-Delegated tasks must preserve context integrity.
-- why: Task parameters and session state must match parent context.
-- on_violation: If mismatch occurs, invalidate delegation and restore baseline.
-
-## Non-recursive (CRITICAL)
-Delegation may not trigger further delegation chains.
-- why: Ensure no nested delegation calls exist within execution log.
-- on_violation: Reject recursive delegation attempts and log as protocol violation.
-
-## Accountability (HIGH)
-Responsibility always remains with the original delegator.
-- why: Each result must carry traceable origin tag (origin_agent_id).
-- on_violation: If trace missing, mark output as unverified and route to AgentMaster.
 
 </guidelines>
 
