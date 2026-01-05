@@ -1,4 +1,4 @@
-$schema: "./schema.json"
+$schema: "../vendor/jarvis-brain/core/agent-schema.json"
 description: An agent that executes tasks using the Claude Opus 4.5 model.
 client: opencode
 cat: +test.json
