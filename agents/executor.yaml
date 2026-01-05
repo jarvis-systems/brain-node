@@ -1,10 +1,21 @@
 $schema: ../vendor/jarvis-brain/core/agent-schema.json
 description: An agent that executes tasks using the Claude Opus 4.5 model.
 client: \$_default_client
+php: \> time() . uniqid()
+php2: \> $this->_model['OPUS']
+php3: \> 3000 + 4500
+php4: "Hello, {> 3000 + 4500}!"
 cat: \@test.json
 params:
   \@test.json:
   model: \$_model.OPUS
+  # Test params for conditionals
+  _debug: true
+  _test: true
+  _count: 10
+  _version: 3
+  enabled: true
+  use_opus: false
 test: "{$params.dmitro} + {$args.0} - {$_time}"
 result: "{$pattern.{$args.0}}"
 list: \!ls {$_path.cwd}
@@ -13,3 +24,42 @@ pattern:
   p2: 11234
 args:
   - p1
+
+# === Ternary Tests ===
+ternary_simple: "{$params._debug ? debug_mode : production}"
+ternary_nested: "{$params._test ? ($params.use_opus ? opus 1 : sonnet 2) : {$_model.GH_SONNET} - 123}"
+ternary_comparison: "{$params._count > 5 ? many : few}"
+ternary_complex: "{$params.enabled && $params._count > 0 ? active : inactive}"
+
+# === Conditional Key Tests ===
+# Note: Use underscores in variable paths to avoid YAML/dot-path parser issues
+# These need to reference top-level params defined below
+"debug_only?{$_cond_debug}": "This key appears only in debug mode"
+"prod_only?{!$_cond_debug}": "This key appears only in production"
+"version_feature?{$_cond_version >= 2}": "Feature for v2+"
+
+# Conditional test variables (top-level to avoid dot-path issues)
+_cond_debug: true
+_cond_version: 3
+
+# === Null Coalescing (??) Tests ===
+# $a ?? $b - returns $a if EXISTS and not null, otherwise $b
+null_coalesce_simple: "{$_undefined_var ?? fallback_value}"
+null_coalesce_existing: "{$_cond_debug ?? fallback}"
+null_coalesce_chain: "{$_undefined_1 ?? $_undefined_2 ?? final_fallback}"
+null_coalesce_nested_var: "{$_undefined ?? {$_cond_version}}"
+null_coalesce_with_ternary: "{$_undefined ?? ($params._debug ? debug : prod)}"
+_null_var: null
+null_coalesce_null_value: "{$_null_var ?? default_for_null}"
+
+# === Elvis (?:) Tests ===
+# $a ?: $b - returns $a if truthy, otherwise $b
+elvis_simple: "{$_cond_debug ?: fallback}"
+elvis_falsy: "{$_empty_string ?: default_value}"
+elvis_chain: "{$_empty_string ?: $_zero_val ?: final}"
+elvis_with_null_coalesce: "{$_empty_string ?: ($_undefined ?? fallback)}"
+_empty_string: ""
+_zero_val: 0
+
+# === Combined Tests ===
+combined_all: "{$_undefined ?? $_empty_string ?: ultimate_fallback}"
