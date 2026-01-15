@@ -12,7 +12,7 @@ use BrainCore\Includes\Commands\Task\TaskValidateInclude;
 
 #[Meta('id', 'task:validate')]
 #[Meta('description', 'Validate task execution command')]
-#[Purpose('Validate tasks')]
+#[Purpose('Validate completed vector task with async workflow.')]
 #[Includes(TaskValidateInclude::class)]
 class ValidateCommand extends CommandArchetype
 {

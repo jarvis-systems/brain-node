@@ -8,13 +8,13 @@ use BrainCore\Archetypes\CommandArchetype;
 use BrainCore\Attributes\Includes;
 use BrainCore\Attributes\Meta;
 use BrainCore\Attributes\Purpose;
-use BrainCore\Includes\Commands\Task\TaskDecomposeInclude;
+use BrainCore\Includes\Commands\Task\TaskValidateSyncInclude;
 
-#[Meta('id', 'task:decompose')]
-#[Meta('description', 'Decompose large task into subtasks (each <=5-8h)')]
-#[Purpose('Split large task into 5-8h subtasks.')]
-#[Includes(TaskDecomposeInclude::class)]
-class DecomposeCommand extends CommandArchetype
+#[Meta('id', 'task:validate-sync')]
+#[Meta('description', 'Sync validate task execution command')]
+#[Purpose('Validate completed vector task synchronously.')]
+#[Includes(TaskValidateSyncInclude::class)]
+class ValidateSyncCommand extends CommandArchetype
 {
     /**
      * Handle the command logic.

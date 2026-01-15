@@ -12,7 +12,7 @@ use BrainCore\Includes\Commands\Task\TaskAsyncInclude;
 
 #[Meta('id', 'task:async')]
 #[Meta('description', 'Async task execution command')]
-#[Purpose('Execute tasks asynchronously')]
+#[Purpose('Run task execution asynchronously.')]
 #[Includes(TaskAsyncInclude::class)]
 class AsyncCommand extends CommandArchetype
 {

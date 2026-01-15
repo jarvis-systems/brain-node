@@ -12,7 +12,7 @@ use BrainCore\Includes\Commands\Task\TaskTestValidateInclude;
 
 #[Meta('id', 'task:test-validate')]
 #[Meta('description', 'Test validate task execution command')]
-#[Purpose('Test validate tasks')]
+#[Purpose('Run validation test flow for a task.')]
 #[Includes(TaskTestValidateInclude::class)]
 class TestValidateCommand extends CommandArchetype
 {

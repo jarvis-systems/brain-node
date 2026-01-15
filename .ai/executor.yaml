@@ -6,6 +6,7 @@ php2: \> $this->_model['OPUS']
 php3: \> 3000 + 4500
 php4: "Hello, {> 3000 + 4500}!"
 cat: \@test.json
+cmd1: \/task:validate {$args.0} -y
 params:
   \@test.json:
   model: \$_model.OPUS
@@ -63,3 +64,4 @@ _zero_val: 0
 
 # === Combined Tests ===
 combined_all: "{$_undefined ?? $_empty_string ?: ultimate_fallback}"
+agent_test: \@agent-explore

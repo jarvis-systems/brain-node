@@ -1,0 +1,29 @@
+$schema: ../.brain/agent-schema.json
+client: opencode
+description: The almost free agent for validating of tasks.
+args:
+  - null
+args_names:
+  - task_id
+env:
+  # Disable non-essential masters
+  AGENTS_AGENT_MASTER_DISABLE: true
+  AGENTS_PROMPT_MASTER_DISABLE: true
+  AGENTS_SCRIPT_MASTER_DISABLE: true
+
+  # Set essential masters to appropriate models
+  CHART_MASTER_MODEL: \$_model.GH_OPUS
+  COMMIT_MASTER_MODEL: \$_model.GLM47
+  DATABASE_MASTER_MODEL: \$_model.GH_OPUS
+  DOCUMENTATION_MASTER_MODEL: \$_model.GLM47
+  EXPLORE_MASTER_MODEL: \$_model.GLM47
+  LIVEWIRE_MASTER_MODEL: \$_model.GH_SONNET
+  REVIEW_MASTER_MODEL: \$_model.GH_OPUS
+  SERVICE_MASTER_MODEL: \$_model.GH_SONNET
+  TEST_MASTER_MODEL: \$_model.GH_SONNET
+  VECTOR_MASTER_MODEL: \$_model.GH_OPUS
+  WEB_RESEARCH_MASTER_MODEL: \$_model.GLM47
+
+params:
+  model: \$_model.GPT52_CODEX
+  "prompt?{$args.task_id}": \/task:async {$args.task_id} -y

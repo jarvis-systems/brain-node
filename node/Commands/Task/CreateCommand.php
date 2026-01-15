@@ -12,7 +12,7 @@ use BrainCore\Includes\Commands\Task\TaskCreateInclude;
 
 #[Meta('id', 'task:create')]
 #[Meta('description', 'Create task from description with analysis and estimation')]
-#[Purpose('Creates task(s) from user description provided via $ARGUMENTS. Analyzes relevant materials, searches vector memory for similar past work, estimates time, gets mandatory user approval, creates task(s), and recommends decomposition if estimate >5-8 hours. Golden rule: each task 5-8 hours max.')]
+#[Purpose('Create vector task(s) from user description.')]
 #[Includes(TaskCreateInclude::class)]
 class CreateCommand extends CommandArchetype
 {
