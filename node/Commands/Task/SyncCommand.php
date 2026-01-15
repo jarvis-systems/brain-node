@@ -12,7 +12,7 @@ use BrainCore\Includes\Commands\Task\TaskSyncInclude;
 
 #[Meta('id', 'task:sync')]
 #[Meta('description', 'Sync task execution command')]
-#[Purpose('Execute tasks synchronously')]
+#[Purpose('Run task execution synchronously.')]
 #[Includes(TaskSyncInclude::class)]
 class SyncCommand extends CommandArchetype
 {
