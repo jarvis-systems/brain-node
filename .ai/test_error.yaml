@@ -1,3 +1,0 @@
-client: opencode
-# Self-reference should trigger recursion guard
-self: "{$self}"
