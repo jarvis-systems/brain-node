@@ -1,0 +1,19 @@
+$schema: ../.brain/agent-schema.json
+client: opencode
+description: Create a new task from text description
+args:
+  - null
+args_names:
+  - task_text
+args_meta:
+  task_text:
+    type: textarea
+    required: true
+    label: Task Description
+    placeholder: Describe the task you want to create...
+    description: Enter a detailed description of the task. The AI will create a structured task from your input.
+    rows: 6
+
+params:
+  model: \$_model.OPUS
+  "prompt?{$args.task_text}": \/task:create {$args.task_text}
