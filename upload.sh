@@ -11,32 +11,21 @@ alias tag='cli git:tag'
 
 # -- Upload NODE to Packagist --
 
-GITHUB_REPO=$(git config --get remote.origin.url | sed -e 's/.*github.com[:/]\(.*\)\.git/\1/')
-GITHUB_REPO="https://github.com/$GITHUB_REPO"
-
-echo $GITHUB_REPO
-
+echo ">> $CURRENT_DIR"
 push -y
-curl -X POST -H'Content-Type:application/json' -H"Authorization: Bearer $API_KEY" 'https://packagist.org/api/update-package' -d "{\"repository\":\"$GITHUB_REPO\"}"
-
+curl -X POST -H'Content-Type:application/json' -H"Authorization: Bearer $API_KEY" 'https://packagist.org/api/update-package' -d "{\"repository\":\"https://packagist.org/packages/jarvis-brain/node\"}"
+echo ">> DONE"
 
 # -- Upload CLI to Packagist --
 
-GITHUB_REPO=$(cd "$CURRENT_DIR/cli" && git config --get remote.origin.url | sed -e 's/.*github.com[:/]\(.*\)\.git/\1/')
-GITHUB_REPO="https://github.com/$GITHUB_REPO"
-
-echo $GITHUB_REPO
-
+echo ">> $CURRENT_DIR/cli"
 cd "$CURRENT_DIR/cli" && untag v0.0.1 && push -y && tag v0.0.1 -y
-curl -X POST -H'Content-Type:application/json' -H"Authorization: Bearer $API_KEY" 'https://packagist.org/api/update-package' -d "{\"repository\":\"$GITHUB_REPO\"}"
-
+curl -X POST -H'Content-Type:application/json' -H"Authorization: Bearer $API_KEY" 'https://packagist.org/api/update-package' -d "{\"repository\":\"https://packagist.org/packages/jarvis-brain/cli\"}"
+echo ">> DONE"
 
 # -- Upload CORE to Packagist --
 
-GITHUB_REPO=$(cd "$CURRENT_DIR/core" && git config --get remote.origin.url | sed -e 's/.*github.com[:/]\(.*\)\.git/\1/')
-GITHUB_REPO="https://github.com/$GITHUB_REPO"
-
-echo $GITHUB_REPO
-
+echo ">> $CURRENT_DIR/core"
 cd "$CURRENT_DIR/core" && untag v0.0.1 && push -y && tag v0.0.1 -y
-curl -X POST -H'Content-Type:application/json' -H"Authorization: Bearer $API_KEY" 'https://packagist.org/api/update-package' -d "{\"repository\":\"$GITHUB_REPO\"}"
+curl -X POST -H'Content-Type:application/json' -H"Authorization: Bearer $API_KEY" 'https://packagist.org/api/update-package' -d "{\"repository\":\"https://packagist.org/packages/jarvis-brain/core\"}"
+echo ">> DONE"
