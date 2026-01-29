@@ -11,8 +11,8 @@ use BrainCore\Attributes\Purpose;
 use BrainCore\Includes\Commands\Task\TaskValidateSyncInclude;
 
 #[Meta('id', 'task:validate-sync')]
-#[Meta('description', 'Sync validate task execution command')]
-#[Purpose('Validate completed vector task synchronously.')]
+#[Meta('description', 'Direct sync validation of vector task without agent delegation')]
+#[Purpose('Validate completed vector task synchronously without agent delegation.')]
 #[Includes(TaskValidateSyncInclude::class)]
 class ValidateSyncCommand extends CommandArchetype
 {

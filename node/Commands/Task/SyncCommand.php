@@ -11,8 +11,8 @@ use BrainCore\Attributes\Purpose;
 use BrainCore\Includes\Commands\Task\TaskSyncInclude;
 
 #[Meta('id', 'task:sync')]
-#[Meta('description', 'Sync task execution command')]
-#[Purpose('Run task execution synchronously.')]
+#[Meta('description', 'Direct sync execution of vector task by Brain without agent delegation')]
+#[Purpose('Run task execution synchronously by Brain without agent delegation.')]
 #[Includes(TaskSyncInclude::class)]
 class SyncCommand extends CommandArchetype
 {

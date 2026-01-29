@@ -12,7 +12,7 @@ use BrainCore\Includes\Commands\Task\TaskListInclude;
 
 #[Meta('id', 'task:list')]
 #[Meta('description', 'List tasks with optional filters (status, parent, tags, priority)')]
-#[Purpose('List tasks with optional filters.')]
+#[Purpose('List vector tasks with optional filters and hierarchy display.')]
 #[Includes(TaskListInclude::class)]
 class ListCommand extends CommandArchetype
 {

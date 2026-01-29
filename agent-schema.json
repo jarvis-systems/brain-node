@@ -84,8 +84,8 @@
         },
         "commandReference": {
             "type": "string",
-            "description": "Reference to a compiled command. Available commands: async-command, brainstorm-command, sync-command, test-validate-command, validate-command, do-command, work-command, init-agents-command, init-brain-command, init-task-command, init-vector-command, cleanup-command, get-command, list-command, search-command, stats-command, store-command, async-command, brainstorm-command, create-command, decompose-command, list-command, status-command, sync-command, test-validate-command, validate-command, validate-sync-command",
-            "pattern": "^(async\\-command|brainstorm\\-command|sync\\-command|test\\-validate\\-command|validate\\-command|do\\-command|work\\-command|init\\-agents\\-command|init\\-brain\\-command|init\\-task\\-command|init\\-vector\\-command|cleanup\\-command|get\\-command|list\\-command|search\\-command|stats\\-command|store\\-command|async\\-command|brainstorm\\-command|create\\-command|decompose\\-command|list\\-command|status\\-command|sync\\-command|test\\-validate\\-command|validate\\-command|validate\\-sync\\-command)$",
+            "description": "Reference to a compiled command. Available commands: async-command, brainstorm-command, sync-command, test-validate-command, validate-command, do-command, work-command, init-agents-command, init-brain-command, init-task-command, init-vector-command, cleanup-command, get-command, list-command, search-command, stats-command, store-command, async-command, brainstorm-command, create-command, decompose-command, list-command, status-command, sync-command, validate-command, validate-sync-command",
+            "pattern": "^(async\\-command|brainstorm\\-command|sync\\-command|test\\-validate\\-command|validate\\-command|do\\-command|work\\-command|init\\-agents\\-command|init\\-brain\\-command|init\\-task\\-command|init\\-vector\\-command|cleanup\\-command|get\\-command|list\\-command|search\\-command|stats\\-command|store\\-command|async\\-command|brainstorm\\-command|create\\-command|decompose\\-command|list\\-command|status\\-command|sync\\-command|validate\\-command|validate\\-sync\\-command)$",
             "examples": [
                 "async-command",
                 "brainstorm-command",
@@ -143,6 +143,8 @@
                 "anthropic/claude-sonnet-4-5",
                 "anthropic/claude-haiku-4-5",
                 "lmstudio/qwen/qwen3-coder-30b",
+                "lmstudio/deepseek-coder-v2-lite-instruct",
+                "alibaba/qwen3-coder-480b-a35b-instruct",
                 "github-copilot/claude-sonnet-4.5",
                 "github-copilot/claude-opus-4.5",
                 "github-copilot/claude-haiku-4.5",
@@ -408,6 +410,14 @@
                     "type": "string",
                     "description": "Model constant: Q3CP (OpenCode CLI)"
                 },
+                "$_model.DSCV2LI": {
+                    "type": "string",
+                    "description": "Model constant: DSCV2LI (OpenCode CLI)"
+                },
+                "$_model.QWEN3_CODER": {
+                    "type": "string",
+                    "description": "Model constant: QWEN3_CODER (OpenCode CLI)"
+                },
                 "$_model.GH_SONNET": {
                     "type": "string",
                     "description": "Model constant: GH_SONNET (OpenCode CLI)"
@@ -516,6 +526,8 @@
                 "$_model.BIG_PICKLE_FREE",
                 "$_model.GROK_CODE_FREE",
                 "$_model.Q3CP",
+                "$_model.DSCV2LI",
+                "$_model.QWEN3_CODER",
                 "$_model.GH_SONNET",
                 "$_model.GH_OPUS",
                 "$_model.GH_HAIKU",
@@ -595,6 +607,8 @@
                 "$_model.BIG_PICKLE_FREE",
                 "$_model.GROK_CODE_FREE",
                 "$_model.Q3CP",
+                "$_model.DSCV2LI",
+                "$_model.QWEN3_CODER",
                 "$_model.GH_SONNET",
                 "$_model.GH_OPUS",
                 "$_model.GH_HAIKU",
@@ -2063,6 +2077,8 @@
                         "anthropic/claude-sonnet-4-5",
                         "anthropic/claude-haiku-4-5",
                         "lmstudio/qwen/qwen3-coder-30b",
+                        "lmstudio/deepseek-coder-v2-lite-instruct",
+                        "alibaba/qwen3-coder-480b-a35b-instruct",
                         "github-copilot/claude-sonnet-4.5",
                         "github-copilot/claude-opus-4.5",
                         "github-copilot/claude-haiku-4.5",

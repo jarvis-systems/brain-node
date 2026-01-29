@@ -12,7 +12,7 @@ use BrainCore\Includes\Commands\Task\TaskStatusInclude;
 
 #[Meta('id', 'task:status')]
 #[Meta('description', 'Show task statistics with optional custom query ($ARGUMENTS)')]
-#[Purpose('Show task stats and progress.')]
+#[Purpose('Show task statistics and progress overview.')]
 #[Includes(TaskStatusInclude::class)]
 class StatusCommand extends CommandArchetype
 {
