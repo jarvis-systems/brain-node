@@ -11,7 +11,7 @@ use BrainCore\Attributes\Purpose;
 use BrainCore\Includes\Commands\Task\TaskValidateInclude;
 
 #[Meta('id', 'task:validate')]
-#[Meta('description', 'Validate task execution command')]
+#[Meta('description', 'Async validation of vector task with 3 parallel agents')]
 #[Purpose('Validate completed vector task with async workflow.')]
 #[Includes(TaskValidateInclude::class)]
 class ValidateCommand extends CommandArchetype

@@ -12,7 +12,7 @@ use BrainCore\Includes\Commands\Task\TaskCreateInclude;
 
 #[Meta('id', 'task:create')]
 #[Meta('description', 'Create task from description with analysis and estimation')]
-#[Purpose('Create vector task(s) from user description.')]
+#[Purpose('Create vector task(s) from user description with analysis and estimation.')]
 #[Includes(TaskCreateInclude::class)]
 class CreateCommand extends CommandArchetype
 {
