@@ -145,6 +145,8 @@
                 "lmstudio/qwen/qwen3-coder-30b",
                 "lmstudio/deepseek-coder-v2-lite-instruct",
                 "alibaba/qwen3-coder-480b-a35b-instruct",
+                "google/gemini-3-pro-preview",
+                "google/gemini-3-flash-preview",
                 "github-copilot/claude-sonnet-4.5",
                 "github-copilot/claude-opus-4.5",
                 "github-copilot/claude-haiku-4.5",
@@ -418,6 +420,14 @@
                     "type": "string",
                     "description": "Model constant: QWEN3_CODER (OpenCode CLI)"
                 },
+                "$_model.GO_GEMINI3_PRO": {
+                    "type": "string",
+                    "description": "Model constant: GO_GEMINI3_PRO (OpenCode CLI)"
+                },
+                "$_model.GO_GEMINI3_FLASH": {
+                    "type": "string",
+                    "description": "Model constant: GO_GEMINI3_FLASH (OpenCode CLI)"
+                },
                 "$_model.GH_SONNET": {
                     "type": "string",
                     "description": "Model constant: GH_SONNET (OpenCode CLI)"
@@ -528,6 +538,8 @@
                 "$_model.Q3CP",
                 "$_model.DSCV2LI",
                 "$_model.QWEN3_CODER",
+                "$_model.GO_GEMINI3_PRO",
+                "$_model.GO_GEMINI3_FLASH",
                 "$_model.GH_SONNET",
                 "$_model.GH_OPUS",
                 "$_model.GH_HAIKU",
@@ -609,6 +621,8 @@
                 "$_model.Q3CP",
                 "$_model.DSCV2LI",
                 "$_model.QWEN3_CODER",
+                "$_model.GO_GEMINI3_PRO",
+                "$_model.GO_GEMINI3_FLASH",
                 "$_model.GH_SONNET",
                 "$_model.GH_OPUS",
                 "$_model.GH_HAIKU",
@@ -2079,6 +2093,8 @@
                         "lmstudio/qwen/qwen3-coder-30b",
                         "lmstudio/deepseek-coder-v2-lite-instruct",
                         "alibaba/qwen3-coder-480b-a35b-instruct",
+                        "google/gemini-3-pro-preview",
+                        "google/gemini-3-flash-preview",
                         "github-copilot/claude-sonnet-4.5",
                         "github-copilot/claude-opus-4.5",
                         "github-copilot/claude-haiku-4.5",
