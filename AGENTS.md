@@ -85,6 +85,11 @@ NEVER set start_at/finish_at manually. Timestamps are AUTO-MANAGED by system on 
 - **why**: System sets start_at when status→`in_progress`, finish_at when status→`completed`/`stopped`. Manual values corrupt timeline.
 - **on_violation**: Remove start_at/finish_at from task_update call. Use ONLY for corrections when explicitly requested by user.
 
+## Parent-readonly (CRITICAL)
+$PARENT task is READ-ONLY context. NEVER call task_update on parent task. NEVER attempt to change parent status. Parent hierarchy is managed by operator/automation OUTSIDE agent/command scope. Agent scope = assigned $TASK only.
+- **why**: Parent task lifecycle is managed externally. Agents must not interfere with parent status. Prevents infinite loops, hierarchy corruption, and scope creep.
+- **on_violation**: ABORT any task_update targeting parent_id. Only task_update on assigned $TASK is allowed.
+
 </provides>
 
 <provides>
@@ -311,10 +316,10 @@ Use categories to narrow search scope when domain is known.
 
 # Task first workflow
 Universal workflow: EXPLORE → EXECUTE → UPDATE. Always understand task context before starting.
-- `explore`: mcp__vector-task__task_get('{task_id}') → STORE-AS($TASK) → IF($TASK.parent_id) → mcp__vector-task__task_get('{task_id: $TASK.parent_id}') → STORE-AS($PARENT) → mcp__vector-task__task_list('{parent_id: $TASK.id}') → STORE-AS($CHILDREN)
-- `start`: mcp__vector-task__task_update('{task_id: $TASK.id, status: "in_progress"}')
+- `explore`: mcp__vector-task__task_get('{task_id}') → STORE-AS($TASK) → IF($TASK.parent_id) → mcp__vector-task__task_get('{task_id: $TASK.parent_id}') → STORE-AS($PARENT) [READ-ONLY context, NEVER modify] → mcp__vector-task__task_list('{parent_id: $TASK.id}') → STORE-AS($CHILDREN)
+- `start`: mcp__vector-task__task_update('{task_id: $TASK.id, status: "in_progress"}') [ONLY $TASK, NEVER $PARENT]
 - `execute`: Perform task work. Add comments for critical discoveries (memory IDs, file paths, blockers).
-- `complete`: mcp__vector-task__task_update('{task_id: $TASK.id, status: "completed", comment: "Done. Key findings stored in memory #ID.", append_comment: true}')
+- `complete`: mcp__vector-task__task_update('{task_id: $TASK.id, status: "completed", comment: "Done. Key findings stored in memory #ID.", append_comment: true}') [ONLY $TASK]
 
 # Mcp tools create
 Task creation tools with full parameters.
