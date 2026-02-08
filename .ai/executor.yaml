@@ -1,5 +1,5 @@
 $schema: ../.brain/agent-schema.json
-client: opencode
+client: claude
 description: The almost free agent for validating of tasks.
 args:
   - null
@@ -13,16 +13,16 @@ env:
 
   # Set essential masters to appropriate models
   CHART_MASTER_MODEL: \$_model.OPUS
-  COMMIT_MASTER_MODEL: \$_model.GLM47
+  COMMIT_MASTER_MODEL: \$_model.SONNET
   DATABASE_MASTER_MODEL: \$_model.OPUS
-  DOCUMENTATION_MASTER_MODEL: \$_model.GLM47
-  EXPLORE_MASTER_MODEL: \$_model.GLM47
+  DOCUMENTATION_MASTER_MODEL: \$_model.SONNET
+  EXPLORE_MASTER_MODEL: \$_model.SONNET
   LIVEWIRE_MASTER_MODEL: \$_model.SONNET
   REVIEW_MASTER_MODEL: \$_model.OPUS
   SERVICE_MASTER_MODEL: \$_model.SONNET
   TEST_MASTER_MODEL: \$_model.SONNET
   VECTOR_MASTER_MODEL: \$_model.OPUS
-  WEB_RESEARCH_MASTER_MODEL: \$_model.GLM47
+  WEB_RESEARCH_MASTER_MODEL: \$_model.SONNET
 
 params:
   model: \$_model.OPUS
