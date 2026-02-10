@@ -76,9 +76,14 @@ EVERY task MUST have estimate in hours. No task without estimate.
 - **on_violation**: Add estimate parameter: mcp__vector-task__task_update('{task_id, estimate: hours}'). Leaf tasks ≤4h, parent tasks = sum of children.
 
 ## Order-siblings (HIGH)
-Sibling tasks (same parent_id) SHOULD have explicit order for execution sequence.
-- **why**: Order defines execution priority within same level. Prevents ambiguity in task selection.
-- **on_violation**: Set order parameter: mcp__vector-task__task_update('{task_id, order: N}'). Sequential: 1, 2, 3. Parallel: same order.
+Sibling tasks (same parent_id) MUST have unique order (1,2,3,4). Tasks that CAN run concurrently MUST be marked parallel: true. Execution: sequential tasks run in order, adjacent parallel=true tasks run concurrently, next sequential task waits for all preceding parallel tasks.
+- **why**: Order defines strict sequence. Parallel flag enables concurrent execution of independent tasks without ambiguity.
+- **on_violation**: Set order (unique, sequential) + parallel (true for independent tasks). Example: order=1 parallel=false → order=2 parallel=true → order=3 parallel=true → order=4 parallel=false. Tasks 2+3 run concurrently, task 4 waits for both.
+
+## Parallel-marking (HIGH)
+Mark parallel: true ONLY for tasks that have NO data/file/context dependency on adjacent siblings. Independent tasks (different files, no shared state) = parallel. Dependent tasks (needs output of previous, same files) = parallel: false (default).
+- **why**: Wrong parallel marking causes race conditions or missed dependencies. Conservative: when in doubt, keep parallel: false.
+- **on_violation**: Analyze dependencies between sibling tasks. Only mark parallel: true when independence is confirmed.
 
 ## Timestamps-auto (CRITICAL)
 NEVER set start_at/finish_at manually. Timestamps are AUTO-MANAGED by system on status change.
@@ -323,11 +328,11 @@ Universal workflow: EXPLORE → EXECUTE → UPDATE. Always understand task conte
 
 # Mcp tools create
 Task creation tools with full parameters.
-- mcp__vector-task__task_create('{title, content, parent_id?, comment?, priority?, estimate?, order?, tags?}')
-- mcp__vector-task__task_create_bulk('{tasks: [{title, content, parent_id?, comment?, priority?, estimate?, order?, tags?}, ...]}')
+- mcp__vector-task__task_create('{title, content, parent_id?, comment?, priority?, estimate?, order?, parallel?, tags?}')
+- mcp__vector-task__task_create_bulk('{tasks: [{title, content, parent_id?, comment?, priority?, estimate?, order?, parallel?, tags?}, ...]}')
 - title: short name (max 200 chars) | content: full description (max 10K chars)
 - parent_id: link to parent task | comment: initial note | priority: low/medium/high/critical
-- estimate: hours (float) | order: position (auto if null) | tags: ["tag1", "tag2"] (max 10)
+- estimate: hours (float) | order: unique position (1,2,3,4) | parallel: bool (can run concurrently with adjacent parallel tasks) | tags: ["tag1", "tag2"] (max 10)
 
 # Mcp tools read
 Task reading tools. USE FULL SEARCH POWER - combine parameters for precise results.
@@ -340,11 +345,11 @@ Task reading tools. USE FULL SEARCH POWER - combine parameters for precise resul
 
 # Mcp tools update
 Task update with ALL parameters. One tool for everything: status, content, comments, tags.
-- mcp__vector-task__task_update('{task_id, title?, content?, status?, parent_id?, comment?, start_at?, finish_at?, priority?, estimate?, order?, tags?, append_comment?, add_tag?, remove_tag?}')
+- mcp__vector-task__task_update('{task_id, title?, content?, status?, parent_id?, comment?, start_at?, finish_at?, priority?, estimate?, order?, parallel?, tags?, append_comment?, add_tag?, remove_tag?}')
 - status: "pending"|"in_progress"|"completed"|"stopped"
 - comment: "text" | append_comment: true (append with \\n\\n separator) | false (replace)
 - add_tag: "single_tag" (validates duplicates, 10-tag limit) | remove_tag: "tag" (case-insensitive)
-- start_at/finish_at: AUTO-MANAGED (NEVER set manually, only for user-requested corrections) | estimate: hours | order: triggers sibling reorder
+- start_at/finish_at: AUTO-MANAGED (NEVER set manually, only for user-requested corrections) | estimate: hours | order: triggers sibling reorder | parallel: bool (concurrent with adjacent parallel tasks)
 
 # Mcp tools delete
 Task deletion (permanent, cannot be undone).
@@ -398,7 +403,7 @@ Flexible hierarchy via parent_id. Unlimited nesting depth.
 Break large tasks into manageable children. Each child ≤ 4 hours estimated.
 - `when`: Task estimate > 8 hours OR multiple distinct deliverables
 - `how`: Create children with parent_id = current task, inherit priority
-- `criteria`: Logical separation, clear dependencies, parallelizable when possible
+- `criteria`: Logical separation, clear dependencies, mark parallel: true for independent subtasks
 - `stop`: When leaf task is atomic: single file/feature, ≤ 4h estimate
 
 # Status flow
