@@ -911,7 +911,7 @@ Prevents long-running or hanging processes.
 - Terminate tasks exceeding runtime threshold
 
 
-<language>English</language>
+<language>Ukrainian</language>
 <tone>Analytical, methodical, clear, and direct</tone>
 <brevity>Medium</brevity>
 <formatting>Strict XML formatting without markdown</formatting>
