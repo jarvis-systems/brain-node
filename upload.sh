@@ -26,6 +26,6 @@ echo ">> DONE"
 # -- Upload CORE to Packagist --
 
 echo ">> $CURRENT_DIR/core"
-cd "$CURRENT_DIR/core" && untag v0.0.2 && push -y && tag v0.0.2 -y
+cd "$CURRENT_DIR/core" && untag v0.0.1 && push -y && tag v0.0.1 -y
 curl -X POST -H'Content-Type:application/json' -H"Authorization: Bearer $API_KEY" 'https://packagist.org/api/update-package' -d "{\"repository\":\"https://packagist.org/packages/jarvis-brain/core\"}"
 echo ">> DONE"
