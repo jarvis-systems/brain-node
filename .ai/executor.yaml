@@ -25,5 +25,6 @@ env:
   WEB_RESEARCH_MASTER_MODEL: \$_model.SONNET
 
 params:
+  yolo: true
   model: \$_model.OPUS
   "prompt?{$args.task_id}": \/task:sync {$args.task_id} -y
