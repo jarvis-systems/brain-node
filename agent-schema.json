@@ -134,6 +134,7 @@
                 "meta-llama/llama-guard-4-12b",
                 "openai/gpt-oss-120b",
                 "zai-coding-plan/glm-4.7",
+                "zai-coding-plan/glm-5.0",
                 "opencode/glm-4.7-free",
                 "opencode/big-pickle",
                 "opencode/grok-code",
@@ -396,6 +397,10 @@
                     "type": "string",
                     "description": "Model constant: GLM47 (OpenCode CLI)"
                 },
+                "$_model.GLM50": {
+                    "type": "string",
+                    "description": "Model constant: GLM50 (OpenCode CLI)"
+                },
                 "$_model.GLM47_FREE": {
                     "type": "string",
                     "description": "Model constant: GLM47_FREE (OpenCode CLI)"
@@ -532,6 +537,7 @@
                 "$_model.OPENAI_GPT_OSS_120B",
                 "$_model.OPENAI_GPT_OSS_20B",
                 "$_model.GLM47",
+                "$_model.GLM50",
                 "$_model.GLM47_FREE",
                 "$_model.BIG_PICKLE_FREE",
                 "$_model.GROK_CODE_FREE",
@@ -615,6 +621,7 @@
                 "$_model.OPENAI_GPT_OSS_120B",
                 "$_model.OPENAI_GPT_OSS_20B",
                 "$_model.GLM47",
+                "$_model.GLM50",
                 "$_model.GLM47_FREE",
                 "$_model.BIG_PICKLE_FREE",
                 "$_model.GROK_CODE_FREE",
@@ -2082,6 +2089,7 @@
                         "meta-llama/llama-guard-4-12b",
                         "openai/gpt-oss-120b",
                         "zai-coding-plan/glm-4.7",
+                        "zai-coding-plan/glm-5.0",
                         "opencode/glm-4.7-free",
                         "opencode/big-pickle",
                         "opencode/grok-code",
