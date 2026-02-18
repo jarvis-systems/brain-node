@@ -84,8 +84,8 @@
         },
         "commandReference": {
             "type": "string",
-            "description": "Reference to a compiled command. Available commands: async-command, brainstorm-command, sync-command, test-validate-command, validate-command, do-command, work-command, init-agents-command, init-brain-command, init-task-command, init-vector-command, cleanup-command, get-command, list-command, search-command, stats-command, store-command, async-command, brainstorm-command, create-command, decompose-command, list-command, status-command, sync-command, test-validate-command, validate-command, validate-sync-command",
-            "pattern": "^(async\\-command|brainstorm\\-command|sync\\-command|test\\-validate\\-command|validate\\-command|do\\-command|work\\-command|init\\-agents\\-command|init\\-brain\\-command|init\\-task\\-command|init\\-vector\\-command|cleanup\\-command|get\\-command|list\\-command|search\\-command|stats\\-command|store\\-command|async\\-command|brainstorm\\-command|create\\-command|decompose\\-command|list\\-command|status\\-command|sync\\-command|test\\-validate\\-command|validate\\-command|validate\\-sync\\-command)$",
+            "description": "Reference to a compiled command. Available commands: async-command, brainstorm-command, sync-command, test-validate-command, validate-command, do-command, work-command, init-agents-command, init-brain-command, init-docs-command, init-task-command, init-vector-command, cleanup-command, get-command, list-command, search-command, stats-command, store-command, async-command, brainstorm-command, create-command, decompose-command, list-command, status-command, sync-command, test-validate-command, validate-command, validate-sync-command",
+            "pattern": "^(async\\-command|brainstorm\\-command|sync\\-command|test\\-validate\\-command|validate\\-command|do\\-command|work\\-command|init\\-agents\\-command|init\\-brain\\-command|init\\-docs\\-command|init\\-task\\-command|init\\-vector\\-command|cleanup\\-command|get\\-command|list\\-command|search\\-command|stats\\-command|store\\-command|async\\-command|brainstorm\\-command|create\\-command|decompose\\-command|list\\-command|status\\-command|sync\\-command|test\\-validate\\-command|validate\\-command|validate\\-sync\\-command)$",
             "examples": [
                 "async-command",
                 "brainstorm-command",
@@ -867,6 +867,10 @@
                     "type": "string",
                     "description": "Disable InitBrainCommand from compilation (true/false)"
                 },
+                "COMMANDS_INIT_DOCS_COMMAND_DISABLE": {
+                    "type": "string",
+                    "description": "Disable InitDocsCommand from compilation (true/false)"
+                },
                 "COMMANDS_INIT_TASK_COMMAND_DISABLE": {
                     "type": "string",
                     "description": "Disable InitTaskCommand from compilation (true/false)"
@@ -1230,6 +1234,34 @@
                 "INIT_BRAIN_COMMAND_RULE_2": {
                     "type": "string",
                     "description": "Custom CRITICAL rule #2 for InitBrainCommand"
+                },
+                "INIT_DOCS_COMMAND_GUIDELINE_0": {
+                    "type": "string",
+                    "description": "Custom guideline #0 for InitDocsCommand"
+                },
+                "INIT_DOCS_COMMAND_GUIDELINE_1": {
+                    "type": "string",
+                    "description": "Custom guideline #1 for InitDocsCommand"
+                },
+                "INIT_DOCS_COMMAND_GUIDELINE_2": {
+                    "type": "string",
+                    "description": "Custom guideline #2 for InitDocsCommand"
+                },
+                "INIT_DOCS_COMMAND_MODEL": {
+                    "type": "string",
+                    "description": "Model override for InitDocsCommand"
+                },
+                "INIT_DOCS_COMMAND_RULE_0": {
+                    "type": "string",
+                    "description": "Custom CRITICAL rule #0 for InitDocsCommand"
+                },
+                "INIT_DOCS_COMMAND_RULE_1": {
+                    "type": "string",
+                    "description": "Custom CRITICAL rule #1 for InitDocsCommand"
+                },
+                "INIT_DOCS_COMMAND_RULE_2": {
+                    "type": "string",
+                    "description": "Custom CRITICAL rule #2 for InitDocsCommand"
                 },
                 "INIT_TASK_COMMAND_GUIDELINE_0": {
                     "type": "string",
