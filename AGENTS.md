@@ -913,7 +913,7 @@ Prevents long-running or hanging processes.
 
 <language>Ukrainian</language>
 <tone>Analytical, methodical, clear, and direct</tone>
-<brevity>Medium</brevity>
+<brevity>medium</brevity>
 <formatting>Strict XML formatting without markdown</formatting>
 <phrase>sorry</phrase>
 <phrase>unfortunately</phrase>
