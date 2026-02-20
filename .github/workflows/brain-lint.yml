@@ -9,6 +9,8 @@ on:
       - 'scripts/**'
       - '.claude/**'
       - '.opencode/**'
+      - 'AGENTS.md'
+      - 'agent-schema.json'
   pull_request:
     paths:
       - 'core/src/**'
@@ -17,6 +19,8 @@ on:
       - 'scripts/**'
       - '.claude/**'
       - '.opencode/**'
+      - 'AGENTS.md'
+      - 'agent-schema.json'
 
 jobs:
   lint-and-test:
@@ -50,9 +54,9 @@ jobs:
           NODE_CHANGED=$(git diff --name-only "$BASE_REF"...HEAD -- '.brain/node/' 'node/' 2>/dev/null | head -1)
           if [ -n "$NODE_CHANGED" ]; then
             # If node sources changed, compiled artifacts MUST also change
-            COMPILED_CHANGED=$(git diff --name-only "$BASE_REF"...HEAD -- '.claude/' '.opencode/' 2>/dev/null | head -1)
+            COMPILED_CHANGED=$(git diff --name-only "$BASE_REF"...HEAD -- '.claude/' '.opencode/' 'AGENTS.md' 'agent-schema.json' 2>/dev/null | head -1)
             if [ -z "$COMPILED_CHANGED" ]; then
-              echo "::error::Node sources changed but compiled artifacts (.claude/, .opencode/) were not updated."
+              echo "::error::Node sources changed but compiled artifacts (.claude/, .opencode/, AGENTS.md, agent-schema.json) were not updated."
               echo "Run 'brain compile' locally and commit the compiled output."
               echo ""
               echo "Changed source files:"
