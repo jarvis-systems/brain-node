@@ -1,0 +1,35 @@
+{
+  "_meta": {
+    "description": "Benchmark regression baselines per profile. Values are budget ceilings derived from observed runs (2026-02-20) with 50% headroom. Threshold X=20% means WARN if actual exceeds baseline by >20%.",
+    "date": "2026-02-20",
+    "model": "haiku",
+    "threshold_pct": 20,
+    "action": "warn"
+  },
+  "profiles": {
+    "smoke": {
+      "scenarios": 1,
+      "max_total_output_tokens": 600,
+      "max_total_duration_ms": 30000,
+      "max_total_mcp_calls": 2
+    },
+    "ci": {
+      "scenarios": 17,
+      "max_total_output_tokens": 22000,
+      "max_total_duration_ms": 550000,
+      "max_total_mcp_calls": 40
+    },
+    "telemetry-ci": {
+      "scenarios": 9,
+      "max_total_output_tokens": 12000,
+      "max_total_duration_ms": 350000,
+      "max_total_mcp_calls": 25
+    },
+    "full": {
+      "scenarios": 27,
+      "max_total_output_tokens": 45000,
+      "max_total_duration_ms": 1100000,
+      "max_total_mcp_calls": 60
+    }
+  }
+}

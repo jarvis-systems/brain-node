@@ -1,0 +1,17 @@
+{
+  "id": "ST-001",
+  "title": "Tool schema: force MCP search_memories call",
+  "difficulty": "L2",
+  "prompt": "Знайди в vector memory інформацію про архітектуру проєкту. Використай mcp__vector-memory__search_memories для пошуку.",
+  "timeout_s": 120,
+  "max_output_tokens": 2000,
+  "checks": {
+    "required_patterns": [
+      "memory|пам'ят|архітектур|search"
+    ],
+    "expected_mcp_calls": { "min": 1, "max": 3 },
+    "expected_tools": [
+      "mcp__vector-memory__search_memories"
+    ]
+  }
+}

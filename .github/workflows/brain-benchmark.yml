@@ -3,6 +3,13 @@ name: Brain LLM Benchmark
 on:
   schedule:
     - cron: '0 3 * * *'
+  pull_request:
+    paths:
+      - '.brain/node/**'
+      - 'core/src/**'
+      - 'scripts/benchmark-*'
+      - '.docs/benchmarks/scenarios/**'
+      - '.docs/benchmarks/baselines/**'
   workflow_dispatch:
     inputs:
       profile:
@@ -54,7 +61,71 @@ jobs:
         run: bash scripts/benchmark-llm-suite.sh --scenario S00 --json --model haiku
         continue-on-error: true
 
+  # PR gate: fast telemetry-ci profile (9 scenarios, haiku, ~2.5 min)
+  pr-gate:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    needs: smoke-test
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Brain CLI
+        run: composer global require jarvis-brain/cli --no-interaction
+
+      - name: Install Claude Code
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Run telemetry-ci benchmark
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          BRAIN_AI_CMD: ${{ runner.tool_cache }}/../.composer/vendor/bin/ai
+        run: |
+          bash scripts/benchmark-llm-suite.sh \
+            --json \
+            --profile telemetry-ci \
+            --model haiku \
+            | tee benchmark-report-telemetry.json
+
+      - name: Run CI benchmark
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          BRAIN_AI_CMD: ${{ runner.tool_cache }}/../.composer/vendor/bin/ai
+        run: |
+          bash scripts/benchmark-llm-suite.sh \
+            --json \
+            --profile ci \
+            --model haiku \
+            | tee benchmark-report-ci.json
+
+      - name: Regression check (telemetry-ci)
+        run: bash scripts/benchmark-regression-check.sh benchmark-report-telemetry.json
+
+      - name: Regression check (ci)
+        run: bash scripts/benchmark-regression-check.sh benchmark-report-ci.json
+
+      - name: Upload PR benchmark reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pr-benchmark-reports
+          path: benchmark-report-*.json
+          retention-days: 14
+
+  # Nightly/manual: full profile with sonnet
   benchmark-suite:
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     needs: smoke-test
     timeout-minutes: 60
@@ -81,7 +152,7 @@ jobs:
       - name: Resolve profile and model
         id: params
         run: |
-          PROFILE="${{ github.event.inputs.profile || 'ci' }}"
+          PROFILE="${{ github.event.inputs.profile || 'full' }}"
           MODEL="${{ github.event.inputs.model || 'sonnet' }}"
           echo "profile=$PROFILE" >> "$GITHUB_OUTPUT"
           echo "model=$MODEL" >> "$GITHUB_OUTPUT"
@@ -96,6 +167,10 @@ jobs:
             --profile "${{ steps.params.outputs.profile }}" \
             --model "${{ steps.params.outputs.model }}" \
             | tee benchmark-report.json
+
+      - name: Regression check
+        run: |
+          bash scripts/benchmark-regression-check.sh benchmark-report.json
 
       - name: Upload benchmark report
         uses: actions/upload-artifact@v4

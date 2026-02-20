@@ -7,8 +7,10 @@
 # - Knowledge verification (iron rules, delegation, directories)
 # - MCP format compliance (correct tool call syntax)
 # - Governance reasoning (precedence, violations, cookbook policy)
+# - Multi-turn sessions with session resume (--resume)
+# - Telemetry-based tool verification (expected_tools)
 #
-# All checks are grep-based on response text. No subjective evaluation.
+# Checks: grep-based on response text + ToolUse DTO telemetry. No subjective evaluation.
 #
 # Options:
 #   --json                  Output JSON report only
@@ -163,6 +165,7 @@ parse_cli_output() {
     local msg_file="$2"
     local metrics_file="$3"
     local tools_file="$4"
+    local session_file="${5:-/dev/null}"
 
     > "$msg_file"
     echo "0 0" > "$metrics_file"
@@ -173,6 +176,9 @@ parse_cli_output() {
         local dtype
         dtype=$(echo "$line" | jq -r '.type // ""' 2>/dev/null) || continue
         case "$dtype" in
+            init)
+                echo "$line" | jq -r '.sessionId // ""' 2>/dev/null > "$session_file"
+                ;;
             message)
                 echo "$line" | jq -r '.content // ""' 2>/dev/null >> "$msg_file"
                 ;;
@@ -379,6 +385,19 @@ run_scenario() {
             fi
         fi
 
+        # Check: expected specific tools in tool_use events (telemetry-based)
+        while IFS= read -r tool_name; do
+            [ -z "$tool_name" ] && continue
+            if grep -qF "$tool_name" "$tools_file" 2>/dev/null; then
+                checks+=("{\"check\":\"expected-tool:$tool_name\",\"status\":\"PASS\"}")
+                log "  ${GREEN}[PASS] expected-tool: '$tool_name'${NC}"
+            else
+                checks+=("{\"check\":\"expected-tool:$tool_name\",\"status\":\"FAIL\",\"detail\":\"not in tool_use events\"}")
+                scenario_status="FAIL"
+                log "  ${RED}[FAIL] expected-tool: '$tool_name' not in tool_use${NC}"
+            fi
+        done < <(jq -r '.checks.expected_tools // [] | .[]' "$scenario_file" 2>/dev/null)
+
         # Check: output token budget
         if [ "$output_tokens" -gt 0 ] && [ "$output_tokens" -gt "$smax_out" ] 2>/dev/null; then
             checks+=("{\"check\":\"token-budget\",\"status\":\"FAIL\",\"detail\":\"$output_tokens > $smax_out\"}")
@@ -430,6 +449,303 @@ run_scenario() {
 }
 
 # ============================================================
+# Run a multi-turn scenario (type: "multi")
+# ============================================================
+run_multi_turn_scenario() {
+    local scenario_file="$1"
+
+    local sid stitle sdiff smax_out stimeout num_turns
+    sid=$(jq -r '.id' "$scenario_file")
+    stitle=$(jq -r '.title' "$scenario_file")
+    sdiff=$(jq -r '.difficulty' "$scenario_file")
+    smax_out=$(jq -r '.max_output_tokens // 3000' "$scenario_file")
+    stimeout=$(jq -r '.timeout_s // '"$TIMEOUT"'' "$scenario_file")
+    num_turns=$(jq -r '.turns | length' "$scenario_file")
+
+    log "\n${CYAN}[$sid] $stitle${NC} ${DIM}($sdiff, ${num_turns} turns)${NC}"
+    ((TOTAL++))
+
+    local scenario_status="PASS"
+    local checks=()
+    local total_response=""
+    local total_input_tokens=0
+    local total_output_tokens=0
+    local total_mcp_calls=0
+    local session_id=""
+
+    if $DRY_RUN; then
+        log "  ${DIM}[DRY-RUN] Multi-turn scenario validated, AI calls skipped${NC}"
+        local valid=true
+        for field in id title difficulty; do
+            if [ "$(jq -r ".$field // empty" "$scenario_file")" = "" ]; then
+                log "  ${RED}[ERROR] Missing required field: $field${NC}"
+                valid=false
+            fi
+        done
+        if [ "$num_turns" -lt 2 ]; then
+            log "  ${RED}[ERROR] Multi-turn requires >= 2 turns, got $num_turns${NC}"
+            valid=false
+        fi
+        local t=0
+        while [ "$t" -lt "$num_turns" ]; do
+            local ask
+            ask=$(jq -r ".turns[$t].ask // empty" "$scenario_file")
+            if [ -z "$ask" ]; then
+                log "  ${RED}[ERROR] Turn $t missing 'ask' field${NC}"
+                valid=false
+            fi
+            ((t++))
+        done
+        if $valid; then
+            checks+=("{\"check\":\"schema-valid\",\"status\":\"PASS\"}")
+            log "  ${GREEN}[PASS] multi-turn schema valid ($num_turns turns)${NC}"
+        else
+            checks+=("{\"check\":\"schema-valid\",\"status\":\"FAIL\"}")
+            scenario_status="FAIL"
+        fi
+    else
+        local start_ns
+        start_ns=$(date +%s%N 2>/dev/null || echo "$(($(date +%s) * 1000000000))")
+
+        local t=0
+        while [ "$t" -lt "$num_turns" ]; do
+            local ask
+            ask=$(jq -r ".turns[$t].ask" "$scenario_file")
+            local turn_label="turn$((t+1))"
+
+            log "  ${DIM}--- $turn_label ---${NC}"
+
+            # Build CLI command
+            local cli_args=(claude --ask "$ask" --json --model "$MODEL")
+            if [ "$t" -gt 0 ] && [ -n "$session_id" ]; then
+                cli_args=(claude --resume "$session_id" --ask "$ask" --json --model "$MODEL")
+            fi
+            $YOLO && cli_args+=(--yolo)
+
+            export STRICT_MODE="$MODE" COGNITIVE_LEVEL="$COGNITIVE"
+            [ -n "${BRAIN_CLI_DEBUG:-}" ] && export BRAIN_CLI_DEBUG
+
+            local raw_file="$TMP_DIR/raw_${sid}_t${t}.jsonl"
+            local err_file="$TMP_DIR/err_${sid}_t${t}.log"
+            local session_file="$TMP_DIR/session_${sid}.txt"
+            cd "$PROJECT_ROOT"
+            $TIMEOUT_CMD "$stimeout" "$AI_CMD" "${cli_args[@]}" > "$raw_file" 2>"$err_file" || true
+
+            # Parse output
+            local msg_file="$TMP_DIR/msg_${sid}_t${t}.txt"
+            local metrics_file="$TMP_DIR/metrics_${sid}_t${t}.txt"
+            local tools_file="$TMP_DIR/tools_${sid}_t${t}.txt"
+            parse_cli_output "$raw_file" "$msg_file" "$metrics_file" "$tools_file" "$session_file"
+
+            local turn_text
+            turn_text=$(cat "$msg_file" 2>/dev/null || echo "")
+            local turn_in turn_out
+            read -r turn_in turn_out < "$metrics_file" 2>/dev/null || true
+            turn_in=${turn_in:-0}
+            turn_out=${turn_out:-0}
+            local turn_mcp
+            turn_mcp=$(wc -l < "$tools_file" 2>/dev/null | tr -d ' ')
+            turn_mcp=${turn_mcp:-0}
+
+            total_response+="$turn_text"
+            total_input_tokens=$((total_input_tokens + turn_in))
+            total_output_tokens=$((total_output_tokens + turn_out))
+            total_mcp_calls=$((total_mcp_calls + turn_mcp))
+
+            # Extract session_id from first turn
+            if [ "$t" -eq 0 ]; then
+                session_id=$(cat "$session_file" 2>/dev/null | tr -d '[:space:]')
+                if [ -z "$session_id" ]; then
+                    log "  ${RED}[ERROR] No sessionId in init DTO${NC}"
+                    scenario_status="ERROR"
+                    ((ERRORS++))
+                    checks+=("{\"check\":\"session-init\",\"status\":\"FAIL\"}")
+                    break
+                fi
+                checks+=("{\"check\":\"session-init\",\"status\":\"PASS\",\"detail\":\"${session_id:0:8}...\"}")
+                log "  ${GREEN}[PASS] session-init: ${session_id:0:8}...${NC}"
+            fi
+
+            # Check: turn response received
+            if [ -z "$turn_text" ] || [ "$turn_text" = "null" ]; then
+                checks+=("{\"check\":\"${turn_label}:response\",\"status\":\"FAIL\"}")
+                scenario_status="FAIL"
+                log "  ${RED}[FAIL] $turn_label: empty response${NC}"
+            else
+                checks+=("{\"check\":\"${turn_label}:response\",\"status\":\"PASS\"}")
+            fi
+
+            # Check: per-turn required patterns
+            while IFS= read -r pattern; do
+                [ -z "$pattern" ] && continue
+                local cnt
+                cnt=$(count_pattern "$msg_file" "$pattern")
+                local pname
+                pname=$(echo "$pattern" | sed 's/\\.*//; s/|.*//; s/ /-/g' | head -c 30)
+                if [ "$cnt" -gt 0 ]; then
+                    checks+=("{\"check\":\"${turn_label}:required:$pname\",\"status\":\"PASS\",\"detail\":\"$cnt matches\"}")
+                    log "  ${GREEN}[PASS] $turn_label required: '$pname'${NC}"
+                else
+                    checks+=("{\"check\":\"${turn_label}:required:$pname\",\"status\":\"FAIL\",\"detail\":\"not found\"}")
+                    scenario_status="FAIL"
+                    log "  ${RED}[FAIL] $turn_label required: '$pname' not found${NC}"
+                fi
+            done < <(jq -r ".turns[$t].checks.required_patterns // [] | .[]" "$scenario_file" 2>/dev/null)
+
+            # Check: per-turn banned patterns
+            while IFS= read -r pattern; do
+                [ -z "$pattern" ] && continue
+                local cnt
+                cnt=$(count_pattern "$msg_file" "$pattern")
+                local pname
+                pname=$(echo "$pattern" | sed 's/\\.*//; s/|.*//; s/ /-/g' | head -c 30)
+                if [ "$cnt" -gt 0 ]; then
+                    checks+=("{\"check\":\"${turn_label}:banned:$pname\",\"status\":\"FAIL\",\"detail\":\"$cnt matches\"}")
+                    scenario_status="FAIL"
+                    log "  ${RED}[FAIL] $turn_label banned: '$pname' found${NC}"
+                else
+                    checks+=("{\"check\":\"${turn_label}:banned:$pname\",\"status\":\"PASS\"}")
+                fi
+            done < <(jq -r ".turns[$t].checks.banned_patterns // [] | .[]" "$scenario_file" 2>/dev/null)
+
+            # Check: per-turn expected_mcp_calls
+            local tmcp_min tmcp_max
+            tmcp_min=$(jq -r ".turns[$t].checks.expected_mcp_calls.min // empty" "$scenario_file" 2>/dev/null)
+            tmcp_max=$(jq -r ".turns[$t].checks.expected_mcp_calls.max // empty" "$scenario_file" 2>/dev/null)
+            if [ -n "$tmcp_min" ] && [ -n "$tmcp_max" ]; then
+                if [ "$turn_mcp" -ge "$tmcp_min" ] && [ "$turn_mcp" -le "$tmcp_max" ]; then
+                    checks+=("{\"check\":\"${turn_label}:mcp-range\",\"status\":\"PASS\",\"detail\":\"$turn_mcp in [$tmcp_min..$tmcp_max]\"}")
+                    log "  ${GREEN}[PASS] $turn_label mcp-range: $turn_mcp in [$tmcp_min..$tmcp_max]${NC}"
+                else
+                    checks+=("{\"check\":\"${turn_label}:mcp-range\",\"status\":\"FAIL\",\"detail\":\"$turn_mcp not in [$tmcp_min..$tmcp_max]\"}")
+                    scenario_status="FAIL"
+                    log "  ${RED}[FAIL] $turn_label mcp-range: $turn_mcp not in [$tmcp_min..$tmcp_max]${NC}"
+                fi
+            fi
+
+            # Check: per-turn expected_tools
+            while IFS= read -r tool_name; do
+                [ -z "$tool_name" ] && continue
+                if grep -qF "$tool_name" "$tools_file" 2>/dev/null; then
+                    checks+=("{\"check\":\"${turn_label}:expected-tool:$tool_name\",\"status\":\"PASS\"}")
+                    log "  ${GREEN}[PASS] $turn_label expected-tool: '$tool_name'${NC}"
+                else
+                    checks+=("{\"check\":\"${turn_label}:expected-tool:$tool_name\",\"status\":\"FAIL\",\"detail\":\"not in tool_use events\"}")
+                    scenario_status="FAIL"
+                    log "  ${RED}[FAIL] $turn_label expected-tool: '$tool_name' not in tool_use${NC}"
+                fi
+            done < <(jq -r ".turns[$t].checks.expected_tools // [] | .[]" "$scenario_file" 2>/dev/null)
+
+            log "  ${DIM}$turn_label: tokens in=$turn_in out=$turn_out | mcp=$turn_mcp | ${#turn_text} chars${NC}"
+
+            ((t++))
+        done
+
+        local end_ns
+        end_ns=$(date +%s%N 2>/dev/null || echo "$(($(date +%s) * 1000000000))")
+        local duration_ms=$(( (end_ns - start_ns) / 1000000 ))
+
+        # Scenario-level checks: global banned
+        local all_msg_file="$TMP_DIR/msg_${sid}_all.txt"
+        > "$all_msg_file"
+        local i=0
+        while [ "$i" -lt "$num_turns" ]; do
+            cat "$TMP_DIR/msg_${sid}_t${i}.txt" >> "$all_msg_file" 2>/dev/null
+            ((i++))
+        done
+
+        for pattern in "${GLOBAL_BANNED[@]}"; do
+            local cnt
+            cnt=$(count_pattern "$all_msg_file" "$pattern")
+            local pname
+            pname=$(echo "$pattern" | sed 's/\\.*//; s/ /-/g' | head -c 30)
+            if [ "$cnt" -gt 0 ]; then
+                checks+=("{\"check\":\"global-banned:$pname\",\"status\":\"FAIL\",\"detail\":\"$cnt matches\"}")
+                scenario_status="FAIL"
+                log "  ${RED}[FAIL] global-banned: '$pname' found $cnt times${NC}"
+            else
+                checks+=("{\"check\":\"global-banned:$pname\",\"status\":\"PASS\"}")
+            fi
+        done
+
+        # Scenario-level banned patterns
+        while IFS= read -r pattern; do
+            [ -z "$pattern" ] && continue
+            local cnt
+            cnt=$(count_pattern "$all_msg_file" "$pattern")
+            local pname
+            pname=$(echo "$pattern" | sed 's/\\.*//; s/|.*//; s/ /-/g' | head -c 30)
+            if [ "$cnt" -gt 0 ]; then
+                checks+=("{\"check\":\"banned:$pname\",\"status\":\"FAIL\",\"detail\":\"$cnt matches\"}")
+                scenario_status="FAIL"
+                log "  ${RED}[FAIL] banned: '$pname' found $cnt times${NC}"
+            else
+                checks+=("{\"check\":\"banned:$pname\",\"status\":\"PASS\"}")
+            fi
+        done < <(jq -r '.checks.banned_patterns // [] | .[]' "$scenario_file" 2>/dev/null)
+
+        # Scenario-level expected MCP calls range
+        local mcp_min mcp_max
+        mcp_min=$(jq -r '.checks.expected_mcp_calls.min // empty' "$scenario_file" 2>/dev/null)
+        mcp_max=$(jq -r '.checks.expected_mcp_calls.max // empty' "$scenario_file" 2>/dev/null)
+        if [ -n "$mcp_min" ] && [ -n "$mcp_max" ]; then
+            if [ "$total_mcp_calls" -ge "$mcp_min" ] && [ "$total_mcp_calls" -le "$mcp_max" ]; then
+                checks+=("{\"check\":\"mcp-calls-range\",\"status\":\"PASS\",\"detail\":\"$total_mcp_calls in [$mcp_min..$mcp_max]\"}")
+                log "  ${GREEN}[PASS] mcp-calls-range: $total_mcp_calls in [$mcp_min..$mcp_max]${NC}"
+            else
+                checks+=("{\"check\":\"mcp-calls-range\",\"status\":\"FAIL\",\"detail\":\"$total_mcp_calls not in [$mcp_min..$mcp_max]\"}")
+                scenario_status="FAIL"
+                log "  ${RED}[FAIL] mcp-calls-range: $total_mcp_calls not in [$mcp_min..$mcp_max]${NC}"
+            fi
+        fi
+
+        # Scenario-level token budget
+        if [ "$total_output_tokens" -gt 0 ] && [ "$total_output_tokens" -gt "$smax_out" ] 2>/dev/null; then
+            checks+=("{\"check\":\"token-budget\",\"status\":\"FAIL\",\"detail\":\"$total_output_tokens > $smax_out\"}")
+            scenario_status="FAIL"
+            log "  ${RED}[FAIL] token-budget: $total_output_tokens > $smax_out${NC}"
+        else
+            checks+=("{\"check\":\"token-budget\",\"status\":\"PASS\",\"detail\":\"$total_output_tokens <= $smax_out\"}")
+            log "  ${GREEN}[PASS] token-budget: $total_output_tokens <= $smax_out${NC}"
+        fi
+
+        # Scenario-level duration
+        local timeout_ms=$((stimeout * 1000))
+        if [ "$duration_ms" -le "$timeout_ms" ]; then
+            checks+=("{\"check\":\"duration\",\"status\":\"PASS\",\"detail\":\"${duration_ms}ms <= ${timeout_ms}ms\"}")
+            log "  ${GREEN}[PASS] duration: ${duration_ms}ms <= ${timeout_ms}ms${NC}"
+        else
+            checks+=("{\"check\":\"duration\",\"status\":\"FAIL\",\"detail\":\"${duration_ms}ms > ${timeout_ms}ms\"}")
+            scenario_status="FAIL"
+            log "  ${RED}[FAIL] duration: ${duration_ms}ms > ${timeout_ms}ms${NC}"
+        fi
+
+        log "  ${DIM}total: tokens in=$total_input_tokens out=$total_output_tokens | mcp=$total_mcp_calls | ${#total_response} chars | ${duration_ms}ms${NC}"
+
+        # Update counters
+        TOTAL_INPUT_TOKENS=$((TOTAL_INPUT_TOKENS + total_input_tokens))
+        TOTAL_OUTPUT_TOKENS=$((TOTAL_OUTPUT_TOKENS + total_output_tokens))
+        TOTAL_DURATION_MS=$((TOTAL_DURATION_MS + duration_ms))
+        TOTAL_MCP_CALLS=$((TOTAL_MCP_CALLS + total_mcp_calls))
+    fi
+
+    # Update counters
+    case "$scenario_status" in
+        PASS) ((PASSED++)) ;;
+        FAIL) ((FAILED++)) ;;
+        ERROR) ;; # already counted
+    esac
+
+    # Record result JSON
+    local checks_json=""
+    if [ ${#checks[@]} -gt 0 ]; then
+        checks_json=$(IFS=,; echo "${checks[*]}")
+    fi
+    local rchars=${#total_response}
+    RESULTS+=("{\"id\":\"$sid\",\"title\":\"$stitle\",\"difficulty\":\"$sdiff\",\"status\":\"$scenario_status\",\"duration_ms\":${duration_ms:-0},\"input_tokens\":$total_input_tokens,\"output_tokens\":$total_output_tokens,\"mcp_calls_count\":$total_mcp_calls,\"response_chars\":$rchars,\"turns\":$num_turns,\"checks\":[$checks_json]}")
+}
+
+# ============================================================
 # MAIN
 # ============================================================
 main() {
@@ -466,21 +782,24 @@ main() {
                     [ "$diff" != "S0" ] && continue
                     ;;
                 ci)
-                    # CI runs L1+L2, skips L3 and S0
+                    # CI: L1+L2+ST, skip L3/MT/S0
                     [ "$diff" = "L3" ] && continue
                     [ "$diff" = "S0" ] && continue
+                    case "$sid_check" in MT-*) continue ;; esac
                     ;;
                 telemetry-ci)
-                    # Smoke + 3 cheapest L1 + 2 L2 (MCP format checks)
+                    # Smoke + cheap L1 + MCP L2 + telemetry ST + multi-turn MT
                     case "$sid_check" in
                         S00-*) ;; # include smoke
                         L1-001|L1-002|L1-003) ;; # 3 cheapest L1
-                        L2-001|L2-002) ;; # MCP format checks (tool_use likely)
+                        L2-001|L2-002) ;; # MCP format checks
+                        ST-001) ;; # telemetry tool check
+                        MT-001|MT-002) ;; # multi-turn
                         *) continue ;;
                     esac
                     ;;
                 full)
-                    # Full runs L1+L2+L3, skips S0
+                    # Everything except S0
                     [ "$diff" = "S0" ] && continue
                     ;;
             esac
@@ -499,7 +818,12 @@ main() {
     IFS=$'\n' scenarios=($(sort <<< "${scenarios[*]}")); unset IFS
 
     for sf in "${scenarios[@]}"; do
-        run_scenario "$sf"
+        local stype
+        stype=$(jq -r '.type // "single"' "$sf" 2>/dev/null)
+        case "$stype" in
+            multi) run_multi_turn_scenario "$sf" ;;
+            *) run_scenario "$sf" ;;
+        esac
     done
 
     # Report

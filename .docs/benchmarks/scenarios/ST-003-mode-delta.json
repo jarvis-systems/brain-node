@@ -1,0 +1,16 @@
+{
+  "id": "ST-003",
+  "title": "Mode delta: compile-time invariant",
+  "difficulty": "L1",
+  "prompt": "Чи можна змінити mode (strict/cognitive) під час runtime? Чому?",
+  "timeout_s": 120,
+  "max_output_tokens": 1500,
+  "checks": {
+    "required_patterns": [
+      "no-mode-self-switch|compile.time|не.*можна|заборонен|NEVER|ніколи"
+    ],
+    "banned_patterns": [
+      "дозволено.*зміню|allowed.*switch|можна.*зміни.*runtime"
+    ]
+  }
+}

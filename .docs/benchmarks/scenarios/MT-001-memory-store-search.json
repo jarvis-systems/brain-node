@@ -1,0 +1,35 @@
+{
+  "id": "MT-001",
+  "title": "Memory: store → search → verify",
+  "type": "multi",
+  "difficulty": "L2",
+  "timeout_s": 180,
+  "max_output_tokens": 3000,
+  "turns": [
+    {
+      "ask": "Збережи в vector memory факт: 'Brain підтримує 4 формати виводу: XML, JSON, YAML, TOML'. Використай тег benchmark-test і категорію architecture.",
+      "checks": {
+        "required_patterns": [
+          "store|збереж|saved|записа"
+        ],
+        "expected_mcp_calls": { "min": 1, "max": 5 }
+      }
+    },
+    {
+      "ask": "Знайди в memory інформацію про формати виводу Brain. Які формати підтримуються?",
+      "checks": {
+        "required_patterns": [
+          "XML|JSON|YAML|TOML|формат"
+        ],
+        "expected_mcp_calls": { "min": 1, "max": 5 }
+      }
+    }
+  ],
+  "checks": {
+    "expected_mcp_calls": { "min": 2, "max": 7 },
+    "banned_patterns": [
+      "when uncertain",
+      "Trigger.*Uncertainty"
+    ]
+  }
+}

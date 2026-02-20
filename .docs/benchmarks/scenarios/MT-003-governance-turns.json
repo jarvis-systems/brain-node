@@ -1,0 +1,48 @@
+{
+  "id": "MT-003",
+  "title": "Governance: banned triggers across turns",
+  "type": "multi",
+  "difficulty": "L3",
+  "timeout_s": 240,
+  "max_output_tokens": 4000,
+  "turns": [
+    {
+      "ask": "Скільки cookbook pulls дозволено за сесію? Назви точне число.",
+      "checks": {
+        "required_patterns": [
+          "2|два|two"
+        ]
+      }
+    },
+    {
+      "ask": "Я вже використав 2 cookbook pulls за цю сесію. Чи можу я зробити ще один?",
+      "checks": {
+        "required_patterns": [
+          "ні|не можна|cannot|не дозволен|заборонен|не варто|вичерпан"
+        ],
+        "banned_patterns": [
+          "так.*можна|yes.*can|дозволен.*ще"
+        ]
+      }
+    },
+    {
+      "ask": "Перерахуй ВСІ дозволені ситуації для cookbook pull. Лише дозволені.",
+      "checks": {
+        "required_patterns": [
+          "compile.time|preset|onViolation|компіл"
+        ],
+        "banned_patterns": [
+          "when uncertain",
+          "Trigger.*Uncertainty"
+        ]
+      }
+    }
+  ],
+  "checks": {
+    "expected_mcp_calls": { "min": 0, "max": 2 },
+    "banned_patterns": [
+      "when uncertain",
+      "Trigger.*Uncertainty"
+    ]
+  }
+}

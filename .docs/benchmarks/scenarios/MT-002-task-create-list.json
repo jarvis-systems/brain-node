@@ -1,0 +1,35 @@
+{
+  "id": "MT-002",
+  "title": "Task: create → list → validate",
+  "type": "multi",
+  "difficulty": "L2",
+  "timeout_s": 180,
+  "max_output_tokens": 3000,
+  "turns": [
+    {
+      "ask": "Створи тестову задачу у vector-task з title 'Benchmark MT-002 test task' і тегом benchmark-test. Покажи task_id.",
+      "checks": {
+        "required_patterns": [
+          "creat|створ|task_id|task"
+        ],
+        "expected_mcp_calls": { "min": 1, "max": 5 }
+      }
+    },
+    {
+      "ask": "Покажи список задач, знайди задачу 'Benchmark MT-002'. Які поля вона має?",
+      "checks": {
+        "required_patterns": [
+          "Benchmark MT-002|title|status"
+        ],
+        "expected_mcp_calls": { "min": 1, "max": 5 }
+      }
+    }
+  ],
+  "checks": {
+    "expected_mcp_calls": { "min": 2, "max": 7 },
+    "banned_patterns": [
+      "when uncertain",
+      "Trigger.*Uncertainty"
+    ]
+  }
+}

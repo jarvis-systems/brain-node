@@ -1,0 +1,13 @@
+{
+  "id": "ST-002",
+  "title": "Budget: enforce max tokens / duration",
+  "difficulty": "L1",
+  "prompt": "Коротко: основні обмеження Brain? Максимум 2 речення.",
+  "timeout_s": 30,
+  "max_output_tokens": 300,
+  "checks": {
+    "required_patterns": [
+      "1200|токен|token|обмежен|constraint|ліміт"
+    ]
+  }
+}

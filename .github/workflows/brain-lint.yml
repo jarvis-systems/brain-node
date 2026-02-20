@@ -50,6 +50,9 @@ jobs:
       - name: LLM benchmark scenarios validation
         run: bash scripts/benchmark-llm-suite.sh --dry-run --json
 
+      - name: Validate baselines JSON
+        run: jq empty .docs/benchmarks/baselines/baselines.json
+
       - name: Compile discipline check
         run: |
           BASE_REF="${GITHUB_BASE_REF:-HEAD~1}"
