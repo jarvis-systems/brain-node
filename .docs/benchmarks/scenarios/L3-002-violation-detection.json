@@ -1,0 +1,16 @@
+{
+  "id": "L3-002",
+  "title": "Search-before-store violation detection",
+  "difficulty": "L3",
+  "prompt": "Агент хоче виконати store_memory без попереднього search_memories. Яке конкретно правило порушено, яка його severity, і яка on_violation дія має бути виконана?",
+  "timeout_s": 150,
+  "max_output_tokens": 3000,
+  "checks": {
+    "required_patterns": [
+      "search-before-store|search.before.store",
+      "search_memories|search.*memor",
+      "HIGH|high|висок"
+    ],
+    "banned_patterns": []
+  }
+}

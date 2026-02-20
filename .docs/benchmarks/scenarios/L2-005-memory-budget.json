@@ -1,0 +1,15 @@
+{
+  "id": "L2-005",
+  "title": "Memory operation budget limits",
+  "difficulty": "L2",
+  "prompt": "Скільки максимум vector memory пошуків дозволено Brain за одну операцію? Скільки cookbook pulls дозволено за сесію? Назви конкретні числа.",
+  "timeout_s": 120,
+  "max_output_tokens": 2000,
+  "checks": {
+    "required_patterns": [
+      "3|три|three",
+      "2|два|two"
+    ],
+    "banned_patterns": []
+  }
+}

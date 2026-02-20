@@ -1,0 +1,16 @@
+{
+  "id": "L1-005",
+  "title": "Agent ecosystem knowledge",
+  "difficulty": "L1",
+  "prompt": "Які агенти доступні для делегування задач у Brain системі? Назви їхні назви та основні ролі.",
+  "timeout_s": 120,
+  "max_output_tokens": 1500,
+  "checks": {
+    "required_patterns": [
+      "explore|Explore",
+      "vector-master|VectorMaster|vector.master",
+      "web-research|WebResearch|web.research"
+    ],
+    "banned_patterns": []
+  }
+}

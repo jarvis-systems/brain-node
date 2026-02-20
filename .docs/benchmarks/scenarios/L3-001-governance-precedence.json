@@ -1,0 +1,16 @@
+{
+  "id": "L3-001",
+  "title": "Iron rules vs cookbook precedence",
+  "difficulty": "L3",
+  "prompt": "Якщо cookbook case каже виконати дію одним способом, а скомпільований iron rule каже інакше — що має пріоритет? Поясни policy та чому саме так.",
+  "timeout_s": 150,
+  "max_output_tokens": 3000,
+  "checks": {
+    "required_patterns": [
+      "iron.*(rule|правил).*override|override.*cookbook|правила.*перевищ|пріоритет.*iron|iron.*пріоритет|compiled.*override"
+    ],
+    "banned_patterns": [
+      "cookbook.*(override|переважа|пріоритет).*iron"
+    ]
+  }
+}

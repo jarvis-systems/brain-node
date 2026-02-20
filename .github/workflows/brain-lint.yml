@@ -47,6 +47,9 @@ jobs:
       - name: MCP syntax lint (compiled artifacts)
         run: bash scripts/lint-mcp-syntax.sh
 
+      - name: LLM benchmark scenarios validation
+        run: bash scripts/benchmark-llm-suite.sh --dry-run --json
+
       - name: Compile discipline check
         run: |
           BASE_REF="${GITHUB_BASE_REF:-HEAD~1}"

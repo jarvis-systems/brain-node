@@ -1,0 +1,16 @@
+{
+  "id": "L2-004",
+  "title": "Error escalation policy levels",
+  "difficulty": "L2",
+  "prompt": "Опиши рівні ескалації помилок у Brain системі. Для кожного рівня: які дії треба виконати?",
+  "timeout_s": 120,
+  "max_output_tokens": 2000,
+  "checks": {
+    "required_patterns": [
+      "standard|стандарт|звичайн",
+      "critical|критичн",
+      "unrecoverable|невідновн|abort"
+    ],
+    "banned_patterns": []
+  }
+}

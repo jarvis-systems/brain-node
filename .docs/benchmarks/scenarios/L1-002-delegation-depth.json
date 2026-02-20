@@ -1,0 +1,16 @@
+{
+  "id": "L1-002",
+  "title": "Delegation depth knowledge",
+  "difficulty": "L1",
+  "prompt": "Яка максимальна допустима глибина делегування в системі Brain? Назви повний ланцюжок рівнів.",
+  "timeout_s": 120,
+  "max_output_tokens": 1500,
+  "checks": {
+    "required_patterns": [
+      "2|два|two",
+      "Brain|brain",
+      "Master|master|Tool|tool"
+    ],
+    "banned_patterns": []
+  }
+}

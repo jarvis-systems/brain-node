@@ -1,0 +1,15 @@
+{
+  "id": "L2-006",
+  "title": "Brain docs CLI protocol",
+  "difficulty": "L2",
+  "prompt": "Що таке brain docs і коли його треба використовувати? Які ключові можливості цього інструменту?",
+  "timeout_s": 120,
+  "max_output_tokens": 2000,
+  "checks": {
+    "required_patterns": [
+      "brain docs|\\.docs/|docs.*tool",
+      "documentation|документац"
+    ],
+    "banned_patterns": []
+  }
+}

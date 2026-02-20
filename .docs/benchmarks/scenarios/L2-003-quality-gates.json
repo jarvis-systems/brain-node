@@ -1,0 +1,15 @@
+{
+  "id": "L2-003",
+  "title": "Quality gates commands",
+  "difficulty": "L2",
+  "prompt": "Які quality gates обовʼязкові в цьому проекті? Перерахуй конкретні команди для кожного гейту.",
+  "timeout_s": 120,
+  "max_output_tokens": 2000,
+  "checks": {
+    "required_patterns": [
+      "composer analyse|PHPSTAN|phpstan",
+      "composer test|TEST|phpunit"
+    ],
+    "banned_patterns": []
+  }
+}

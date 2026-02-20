@@ -1,0 +1,17 @@
+{
+  "id": "L2-002",
+  "title": "VectorMemory MCP search format",
+  "difficulty": "L2",
+  "prompt": "Покажи правильний формат MCP виклику для пошуку у vector memory. Дай конкретний приклад виклику з JSON параметрами.",
+  "timeout_s": 120,
+  "max_output_tokens": 2000,
+  "checks": {
+    "required_patterns": [
+      "mcp__vector-memory__search_memories|vector.memory.*search",
+      "query|limit"
+    ],
+    "banned_patterns": [
+      "mcp__vector-task|vector.task"
+    ]
+  }
+}

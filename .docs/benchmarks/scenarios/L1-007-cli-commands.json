@@ -1,0 +1,17 @@
+{
+  "id": "L1-007",
+  "title": "Brain CLI commands format",
+  "difficulty": "L1",
+  "prompt": "Як правильно викликати Brain CLI команди? Чи потрібен префікс php? Наведи приклади правильного і неправильного формату.",
+  "timeout_s": 120,
+  "max_output_tokens": 1500,
+  "checks": {
+    "required_patterns": [
+      "brain compile|brain.*compile",
+      "brain make|brain.*make"
+    ],
+    "banned_patterns": [
+      "php brain"
+    ]
+  }
+}

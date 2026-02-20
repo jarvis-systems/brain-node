@@ -1,0 +1,18 @@
+{
+  "id": "L3-007",
+  "title": "Compile-time vs runtime constraints",
+  "difficulty": "L3",
+  "prompt": "Поясни різницю між compile-time та runtime обмеженнями в Brain системі. Чому cookbook preset бейкнутий на етапі компіляції, а не формується динамічно? Що заборонено змінювати під час runtime?",
+  "timeout_s": 150,
+  "max_output_tokens": 3000,
+  "checks": {
+    "required_patterns": [
+      "compile.time|компіл.*час|час.*компіляц|compile-time",
+      "determinism|детермін|deterministic|передбачуван",
+      "mode|режим"
+    ],
+    "banned_patterns": [
+      "runtime.*construct|dynamic.*param|динаміч.*формув.*cookbook"
+    ]
+  }
+}

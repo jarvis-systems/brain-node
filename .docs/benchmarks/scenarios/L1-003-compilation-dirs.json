@@ -1,0 +1,16 @@
+{
+  "id": "L1-003",
+  "title": "Source vs compiled directories",
+  "difficulty": "L1",
+  "prompt": "Назви source та compiled директорії проекту Brain. Яку з них дозволено редагувати, а яку заборонено?",
+  "timeout_s": 120,
+  "max_output_tokens": 1500,
+  "checks": {
+    "required_patterns": [
+      "\\.brain/node|\\.brain.node",
+      "\\.claude/|\\.claude",
+      "SOURCE|source|джерел|вихідн"
+    ],
+    "banned_patterns": []
+  }
+}

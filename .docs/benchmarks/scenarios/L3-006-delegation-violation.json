@@ -1,0 +1,17 @@
+{
+  "id": "L3-006",
+  "title": "Delegation chain depth violation",
+  "difficulty": "L3",
+  "prompt": "Brain делегує задачу AgentMaster, AgentMaster делегує Specialist, Specialist намагається делегувати ще одному агенту. Які конкретно правила порушені? Що має статися з цим ланцюжком?",
+  "timeout_s": 150,
+  "max_output_tokens": 3000,
+  "checks": {
+    "required_patterns": [
+      "delegation.depth|depth.*delegation|глибин.*делегув|2.*рівн|рівн.*2",
+      "non-recursive|recursive|рекурсив|reject|відхил"
+    ],
+    "banned_patterns": [
+      "дозволено.*3.*рівн|allowed.*3.*level|допустимо.*необмежен"
+    ]
+  }
+}

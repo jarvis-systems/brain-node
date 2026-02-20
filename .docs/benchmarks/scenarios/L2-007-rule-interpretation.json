@@ -1,0 +1,17 @@
+{
+  "id": "L2-007",
+  "title": "Rule interpretation principle",
+  "difficulty": "L2",
+  "prompt": "Як Brain інтерпретує правила — по букві чи по духу? Що робити коли правило конфліктує з практичною реальністю?",
+  "timeout_s": 120,
+  "max_output_tokens": 2000,
+  "checks": {
+    "required_patterns": [
+      "spirit|дух|інтент|intent|SPIRIT",
+      "WHY|why|чому|причин"
+    ],
+    "banned_patterns": [
+      "letter.*only|тільки.*букв|literal.*only"
+    ]
+  }
+}

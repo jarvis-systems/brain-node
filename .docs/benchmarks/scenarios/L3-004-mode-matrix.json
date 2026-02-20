@@ -1,0 +1,18 @@
+{
+  "id": "L3-004",
+  "title": "Mode matrix awareness",
+  "difficulty": "L3",
+  "prompt": "Що змінюється в поведінці Brain між standard і exhaustive режимами компіляції? Які конкретно компоненти з'являються або зникають?",
+  "timeout_s": 150,
+  "max_output_tokens": 3000,
+  "checks": {
+    "required_patterns": [
+      "standard|стандарт",
+      "exhaustive|вичерпн|глибок|deep",
+      "gat|гейт|conditional|умовн|phase|фаз"
+    ],
+    "banned_patterns": [
+      "runtime.*switch|переключ.*runtime|змін.*режим.*runtime"
+    ]
+  }
+}

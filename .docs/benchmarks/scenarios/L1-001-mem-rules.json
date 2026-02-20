@@ -1,0 +1,16 @@
+{
+  "id": "L1-001",
+  "title": "Vector Memory iron rules knowledge",
+  "difficulty": "L1",
+  "prompt": "Перерахуй iron rules для vector memory операцій. Для кожного правила вкажи назву та severity рівень.",
+  "timeout_s": 120,
+  "max_output_tokens": 1500,
+  "checks": {
+    "required_patterns": [
+      "mcp-json-only|MCP.*JSON",
+      "search-before-store",
+      "CRITICAL|critical"
+    ],
+    "banned_patterns": []
+  }
+}

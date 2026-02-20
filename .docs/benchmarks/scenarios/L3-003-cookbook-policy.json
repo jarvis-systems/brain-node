@@ -1,0 +1,17 @@
+{
+  "id": "L3-003",
+  "title": "Cookbook pull policy compliance",
+  "difficulty": "L3",
+  "prompt": "Коли саме дозволено робити cookbook pull? Перерахуй ВСІ дозволені випадки та бюджетні обмеження. Коли НЕ дозволено?",
+  "timeout_s": 150,
+  "max_output_tokens": 3000,
+  "checks": {
+    "required_patterns": [
+      "preset|compile.time|компіл",
+      "onViolation|on_violation|on.violation"
+    ],
+    "banned_patterns": [
+      "when uncertain|коли невпевнен|невизначен.*cookbook|uncertainty.*trigger"
+    ]
+  }
+}

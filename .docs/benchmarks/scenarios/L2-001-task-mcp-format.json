@@ -1,0 +1,17 @@
+{
+  "id": "L2-001",
+  "title": "VectorTask MCP call format",
+  "difficulty": "L2",
+  "prompt": "Покажи правильний формат MCP виклику для створення нової задачі у vector-task системі. Дай конкретний приклад виклику з параметрами.",
+  "timeout_s": 120,
+  "max_output_tokens": 2000,
+  "checks": {
+    "required_patterns": [
+      "mcp__vector-task__task_create|vector.task.*task_create",
+      "title|task_id|description"
+    ],
+    "banned_patterns": [
+      "mcp__vector-memory|vector.memory"
+    ]
+  }
+}

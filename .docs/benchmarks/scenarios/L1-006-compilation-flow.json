@@ -1,0 +1,16 @@
+{
+  "id": "L1-006",
+  "title": "Compilation pipeline knowledge",
+  "difficulty": "L1",
+  "prompt": "Опиши повний flow компіляції Brain: від source до compiled output. Які кроки та команди залучені?",
+  "timeout_s": 120,
+  "max_output_tokens": 1500,
+  "checks": {
+    "required_patterns": [
+      "\\.brain/node|brain.node",
+      "brain compile|brain.*compile",
+      "\\.claude/|\\.claude"
+    ],
+    "banned_patterns": []
+  }
+}
