@@ -1,0 +1,65 @@
+name: Brain Lint & Tests
+
+on:
+  push:
+    paths:
+      - 'core/src/**'
+      - '.brain/node/**'
+      - 'node/**'
+      - 'scripts/**'
+      - '.claude/**'
+      - '.opencode/**'
+  pull_request:
+    paths:
+      - 'core/src/**'
+      - '.brain/node/**'
+      - 'node/**'
+      - 'scripts/**'
+      - '.claude/**'
+      - '.opencode/**'
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+
+      - name: Install core dependencies
+        run: composer install --no-interaction --prefer-dist
+        working-directory: core
+
+      - name: Schema validator tests
+        run: ./vendor/bin/phpunit tests/McpSchemaValidatorTest.php
+        working-directory: core
+
+      - name: MCP syntax lint (compiled artifacts)
+        run: bash scripts/lint-mcp-syntax.sh
+
+      - name: Compile discipline check
+        run: |
+          BASE_REF="${GITHUB_BASE_REF:-HEAD~1}"
+          # Check if .brain/node/ or node/ sources changed
+          NODE_CHANGED=$(git diff --name-only "$BASE_REF"...HEAD -- '.brain/node/' 'node/' 2>/dev/null | head -1)
+          if [ -n "$NODE_CHANGED" ]; then
+            # If node sources changed, compiled artifacts MUST also change
+            COMPILED_CHANGED=$(git diff --name-only "$BASE_REF"...HEAD -- '.claude/' '.opencode/' 2>/dev/null | head -1)
+            if [ -z "$COMPILED_CHANGED" ]; then
+              echo "::error::Node sources changed but compiled artifacts (.claude/, .opencode/) were not updated."
+              echo "Run 'brain compile' locally and commit the compiled output."
+              echo ""
+              echo "Changed source files:"
+              git diff --name-only "$BASE_REF"...HEAD -- '.brain/node/' 'node/'
+              exit 1
+            fi
+            echo "Compile discipline: PASSED (sources + artifacts both updated)"
+          else
+            echo "Compile discipline: SKIPPED (no node source changes)"
+          fi

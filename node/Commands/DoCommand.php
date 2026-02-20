@@ -12,6 +12,7 @@ use BrainCore\Compilation\Operator;
 use BrainCore\Compilation\Store;
 use BrainCore\Compilation\Tools\BashTool;
 use BrainCore\Compilation\Tools\TaskTool;
+use BrainNode\Mcp\VectorMemoryMcp;
 
 #[Meta('id', 'do')]
 #[Meta('description', 'Multi-agent orchestration command for flexible task execution (sequential/parallel) with user approval gates')]
@@ -80,7 +81,7 @@ class DoCommand extends CommandArchetype
         $this->guideline('phase1-agent-discovery')
             ->goal('Discover agents leveraging conversation context + vector memory')
             ->example()
-            ->phase('mcp__vector-memory__search_memories(query: "similar: {$TASK_DESCRIPTION}", limit: 5, category: "code-solution,architecture")')
+            ->phase(VectorMemoryMcp::callValidatedJson('search_memories', ['query' => 'similar: {$TASK_DESCRIPTION}', 'limit' => 5, 'category' => 'code-solution,architecture']))
             ->phase(Store::as('PAST_SOLUTIONS', 'Past approaches'))
             ->phase(BashTool::describe(BrainCLI::LIST_MASTERS, 'brain list:masters'))
             ->phase(Store::as('AVAILABLE_AGENTS', 'Agents list'))
@@ -95,7 +96,7 @@ class DoCommand extends CommandArchetype
         $this->guideline('phase2-requirements-analysis-approval')
             ->goal('Create requirements plan leveraging conversation + memory + GET USER APPROVAL')
             ->example()
-            ->phase('mcp__vector-memory__search_memories(query: "patterns: {task_domain}", limit: 5, category: "learning,architecture")')
+            ->phase(VectorMemoryMcp::callValidatedJson('search_memories', ['query' => 'patterns: {task_domain}', 'limit' => 5, 'category' => 'learning,architecture']))
             ->phase(Store::as('IMPLEMENTATION_PATTERNS', 'Past patterns'))
             ->phase('Analyze: $TASK_DESCRIPTION + $CONVERSATION_CONTEXT + $PAST_SOLUTIONS + $IMPLEMENTATION_PATTERNS')
             ->phase('Determine needs: scan targets, web research (if non-trivial), docs scan (if architecture-related)')
@@ -130,7 +131,7 @@ class DoCommand extends CommandArchetype
                 Store::as('WEB_RESEARCH_FINDINGS', 'External knowledge'),
             ]))
             ->phase(Store::as('CONTEXT_PACKAGES', '{agent_name: {context, materials, task_domain}, ...}'))
-            ->phase('Store gathered context: mcp__vector-memory__store_memory(content: "Context for {$TASK_DESCRIPTION}\\n\\nMaterials: {summary}", category: "tool-usage", tags: ["do-command", "context-gathering"])')
+            ->phase('Store gathered context: ' . VectorMemoryMcp::callValidatedJson('store_memory', ['content' => 'Context for {$TASK_DESCRIPTION}\n\nMaterials: {summary}', 'category' => 'tool-usage', 'tags' => ['do-command', 'context-gathering']]))
             ->phase(Operator::output([
                 '=== PHASE 3: MATERIALS GATHERED ===',
                 'Materials: {count} | Docs: {status} | Web: {status}',
@@ -141,7 +142,7 @@ class DoCommand extends CommandArchetype
         $this->guideline('phase4-execution-planning-approval')
             ->goal('Create atomic plan leveraging past execution patterns, analyze dependencies, and GET USER APPROVAL')
             ->example()
-            ->phase('Search vector memory: mcp__vector-memory__search_memories(query: "execution approach for {task_type}", limit: 5, category: "code-solution")')
+            ->phase('Search vector memory: ' . VectorMemoryMcp::callValidatedJson('search_memories', ['query' => 'execution approach for {task_type}', 'limit' => 5, 'category' => 'code-solution']))
             ->phase(Store::as('EXECUTION_PATTERNS', 'Past successful execution approaches'))
             ->phase('Create plan: atomic steps (≤2 files each), logical order, informed by $EXECUTION_PATTERNS')
             ->phase('Analyze step dependencies: file conflicts, context dependencies, data flow')
@@ -193,9 +194,9 @@ class DoCommand extends CommandArchetype
                     ]),
                     'Delegate via Task() with MANDATORY vector memory instructions:',
                     '',
-                    '  📥 BEFORE: You MUST execute: mcp__vector-memory__search_memories(query: "{step.memory_search_query}", limit: 5, category: "code-solution,learning") and review results',
+                    '  BEFORE: You MUST execute: ' . VectorMemoryMcp::callValidatedJson('search_memories', ['query' => '{step.memory_search_query}', 'limit' => 5, 'category' => 'code-solution,learning']) . ' and review results',
                     '  🔧 DURING: Execute task: {step.task_description} | Context: {$CONTEXT_PACKAGES} | Files: {step.file_scope} (ATOMIC - no expansion)',
-                    '  📤 AFTER: You MUST execute: mcp__vector-memory__store_memory(content: "Step {N}: {outcome}\\n\\nApproach: {what_worked}\\n\\nLearnings: {insights}", category: "code-solution", tags: ["do-command", "step-{N}"])',
+                    '  AFTER: You MUST execute: ' . VectorMemoryMcp::callValidatedJson('store_memory', ['content' => 'Step {N}: {outcome}\n\nApproach: {what_worked}\n\nLearnings: {insights}', 'category' => 'code-solution', 'tags' => ['do-command', 'step-{N}']]),
                     '',
                     TaskTool::describe('Task(@agent-{name}, {task_with_MANDATORY_memory_instructions})'),
                     Store::as('STEP_RESULTS[{N}]', 'Result with memory trace'),
@@ -211,9 +212,9 @@ class DoCommand extends CommandArchetype
                     'Launch ALL steps in group CONCURRENTLY via multiple Task() calls in single message:',
                     '',
                     Operator::forEach('step in group', [
-                        '  📥 BEFORE: mcp__vector-memory__search_memories(query: "{step.memory_search_query}", limit: 5)',
+                        '  BEFORE: ' . VectorMemoryMcp::callValidatedJson('search_memories', ['query' => '{step.memory_search_query}', 'limit' => 5]),
                         '  🔧 DURING: Execute task: {step.task_description} | Context: {$CONTEXT_PACKAGES} | Files: {step.file_scope}',
-                        '  📤 AFTER: mcp__vector-memory__store_memory(content: "Step {N}: {outcome}\\n\\n{insights}", category: "code-solution", tags: ["do-command", "step-{N}"])',
+                        '  AFTER: ' . VectorMemoryMcp::callValidatedJson('store_memory', ['content' => 'Step {N}: {outcome}\n\n{insights}', 'category' => 'code-solution', 'tags' => ['do-command', 'step-{N}']]),
                         '',
                         TaskTool::describe('Task(@agent-{name}, {task_with_memory_instructions})'),
                     ]),
@@ -225,7 +226,7 @@ class DoCommand extends CommandArchetype
                 ]),
             ]))
             ->phase(Operator::if('step fails', [
-                'mcp__vector-memory__store_memory(content: "Failure at step {N}: {error}", category: "debugging", tags: ["do-command", "failure"])',
+                VectorMemoryMcp::callValidatedJson('store_memory', ['content' => 'Failure at step {N}: {error}', 'category' => 'debugging', 'tags' => ['do-command', 'failure']]),
                 'Offer: Retry / Skip / Abort → WAIT',
             ]));
 
@@ -234,7 +235,7 @@ class DoCommand extends CommandArchetype
             ->goal('Report results and store comprehensive learnings to vector memory')
             ->example()
             ->phase(Store::as('COMPLETION_SUMMARY', '{completed_steps, files_modified, outcomes, learnings}'))
-            ->phase('Store final summary: mcp__vector-memory__store_memory(content: "Completed: {$TASK_DESCRIPTION}\\n\\nApproach: {summary}\\n\\nSteps: {outcomes}\\n\\nLearnings: {insights}\\n\\nFiles: {list}", category: "code-solution", tags: ["do-command", "completed"])')
+            ->phase('Store final summary: ' . VectorMemoryMcp::callValidatedJson('store_memory', ['content' => 'Completed: {$TASK_DESCRIPTION}\n\nApproach: {summary}\n\nSteps: {outcomes}\n\nLearnings: {insights}\n\nFiles: {list}', 'category' => 'code-solution', 'tags' => ['do-command', 'completed']]))
             ->phase(Operator::output([
                 '',
                 '=== EXECUTION COMPLETE ===',
@@ -252,7 +253,7 @@ class DoCommand extends CommandArchetype
             ->example()
             ->phase('BEFORE TASK:')
             ->do([
-                'Execute: mcp__vector-memory__search_memories(query: "{relevant}", limit: 5)',
+                'Execute: ' . VectorMemoryMcp::callValidatedJson('search_memories', ['query' => '{relevant}', 'limit' => 5]),
                 'Review: Analyze results for patterns, solutions, learnings',
                 'Apply: Incorporate insights into approach',
             ])
@@ -264,7 +265,7 @@ class DoCommand extends CommandArchetype
             ->phase('AFTER TASK:')
             ->do([
                 'Document: Summarize what was done, how it worked, key insights',
-                'Execute: mcp__vector-memory__store_memory(content: "{what+how+insights}", category: "{appropriate}", tags: [...])',
+                'Execute: ' . VectorMemoryMcp::callValidatedJson('store_memory', ['content' => '{what+how+insights}', 'category' => '{appropriate}', 'tags' => ['...']]),
                 'Verify: Confirm storage successful',
             ])
             ->phase('CRITICAL: Vector memory is the communication channel between agents. Your learnings enable the next agent!');
