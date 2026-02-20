@@ -8,3 +8,4 @@ memory
 .mcp.json
 composer.lock
 brain.lock
+dist

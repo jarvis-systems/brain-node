@@ -1,0 +1,80 @@
+name: Brain Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Brain CLI
+        run: composer global require jarvis-brain/cli --no-interaction
+
+      - name: Validate tag matches composer.json version
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          COMPOSER_VERSION=$(jq -r '.version' composer.json)
+          if [[ "$TAG" != "$COMPOSER_VERSION" ]]; then
+            echo "::error::Tag ($TAG) does not match composer.json version ($COMPOSER_VERSION)"
+            exit 1
+          fi
+          echo "Version match: $TAG"
+
+      - name: Verify pin policy (strict)
+        run: bash scripts/verify-pins.sh
+        env:
+          PIN_STRICT: '1'
+
+      - name: Validate baselines JSON
+        run: jq empty .docs/benchmarks/baselines/baselines.json
+
+      - name: Generate manifest
+        run: bash scripts/generate-manifest.sh
+        env:
+          PIN_STRICT: '1'
+
+      - name: Validate manifest
+        run: |
+          jq empty .docs/releases/manifest.json
+          PIN_VALUE=$(jq -r '.pin_strict' .docs/releases/manifest.json)
+          if [[ "$PIN_VALUE" != "1" ]]; then
+            echo "::error::Manifest pin_strict must be '1' for release builds"
+            exit 1
+          fi
+
+      - name: Build release bundle
+        run: bash scripts/build-release-bundle.sh
+
+      - name: Upload release bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-bundle-${{ github.ref_name }}
+          path: |
+            dist/*.tar.gz
+            dist/*.sha256
+          retention-days: 90
+
+      - name: Upload manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-manifest-${{ github.ref_name }}
+          path: .docs/releases/manifest.json
+          retention-days: 90

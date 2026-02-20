@@ -7,6 +7,19 @@ description: "Release changelog for jarvis-brain/node"
 
 ## [Unreleased]
 
+## [v0.1.1] — 2026-02-20
+
+### Added — Enterprise Hardening
+- **Release CI Gate**: `brain-release.yml` workflow on `v*` tag push — pin verification (strict), manifest generation, bundle build, artifact upload
+- **Release Bundle**: `scripts/build-release-bundle.sh` produces `dist/brain-enterprise-vX.Y.Z.tar.gz` + `.sha256`
+- **LICENSE**: MIT license file (matches `composer.json` declaration)
+- **SECURITY.md**: vulnerability reporting policy with response timeline and scope
+- **SUPPORT.md**: support workflow with documentation reference and bug report template
+
+### Changed
+- **RELEASE.md**: pin verification step is now mandatory for all releases (was optional), added release bundle step, annotated tags
+- **Version Bump**: `v0.1.0` → `v0.1.1`
+
 ## [v0.1.0] — 2026-02-20
 
 ### Added — Productization v1

@@ -47,12 +47,16 @@ STRICT_MODE=paranoid brain compile
 
 Verify output is consistent.
 
-### 6. Pin Verification (if releasing with pins)
+### 6. Pin Verification (MANDATORY)
+
+Every release MUST pass pin verification. No exceptions.
 
 ```
 PIN_STRICT=1 brain compile
 PIN_STRICT=1 bash scripts/verify-pins.sh
 ```
+
+Both commands must exit 0. If `verify-pins.sh` reports FAIL, update `pins.json` or recompile.
 
 ### 7. Generate Manifest
 
@@ -62,19 +66,29 @@ bash scripts/generate-manifest.sh
 
 Review `.docs/releases/manifest.json` for correctness.
 
-### 8. Commit and Tag
+### 8. Build Release Bundle
+
+```
+bash scripts/build-release-bundle.sh
+```
+
+Verify `dist/brain-enterprise-vX.Y.Z.tar.gz` and `.sha256` exist.
+
+### 9. Commit and Tag
 
 ```
 git add -A
 git commit -m "release: vX.Y.Z"
-git tag vX.Y.Z
+git tag -a vX.Y.Z -m "release: vX.Y.Z"
 ```
 
-### 9. Push
+### 10. Push
 
 ```
 git push origin master --tags
 ```
+
+CI will automatically run `brain-release.yml` on tag push: pin verification, manifest generation, bundle build, and artifact upload.
 
 ## Version Convention
 
