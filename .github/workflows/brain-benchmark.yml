@@ -21,6 +21,7 @@ on:
           - ci
           - telemetry-ci
           - full
+          - matrix
       model:
         description: 'AI model'
         default: 'sonnet'
@@ -123,9 +124,11 @@ jobs:
           path: benchmark-report-*.json
           retention-days: 14
 
-  # Nightly/manual: full profile with sonnet
+  # Nightly/manual: full profile with sonnet (skip if matrix selected)
   benchmark-suite:
-    if: github.event_name != 'pull_request'
+    if: >-
+      github.event_name != 'pull_request' &&
+      (github.event.inputs.profile || 'full') != 'matrix'
     runs-on: ubuntu-latest
     needs: smoke-test
     timeout-minutes: 60
@@ -178,4 +181,72 @@ jobs:
         with:
           name: benchmark-report
           path: benchmark-report.json
+          retention-days: 30
+
+  # Nightly/manual: matrix stress harness (4 configs × stress subset)
+  matrix-stress:
+    if: >-
+      github.event_name == 'schedule' ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.profile == 'matrix')
+    runs-on: ubuntu-latest
+    needs: smoke-test
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Brain CLI
+        run: composer global require jarvis-brain/cli --no-interaction
+
+      - name: Install Claude Code
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Resolve model
+        id: params
+        run: |
+          MODEL="${{ github.event.inputs.model || 'haiku' }}"
+          echo "model=$MODEL" >> "$GITHUB_OUTPUT"
+
+      - name: Run matrix stress
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          BRAIN_AI_CMD: ${{ runner.tool_cache }}/../.composer/vendor/bin/ai
+        run: |
+          bash scripts/benchmark-llm-suite.sh \
+            --matrix \
+            --json \
+            --model "${{ steps.params.outputs.model }}" \
+            --yolo \
+            | tee matrix-stress-report.json
+
+      - name: Validate matrix JSON schema
+        run: jq . matrix-stress-report.json > /dev/null
+
+      - name: Check matrix results
+        run: |
+          CONFIGS_PASSED=$(jq -r '.summary.configs_passed' matrix-stress-report.json)
+          TOTAL_CONFIGS=$(jq -r '.summary.total_configs' matrix-stress-report.json)
+          TOTAL_FAILED=$(jq -r '.summary.total_failed' matrix-stress-report.json)
+          echo "Matrix: $CONFIGS_PASSED/$TOTAL_CONFIGS configs passed, $TOTAL_FAILED scenarios failed"
+          if [ "$CONFIGS_PASSED" -lt "$TOTAL_CONFIGS" ] || [ "$TOTAL_FAILED" -gt 0 ]; then
+            echo "::error::Matrix stress FAILED"
+            exit 1
+          fi
+
+      - name: Upload matrix report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: matrix-stress-report
+          path: matrix-stress-report.json
           retention-days: 30

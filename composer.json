@@ -25,6 +25,7 @@
     "benchmark:dry": "bash scripts/benchmark-llm-suite.sh --dry-run --json",
     "benchmark:smoke": "bash scripts/benchmark-llm-suite.sh --scenario S00 --json --model haiku",
     "benchmark:mt": "bash scripts/benchmark-llm-suite.sh --scenario MT --json --model haiku",
+    "benchmark:matrix": "bash scripts/benchmark-llm-suite.sh --matrix --json --model haiku",
     "benchmark:regression": "bash scripts/benchmark-regression-check.sh"
   },
   "require": {

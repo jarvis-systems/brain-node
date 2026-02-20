@@ -30,6 +30,13 @@
       "max_total_output_tokens": 45000,
       "max_total_duration_ms": 1100000,
       "max_total_mcp_calls": 60
+    },
+    "matrix": {
+      "scenarios": 4,
+      "stress_scenarios": ["MT-001", "MT-002", "MT-003", "ST-001"],
+      "max_total_output_tokens": 6000,
+      "max_total_duration_ms": 480000,
+      "max_total_mcp_calls": 15
     }
   }
 }

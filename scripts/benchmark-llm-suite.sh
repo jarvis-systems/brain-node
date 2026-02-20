@@ -21,6 +21,7 @@
 #   --dry-run               Validate scenarios without AI calls
 #   --timeout <seconds>     Per-scenario timeout (default: 120)
 #   --yolo                  Pass --yolo to Brain CLI (bypass permissions)
+#   --matrix                Run matrix stress harness (4 configs × stress subset)
 #
 # Exit codes:
 #   0 - All scenarios passed
@@ -41,6 +42,7 @@ NC='\033[0m'
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 SCENARIOS_DIR="$PROJECT_ROOT/.docs/benchmarks/scenarios"
+BASELINES_FILE="$PROJECT_ROOT/.docs/benchmarks/baselines/baselines.json"
 TMP_DIR=$(mktemp -d)
 
 # macOS-compatible timeout wrapper
@@ -88,6 +90,7 @@ MODEL="sonnet"
 DRY_RUN=false
 TIMEOUT=120
 YOLO=false
+MATRIX=false
 
 # Parse args
 while [[ $# -gt 0 ]]; do
@@ -108,6 +111,7 @@ while [[ $# -gt 0 ]]; do
         --dry-run) DRY_RUN=true; shift ;;
         --timeout) TIMEOUT="$2"; shift 2 ;;
         --yolo) YOLO=true; shift ;;
+        --matrix) MATRIX=true; shift ;;
         -h|--help)
             head -30 "$0" | grep '^#' | sed 's/^# \?//'
             exit 0 ;;
@@ -746,10 +750,169 @@ run_multi_turn_scenario() {
 }
 
 # ============================================================
+# Matrix stress harness: 4 configs × stress subset
+# ============================================================
+run_matrix() {
+    # Load stress scenario IDs and per-config budgets from baselines
+    local mp=".profiles.matrix"
+    local stress_ids=()
+    if [ -f "$BASELINES_FILE" ]; then
+        while IFS= read -r sid; do
+            [ -n "$sid" ] && stress_ids+=("$sid")
+        done < <(jq -r "$mp.stress_scenarios // empty | .[]?" "$BASELINES_FILE" 2>/dev/null)
+    fi
+    [ ${#stress_ids[@]} -eq 0 ] && stress_ids=("MT-001" "MT-002" "MT-003" "ST-001")
+
+    local budget_tokens budget_duration budget_mcp
+    if [ -f "$BASELINES_FILE" ]; then
+        budget_tokens=$(jq -r "$mp.max_total_output_tokens // 6000" "$BASELINES_FILE" 2>/dev/null)
+        budget_duration=$(jq -r "$mp.max_total_duration_ms // 480000" "$BASELINES_FILE" 2>/dev/null)
+        budget_mcp=$(jq -r "$mp.max_total_mcp_calls // 15" "$BASELINES_FILE" 2>/dev/null)
+    else
+        budget_tokens=6000; budget_duration=480000; budget_mcp=15
+    fi
+
+    # Hard cap = baseline × 1.2
+    local cap_tokens=$((budget_tokens * 120 / 100))
+    local cap_duration=$((budget_duration * 120 / 100))
+    local cap_mcp=$((budget_mcp * 120 / 100))
+
+    log "\n${YELLOW}Brain LLM Matrix Stress Harness${NC}"
+    log "${DIM}Model: $MODEL | Stress subset: ${stress_ids[*]}${NC}"
+    log "${DIM}Budget/config: tokens=$budget_tokens (cap=$cap_tokens) duration=${budget_duration}ms mcp=$budget_mcp (cap=$cap_mcp)${NC}"
+    $DRY_RUN && log "${DIM}DRY-RUN: validating scenarios only${NC}"
+    log ""
+
+    # Collect stress scenario files
+    local stress_scenarios=()
+    for sid in "${stress_ids[@]}"; do
+        local found
+        found=$(find "$SCENARIOS_DIR" -name "*${sid}*" -type f 2>/dev/null | head -1)
+        if [ -n "$found" ]; then
+            stress_scenarios+=("$found")
+        else
+            log "  ${RED}WARNING: Stress scenario $sid not found${NC}"
+        fi
+    done
+
+    if [ ${#stress_scenarios[@]} -eq 0 ]; then
+        echo "ERROR: No stress scenarios found" >&2
+        exit 2
+    fi
+    IFS=$'\n' stress_scenarios=($(sort <<< "${stress_scenarios[*]}")); unset IFS
+
+    # Configs: (STRICT_MODE:COGNITIVE_LEVEL)
+    local configs=("standard:standard" "standard:exhaustive" "paranoid:standard" "paranoid:exhaustive")
+    log "Running ${#stress_scenarios[@]} scenarios × ${#configs[@]} configs = $((${#stress_scenarios[@]} * ${#configs[@]})) total runs\n"
+
+    local config_results=()
+    local grand_total=0 grand_passed=0 grand_failed=0 grand_errors=0
+    local grand_in_tokens=0 grand_out_tokens=0 grand_duration=0 grand_mcp=0
+    local configs_passed=0
+
+    for config in "${configs[@]}"; do
+        local cfg_mode="${config%%:*}"
+        local cfg_cognitive="${config##*:}"
+
+        MODE="$cfg_mode"
+        COGNITIVE="$cfg_cognitive"
+        TOTAL=0; PASSED=0; FAILED=0; ERRORS=0
+        TOTAL_INPUT_TOKENS=0; TOTAL_OUTPUT_TOKENS=0
+        TOTAL_DURATION_MS=0; TOTAL_MCP_CALLS=0
+        RESULTS=()
+
+        log "${YELLOW}━━━ Config: $cfg_mode/$cfg_cognitive ━━━${NC}\n"
+
+        for sf in "${stress_scenarios[@]}"; do
+            local stype
+            stype=$(jq -r '.type // "single"' "$sf" 2>/dev/null)
+            case "$stype" in
+                multi) run_multi_turn_scenario "$sf" ;;
+                *) run_scenario "$sf" ;;
+            esac
+        done
+
+        local rate="0.0"
+        [ "$TOTAL" -gt 0 ] && rate=$(echo "scale=1; $PASSED * 100 / $TOTAL" | bc)
+
+        local results_json=""
+        [ ${#RESULTS[@]} -gt 0 ] && results_json=$(IFS=,; echo "${RESULTS[*]}")
+
+        # Cost guard: regression check per config
+        local budget_status="OK"
+        if ! $DRY_RUN && [ -f "$BASELINES_FILE" ]; then
+            local mini_report="$TMP_DIR/matrix_${cfg_mode}_${cfg_cognitive}.json"
+            echo "{\"total\":$TOTAL,\"passed\":$PASSED,\"failed\":$FAILED,\"errors\":$ERRORS,\"pass_rate\":\"${rate}%\",\"profile\":\"matrix\",\"model\":\"$MODEL\",\"dry_run\":false,\"total_input_tokens\":$TOTAL_INPUT_TOKENS,\"total_output_tokens\":$TOTAL_OUTPUT_TOKENS,\"total_mcp_calls\":$TOTAL_MCP_CALLS,\"total_duration_ms\":$TOTAL_DURATION_MS,\"scenarios\":[]}" > "$mini_report"
+
+            local reg_rc=0
+            bash "$SCRIPT_DIR/benchmark-regression-check.sh" "$mini_report" --strict > "$TMP_DIR/reg_${cfg_mode}_${cfg_cognitive}.log" 2>&1 || reg_rc=$?
+
+            while IFS= read -r rline; do
+                log "  $rline"
+            done < "$TMP_DIR/reg_${cfg_mode}_${cfg_cognitive}.log"
+
+            if [ "$reg_rc" -ne 0 ]; then
+                budget_status="FAIL:regression"
+                log "  ${RED}[COST GUARD] Budget blowup: $cfg_mode/$cfg_cognitive${NC}"
+            fi
+        fi
+
+        config_results+=("{\"mode\":\"$cfg_mode\",\"cognitive\":\"$cfg_cognitive\",\"total\":$TOTAL,\"passed\":$PASSED,\"failed\":$FAILED,\"errors\":$ERRORS,\"pass_rate\":\"${rate}%\",\"total_input_tokens\":$TOTAL_INPUT_TOKENS,\"total_output_tokens\":$TOTAL_OUTPUT_TOKENS,\"total_duration_ms\":$TOTAL_DURATION_MS,\"total_mcp_calls\":$TOTAL_MCP_CALLS,\"budget_status\":\"$budget_status\",\"scenarios\":[$results_json]}")
+
+        grand_total=$((grand_total + TOTAL))
+        grand_passed=$((grand_passed + PASSED))
+        grand_failed=$((grand_failed + FAILED))
+        grand_errors=$((grand_errors + ERRORS))
+        grand_in_tokens=$((grand_in_tokens + TOTAL_INPUT_TOKENS))
+        grand_out_tokens=$((grand_out_tokens + TOTAL_OUTPUT_TOKENS))
+        grand_duration=$((grand_duration + TOTAL_DURATION_MS))
+        grand_mcp=$((grand_mcp + TOTAL_MCP_CALLS))
+
+        if [ "$budget_status" = "OK" ] && [ "$FAILED" -eq 0 ] && [ "$ERRORS" -eq 0 ]; then
+            ((configs_passed++))
+            log "  ${GREEN}[$cfg_mode/$cfg_cognitive] PASS ($PASSED/$TOTAL, ${TOTAL_OUTPUT_TOKENS} tokens)${NC}\n"
+        else
+            log "  ${RED}[$cfg_mode/$cfg_cognitive] FAIL (budget=$budget_status failed=$FAILED)${NC}\n"
+        fi
+    done
+
+    # Build stress_scenarios JSON array
+    local stress_json
+    stress_json=$(printf '%s\n' "${stress_ids[@]}" | jq -R . | jq -sc .)
+
+    # Output consolidated report
+    if $JSON_MODE; then
+        local configs_json
+        configs_json=$(IFS=,; echo "${config_results[*]}")
+        cat <<EOF
+{"matrix":true,"model":"$MODEL","dry_run":$DRY_RUN,"stress_scenarios":$stress_json,"configs":[$configs_json],"summary":{"total_configs":${#configs[@]},"configs_passed":$configs_passed,"total_scenarios":$grand_total,"total_passed":$grand_passed,"total_failed":$grand_failed,"total_errors":$grand_errors,"total_input_tokens":$grand_in_tokens,"total_output_tokens":$grand_out_tokens,"total_duration_ms":$grand_duration,"total_mcp_calls":$grand_mcp}}
+EOF
+    else
+        echo ""
+        echo "=========================================="
+        echo "Matrix Stress: $configs_passed/${#configs[@]} configs passed, $grand_passed/$grand_total scenarios"
+        echo "  Model: $MODEL | Tokens: in=$grand_in_tokens out=$grand_out_tokens"
+        echo "  MCP: $grand_mcp | Duration: ${grand_duration}ms"
+        echo ""
+        if [ "$configs_passed" -lt "${#configs[@]}" ] || [ "$grand_failed" -gt 0 ]; then
+            echo -e "${RED}MATRIX FAILED${NC}"
+            exit 1
+        else
+            echo -e "${GREEN}MATRIX PASSED${NC}"
+        fi
+    fi
+}
+
+# ============================================================
 # MAIN
 # ============================================================
 main() {
     check_deps
+
+    if $MATRIX; then
+        run_matrix
+        return
+    fi
 
     log "\n${YELLOW}Brain LLM Benchmark Suite${NC}"
     log "${DIM}Mode: $MODE/$COGNITIVE | Profile: $PROFILE | Model: $MODEL${NC}"
