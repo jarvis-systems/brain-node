@@ -61,9 +61,12 @@ jobs:
         env:
           PIN_STRICT: ${{ vars.PIN_STRICT || '0' }}
 
-      - name: Enterprise audit (non-blocking)
+      - name: PHPStan static analysis
+        run: composer analyse
+        working-directory: core
+
+      - name: Enterprise audit (blocking — P0 gate)
         run: bash scripts/audit-enterprise.sh
-        continue-on-error: true
 
       - name: Compile discipline check
         run: |

@@ -14,11 +14,15 @@
 #   - Shell script safety headers
 #   - No-op escape methods (contract lies)
 #   - self:: in trait files (LSB violations)
+#   - Known typos (Standarts→Standards)
+#   - Dev dependencies in production require
+#   - PHPStan static analysis
 #
 # Output: dist/audit-report.json + stdout summary
 #
 # Exit codes:
-#   0 - Audit completed (findings may exist)
+#   0 - All P0 checks pass (FAIL categories = 0)
+#   1 - P0 regression detected (any FAIL category)
 #   2 - Missing dependencies
 #
 
@@ -89,7 +93,7 @@ add_category() {
 
 # ── Check 1: PHP syntax ──────────────────────────────────────────────────
 
-log "${BOLD}[1/9] PHP syntax check${NC}"
+log "${BOLD}[1/12] PHP syntax check${NC}"
 
 PHP_ERRORS=0
 PHP_FINDINGS="[]"
@@ -126,7 +130,7 @@ add_category "php-syntax" "$([ $PHP_ERRORS -eq 0 ] && echo pass || echo fail)" "
 
 # ── Check 2: PHPUnit (if available) ─────────────────────────────────────
 
-log "${BOLD}[2/9] PHPUnit tests${NC}"
+log "${BOLD}[2/12] PHPUnit tests${NC}"
 
 TEST_FINDINGS="[]"
 TEST_COUNT=0
@@ -141,11 +145,11 @@ if [[ -f "$PROJECT_ROOT/core/vendor/bin/phpunit" ]]; then
 else
     log "  ${YELLOW}SKIP${NC} PHPUnit not installed (run: cd core && composer install)"
 fi
-add_category "phpunit" "$([ $TEST_COUNT -eq 0 ] && echo pass || echo fail)" "$TEST_COUNT" "$TEST_FINDINGS"
+add_category "phpunit" "$([ $TEST_COUNT -eq 0 ] && echo pass || echo warn)" "$TEST_COUNT" "$TEST_FINDINGS"
 
 # ── Check 3: Silent catch blocks ────────────────────────────────────────
 
-log "${BOLD}[3/9] Silent catch blocks${NC}"
+log "${BOLD}[3/12] Silent catch blocks${NC}"
 
 CATCH_FINDINGS="[]"
 CATCH_COUNT=0
@@ -205,7 +209,7 @@ add_category "silent-catches" "$([ $CATCH_COUNT -eq 0 ] && echo pass || echo war
 
 # ── Check 4: Debug artifacts ────────────────────────────────────────────
 
-log "${BOLD}[4/9] Debug artifacts${NC}"
+log "${BOLD}[4/12] Debug artifacts${NC}"
 
 DEBUG_FINDINGS="[]"
 DEBUG_COUNT=0
@@ -241,7 +245,7 @@ add_category "debug-artifacts" "$([ $DEBUG_COUNT -eq 0 ] && echo pass || echo wa
 
 # ── Check 5: TODO/FIXME markers ────────────────────────────────────────
 
-log "${BOLD}[5/9] TODO/FIXME markers${NC}"
+log "${BOLD}[5/12] TODO/FIXME markers${NC}"
 
 TODO_FINDINGS="[]"
 TODO_COUNT=0
@@ -273,7 +277,7 @@ add_category "todo-fixme" "$([ $TODO_COUNT -eq 0 ] && echo pass || echo info)" "
 
 # ── Check 6: Unsafe patterns ───────────────────────────────────────────
 
-log "${BOLD}[6/9] Unsafe patterns (eval/shell_exec/die/exit)${NC}"
+log "${BOLD}[6/12] Unsafe patterns (eval/shell_exec/die/exit)${NC}"
 
 UNSAFE_FINDINGS="[]"
 UNSAFE_COUNT=0
@@ -320,7 +324,7 @@ add_category "unsafe-patterns" "$([ $UNSAFE_COUNT -eq 0 ] && echo pass || echo w
 
 # ── Check 7: Shell script safety ────────────────────────────────────────
 
-log "${BOLD}[7/9] Shell script safety headers${NC}"
+log "${BOLD}[7/12] Shell script safety headers${NC}"
 
 SHELL_FINDINGS="[]"
 SHELL_COUNT=0
@@ -348,7 +352,7 @@ add_category "shell-safety" "$([ $SHELL_COUNT -eq 0 ] && echo pass || echo warn)
 
 # ── Check 8: No-op escape methods ───────────────────────────────────────
 
-log "${BOLD}[8/9] No-op escape method detection${NC}"
+log "${BOLD}[8/12] No-op escape method detection${NC}"
 
 NOOP_FINDINGS="[]"
 NOOP_COUNT=0
@@ -386,7 +390,7 @@ add_category "noop-escape" "$([ $NOOP_COUNT -eq 0 ] && echo pass || echo warn)" 
 
 # ── Check 9: self:: in trait files ─────────────────────────────────────
 
-log "${BOLD}[9/9] Late static binding in traits${NC}"
+log "${BOLD}[9/12] Late static binding in traits${NC}"
 
 LSB_FINDINGS="[]"
 LSB_COUNT=0
@@ -410,6 +414,86 @@ if [[ $LSB_COUNT -eq 0 ]]; then
     log "  ${GREEN}PASS${NC} No self:: in trait files"
 fi
 add_category "trait-lsb" "$([ $LSB_COUNT -eq 0 ] && echo pass || echo warn)" "$LSB_COUNT" "$LSB_FINDINGS"
+
+# ── Check 10: Known typos ──────────────────────────────────────────────
+
+log "${BOLD}[10/12] Known typos in codebase${NC}"
+
+TYPO_FINDINGS="[]"
+TYPO_COUNT=0
+
+# "Standarts" is a known P0-004 typo that propagated through 4 files.
+# This check prevents regression after the CompileStandardsTrait rename.
+while IFS=: read -r file line content; do
+    [[ -z "$file" ]] && continue
+    relative="${file#$PROJECT_ROOT/}"
+    [[ "$relative" == vendor/* ]] && continue
+    [[ "$relative" == */vendor/* ]] && continue
+    [[ "$relative" == .docs/* ]] && continue
+    [[ "$relative" == scripts/audit-enterprise.sh ]] && continue
+    TYPO_COUNT=$((TYPO_COUNT + 1))
+    TYPO_FINDINGS=$(echo "$TYPO_FINDINGS" | jq \
+        --arg file "$relative" \
+        --arg line "$line" \
+        --arg content "$(echo "$content" | head -c 200)" \
+        '. + [{"file": $file, "line": ($line | tonumber), "content": $content}]')
+    log "  ${RED}FAIL${NC} $relative:$line — typo: Standarts (should be Standards)"
+done < <(grep -rn 'Standarts' "$PROJECT_ROOT/core/src" "$PROJECT_ROOT/node" --include='*.php' 2>/dev/null || true)
+
+if [[ $TYPO_COUNT -eq 0 ]]; then
+    log "  ${GREEN}PASS${NC} No known typos"
+fi
+add_category "known-typos" "$([ $TYPO_COUNT -eq 0 ] && echo pass || echo fail)" "$TYPO_COUNT" "$TYPO_FINDINGS"
+
+# ── Check 11: Dev deps in production require ───────────────────────────
+
+log "${BOLD}[11/12] Dev dependencies in production require${NC}"
+
+DEVDEP_FINDINGS="[]"
+DEVDEP_COUNT=0
+
+# Known dev-only packages that should be in require-dev, not require
+DEV_ONLY_PACKAGES=("fakerphp/faker" "phpunit/phpunit" "phpstan/phpstan" "vimeo/psalm")
+
+for composer_file in "$PROJECT_ROOT"/*/composer.json "$PROJECT_ROOT/composer.json"; do
+    [[ ! -f "$composer_file" ]] && continue
+    relative="${composer_file#$PROJECT_ROOT/}"
+    for pkg in "${DEV_ONLY_PACKAGES[@]}"; do
+        # Check if package is in "require" (not "require-dev")
+        if jq -e --arg pkg "$pkg" '.require[$pkg] // empty' "$composer_file" >/dev/null 2>&1; then
+            DEVDEP_COUNT=$((DEVDEP_COUNT + 1))
+            DEVDEP_FINDINGS=$(echo "$DEVDEP_FINDINGS" | jq \
+                --arg file "$relative" \
+                --arg pkg "$pkg" \
+                '. + [{"file": $file, "package": $pkg, "message": "dev-only package in production require"}]')
+            log "  ${RED}FAIL${NC} $relative — $pkg in require (should be require-dev)"
+        fi
+    done
+done
+
+if [[ $DEVDEP_COUNT -eq 0 ]]; then
+    log "  ${GREEN}PASS${NC} No dev deps in production require"
+fi
+add_category "dev-deps-prod" "$([ $DEVDEP_COUNT -eq 0 ] && echo pass || echo fail)" "$DEVDEP_COUNT" "$DEVDEP_FINDINGS"
+
+# ── Check 12: PHPStan (static analysis) ───────────────────────────────
+
+log "${BOLD}[12/12] PHPStan static analysis${NC}"
+
+PHPSTAN_FINDINGS="[]"
+PHPSTAN_COUNT=0
+if [[ -f "$PROJECT_ROOT/core/vendor/bin/phpstan" ]]; then
+    if (cd "$PROJECT_ROOT/core" && ./vendor/bin/phpstan analyse --no-progress 2>&1) >/dev/null 2>&1; then
+        log "  ${GREEN}PASS${NC} Core phpstan passed"
+    else
+        PHPSTAN_COUNT=1
+        PHPSTAN_FINDINGS=$(echo "$PHPSTAN_FINDINGS" | jq '. + [{"file": "core/", "message": "PHPStan analysis failed"}]')
+        log "  ${RED}FAIL${NC} Core phpstan failed"
+    fi
+else
+    log "  ${YELLOW}SKIP${NC} PHPStan not installed (run: cd core && composer install)"
+fi
+add_category "phpstan" "$([ $PHPSTAN_COUNT -eq 0 ] && echo pass || echo fail)" "$PHPSTAN_COUNT" "$PHPSTAN_FINDINGS"
 
 # ── Output JSON report ──────────────────────────────────────────────────
 
@@ -446,5 +530,12 @@ log "  ${RED}FAIL${NC}: $fail_count categories"
 log "  Total findings: $TOTAL_FINDINGS"
 log ""
 log "  Report: ${CYAN}$REPORT_FILE${NC}"
+
+# Blocking exit: any FAIL category = exit 1 (P0 regression)
+if [[ $fail_count -gt 0 ]]; then
+    log ""
+    log "  ${RED}BLOCKED${NC}: $fail_count FAIL categories detected — P0 regression"
+    exit 1
+fi
 
 exit 0

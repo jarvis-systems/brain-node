@@ -50,10 +50,10 @@ status: active
 |-------|-------|
 | File | `core/src/Compilation/Traits/CompileStandartsTrait.php` |
 | Risk | Typo "Standarts" propagates to 3+ files via `use` statements; maintenance confusion |
-| Fix | Rename to `CompileStandardsTrait.php`, update all `use` references |
-| Size | 4+ files |
-| Status | Open (coordinated rename needed) |
-| Validate | `php -l` on all affected files + full test suite |
+| Fix | Renamed file to `CompileStandardsTrait.php`, updated trait name + all `use` references in `Store.php`, `Operator.php`, `ToolAbstract.php` |
+| Size | 4 files |
+| Status | **FIXED** |
+| Validate | `php -l` on all 4 files + `audit-enterprise.sh` Check 10 (known typos) = PASS |
 
 ### ~~P0-005~~: Catch blocks in CompileStandartsTrait (RECLASSIFIED to P2)
 
@@ -101,10 +101,10 @@ status: active
 |-------|-------|
 | File | `scripts/HelloScript.php` |
 | Risk | Scaffold file with unused `Http` import and default description — dead code in tree |
-| Fix | Remove file or complete implementation |
-| Size | 1 file |
-| Status | Open |
-| Validate | N/A |
+| Fix | Removed file entirely — no callers, no references |
+| Size | -1 file |
+| Status | **FIXED** |
+| Validate | File deletion verified; phpstan would catch unused imports in remaining scripts |
 
 ### P0-010: No static analysis
 
@@ -112,21 +112,21 @@ status: active
 |-------|-------|
 | Files | No `phpstan.neon`/`psalm.xml` anywhere |
 | Risk | Zero static analysis across all 3 packages — type bugs and dead code undetectable |
-| Fix | Install phpstan, create baseline, add to CI |
-| Size | New tooling |
-| Status | Open (out of scope: "no new features" constraint) |
-| Validate | `composer analyse` passes |
+| Fix | Installed phpstan 2.x in core, created `phpstan.neon` (level 0, 4 documented suppressions), added `composer analyse` script, added to CI as blocking step |
+| Size | +3 files (phpstan dep, config, composer script) + CI update |
+| Status | **FIXED** |
+| Validate | `cd core && composer analyse` = 0 errors + `audit-enterprise.sh` Check 12 (phpstan) = PASS |
 
 ### P0-011: faker in production require
 
 | Field | Value |
 |-------|-------|
-| File | `cli/composer.json` |
+| File | `cli/composer.json` + `cli/helpers.php` |
 | Risk | `fakerphp/faker` in `require` instead of `require-dev` — dev dependency in production |
-| Fix | Move to `require-dev` |
-| Size | 1 line |
-| Status | Open (CLI package, separate concern) |
-| Validate | `composer install --no-dev` still works |
+| Fix | Moved faker to `require-dev`, removed dead `fake()` function from `helpers.php` (zero callers in entire project) |
+| Size | 2 files |
+| Status | **FIXED** |
+| Validate | `php -l cli/helpers.php` + `audit-enterprise.sh` Check 11 (dev deps in prod) = PASS |
 
 ### P0-012: self instead of static in McpSchemaTrait
 
@@ -211,10 +211,10 @@ status: active
 
 | Priority | Total | Fixed | Reclassified | Open |
 |----------|-------|-------|--------------|------|
-| P0 | 12 | 6 | 2 (to P2) | 4 |
+| P0 | 12 | 10 | 2 (to P2) | 0 |
 | P1 | 5 | 0 | 0 | 5 |
 | P2 | 3+2 | 0 | 0 | 5 |
-| **Total** | **20** | **6** | **2** | **14** |
+| **Total** | **20** | **10** | **2** | **10** |
 
 ### Audit Check Coverage
 
@@ -223,6 +223,10 @@ status: active
 | P0-001 (strict_types) | `audit-enterprise.sh` Check 1 (PHP syntax) |
 | P0-002 (dd artifacts) | `audit-enterprise.sh` Check 4 (debug artifacts) |
 | P0-003 (dump→stderr) | `audit-enterprise.sh` Check 4 (debug artifacts) |
+| P0-004 (typo rename) | `audit-enterprise.sh` Check 10 (known typos) |
 | P0-007 (CI timeout) | YAML syntax validation |
 | P0-008 (pipefail) | `audit-enterprise.sh` Check 7 (shell safety) |
+| P0-009 (dead code) | File deletion + phpstan unused import detection |
+| P0-010 (phpstan) | `audit-enterprise.sh` Check 12 (phpstan) + CI blocking step |
+| P0-011 (faker→dev) | `audit-enterprise.sh` Check 11 (dev deps in prod) |
 | P0-012 (self→static) | `audit-enterprise.sh` Check 9 (trait LSB) |
