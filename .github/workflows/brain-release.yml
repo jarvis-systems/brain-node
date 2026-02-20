@@ -46,6 +46,9 @@ jobs:
       - name: Validate baselines JSON
         run: jq empty .docs/benchmarks/baselines/baselines.json
 
+      - name: Benchmark dry-run validation
+        run: bash scripts/benchmark-llm-suite.sh --dry-run --json
+
       - name: Generate manifest
         run: bash scripts/generate-manifest.sh
         env:

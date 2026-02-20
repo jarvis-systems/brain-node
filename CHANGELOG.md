@@ -7,6 +7,17 @@ description: "Release changelog for jarvis-brain/node"
 
 ## [Unreleased]
 
+### Added — Sales Demo + Pilot Pack
+- **Enterprise Demo**: `scripts/demo-enterprise.sh` — one-command demo running MT-001, MT-002, ADV-003 with consolidated `dist/demo-report.json`
+- **Pilot Guide**: `.docs/product/06-pilot.md` — prerequisites, bundle usage, success criteria, support artifacts
+- **Composer Alias**: `demo:enterprise` for quick demo execution
+- **Release Bundle**: demo script, benchmark runner, and demo scenarios now included in enterprise bundle
+- **CI Dry-Run Gate**: benchmark dry-run validation step added to `brain-release.yml`
+
+### Changed
+- **00-overview.md**: added pilot deployment reference
+- **build-release-bundle.sh**: includes demo-relevant scripts and scenario files
+
 ## [v0.1.1] — 2026-02-20
 
 ### Added — Enterprise Hardening

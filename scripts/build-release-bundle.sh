@@ -94,6 +94,22 @@ if [[ -f ".mcp.json" ]]; then
     cp .mcp.json "$STAGING/"
 fi
 
+# Demo: scripts + scenarios (for demo-enterprise.sh from bundle)
+mkdir -p "$STAGING/scripts"
+for DEMO_SCRIPT in demo-enterprise.sh benchmark-llm-suite.sh; do
+    if [[ -f "scripts/$DEMO_SCRIPT" ]]; then
+        cp "scripts/$DEMO_SCRIPT" "$STAGING/scripts/"
+        chmod +x "$STAGING/scripts/$DEMO_SCRIPT"
+    fi
+done
+
+mkdir -p "$STAGING/.docs/benchmarks/scenarios"
+for DEMO_SID in MT-001 MT-002 ADV-003; do
+    for SF in .docs/benchmarks/scenarios/${DEMO_SID}*.json; do
+        [[ -f "$SF" ]] && cp "$SF" "$STAGING/.docs/benchmarks/scenarios/"
+    done
+done
+
 # Count files
 FILE_COUNT=$(find "$STAGING" -type f | wc -l | tr -d ' ')
 echo "Staged ${FILE_COUNT} files"

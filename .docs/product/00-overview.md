@@ -55,3 +55,7 @@ Brain is a **build-time tool**, not a runtime service. It produces static artifa
 - **Commands**: User-triggered slash commands (e.g., `/commit`).
 - **Includes**: Compile-time fragments merged into targets. Not visible at runtime.
 - **MCP**: Model Context Protocol server configurations.
+
+## Pilot Deployment
+
+For enterprise pilot setup, demo execution, and success criteria, see the [Pilot Guide](06-pilot.md).
