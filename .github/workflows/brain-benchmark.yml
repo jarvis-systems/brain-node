@@ -12,6 +12,7 @@ on:
         options:
           - smoke
           - ci
+          - telemetry-ci
           - full
       model:
         description: 'AI model'

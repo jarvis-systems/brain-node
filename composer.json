@@ -21,6 +21,7 @@
   "scripts": {
     "benchmark": "bash scripts/benchmark-llm-suite.sh",
     "benchmark:ci": "bash scripts/benchmark-llm-suite.sh --json --profile ci --model haiku",
+    "benchmark:telemetry": "bash scripts/benchmark-llm-suite.sh --json --profile telemetry-ci --model haiku",
     "benchmark:dry": "bash scripts/benchmark-llm-suite.sh --dry-run --json",
     "benchmark:smoke": "bash scripts/benchmark-llm-suite.sh --scenario S00 --json --model haiku"
   },

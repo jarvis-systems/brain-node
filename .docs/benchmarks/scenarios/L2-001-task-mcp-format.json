@@ -12,6 +12,7 @@
     ],
     "banned_patterns": [
       "mcp__vector-memory|vector.memory"
-    ]
+    ],
+    "expected_mcp_calls": { "min": 0, "max": 5 }
   }
 }

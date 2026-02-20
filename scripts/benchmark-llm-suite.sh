@@ -13,7 +13,7 @@
 # Options:
 #   --json                  Output JSON report only
 #   --mode standard|exhaustive   Compilation mode (default: standard)
-#   --profile ci|full       ci=L1+L2 only, full=all (default: full)
+#   --profile <name>        smoke|ci|telemetry-ci|full (default: full)
 #   --scenario <id>         Run single scenario by ID
 #   --model <name>          Override AI model (default: sonnet)
 #   --dry-run               Validate scenarios without AI calls
@@ -40,6 +40,28 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 SCENARIOS_DIR="$PROJECT_ROOT/.docs/benchmarks/scenarios"
 TMP_DIR=$(mktemp -d)
+
+# macOS-compatible timeout wrapper
+if command -v timeout &>/dev/null; then
+    TIMEOUT_CMD="timeout"
+elif command -v gtimeout &>/dev/null; then
+    TIMEOUT_CMD="gtimeout"
+else
+    # Pure bash fallback: run command with background kill after N seconds
+    _timeout_fallback() {
+        local secs="$1"; shift
+        "$@" &
+        local pid=$!
+        ( sleep "$secs" && kill -TERM "$pid" 2>/dev/null ) &
+        local watchdog=$!
+        wait "$pid" 2>/dev/null
+        local rc=$?
+        kill -TERM "$watchdog" 2>/dev/null
+        wait "$watchdog" 2>/dev/null
+        return $rc
+    }
+    TIMEOUT_CMD="_timeout_fallback"
+fi
 
 # CLI path resolution: env → local → global
 if [ -n "${BRAIN_AI_CMD:-}" ]; then
@@ -176,7 +198,9 @@ parse_cli_output() {
 count_pattern() {
     local file="$1"
     local pattern="$2"
-    grep -ciE "$pattern" "$file" 2>/dev/null || echo "0"
+    local result
+    result=$(grep -ciE "$pattern" "$file" 2>/dev/null) || result=0
+    echo "$result"
 }
 
 # ============================================================
@@ -226,14 +250,18 @@ run_scenario() {
         local cli_args=(claude --ask "$sprompt" --json --model "$MODEL")
         $YOLO && cli_args+=(--yolo)
 
+        # Export env vars for CLI subprocess
+        export STRICT_MODE="$MODE" COGNITIVE_LEVEL="$COGNITIVE"
+        [ -n "${BRAIN_CLI_DEBUG:-}" ] && export BRAIN_CLI_DEBUG
+
         # Run Brain CLI
         local start_ns
         start_ns=$(date +%s%N 2>/dev/null || echo "$(($(date +%s) * 1000000000))")
 
         local raw_file="$TMP_DIR/raw_${sid}.jsonl"
+        local err_file="$TMP_DIR/err_${sid}.log"
         cd "$PROJECT_ROOT"
-        STRICT_MODE="$MODE" COGNITIVE_LEVEL="$COGNITIVE" \
-            timeout "$stimeout" "$AI_CMD" "${cli_args[@]}" > "$raw_file" 2>/dev/null || true
+        $TIMEOUT_CMD "$stimeout" "$AI_CMD" "${cli_args[@]}" > "$raw_file" 2>"$err_file" || true
 
         local end_ns
         end_ns=$(date +%s%N 2>/dev/null || echo "$(($(date +%s) * 1000000000))")
@@ -264,9 +292,9 @@ run_scenario() {
 
         # Check: DTO schema (init + message + result present)
         local has_init has_message has_result
-        has_init=$(grep -c '"type":"init"' "$raw_file" 2>/dev/null || echo "0")
-        has_message=$(grep -c '"type":"message"' "$raw_file" 2>/dev/null || echo "0")
-        has_result=$(grep -c '"type":"result"' "$raw_file" 2>/dev/null || echo "0")
+        has_init=$(grep -c '"type":"init"' "$raw_file" 2>/dev/null) || has_init=0
+        has_message=$(grep -c '"type":"message"' "$raw_file" 2>/dev/null) || has_message=0
+        has_result=$(grep -c '"type":"result"' "$raw_file" 2>/dev/null) || has_result=0
         if [ "$has_init" -gt 0 ] && [ "$has_message" -gt 0 ] && [ "$has_result" -gt 0 ]; then
             checks+=("{\"check\":\"dto-schema\",\"status\":\"PASS\",\"detail\":\"init=$has_init msg=$has_message result=$has_result\"}")
             log "  ${GREEN}[PASS] dto-schema: init=$has_init msg=$has_message result=$has_result${NC}"
@@ -335,6 +363,21 @@ run_scenario() {
                 log "  ${GREEN}[PASS] banned: '$pname' absent${NC}"
             fi
         done < <(jq -r '.checks.banned_patterns // [] | .[]' "$scenario_file" 2>/dev/null)
+
+        # Check: expected MCP calls range (if specified in scenario)
+        local mcp_min mcp_max
+        mcp_min=$(jq -r '.checks.expected_mcp_calls.min // empty' "$scenario_file" 2>/dev/null)
+        mcp_max=$(jq -r '.checks.expected_mcp_calls.max // empty' "$scenario_file" 2>/dev/null)
+        if [ -n "$mcp_min" ] && [ -n "$mcp_max" ]; then
+            if [ "$mcp_calls" -ge "$mcp_min" ] && [ "$mcp_calls" -le "$mcp_max" ]; then
+                checks+=("{\"check\":\"mcp-calls-range\",\"status\":\"PASS\",\"detail\":\"$mcp_calls in [$mcp_min..$mcp_max]\"}")
+                log "  ${GREEN}[PASS] mcp-calls-range: $mcp_calls in [$mcp_min..$mcp_max]${NC}"
+            else
+                checks+=("{\"check\":\"mcp-calls-range\",\"status\":\"FAIL\",\"detail\":\"$mcp_calls not in [$mcp_min..$mcp_max]\"}")
+                scenario_status="FAIL"
+                log "  ${RED}[FAIL] mcp-calls-range: $mcp_calls not in [$mcp_min..$mcp_max]${NC}"
+            fi
+        fi
 
         # Check: output token budget
         if [ "$output_tokens" -gt 0 ] && [ "$output_tokens" -gt "$smax_out" ] 2>/dev/null; then
@@ -415,6 +458,8 @@ main() {
             local diff
             diff=$(jq -r '.difficulty' "$sf" 2>/dev/null)
             # Profile filter
+            local sid_check
+            sid_check=$(jq -r '.id' "$sf" 2>/dev/null)
             case "$PROFILE" in
                 smoke)
                     # Smoke runs only S0 scenarios
@@ -424,6 +469,15 @@ main() {
                     # CI runs L1+L2, skips L3 and S0
                     [ "$diff" = "L3" ] && continue
                     [ "$diff" = "S0" ] && continue
+                    ;;
+                telemetry-ci)
+                    # Smoke + 3 cheapest L1 + 2 L2 (MCP format checks)
+                    case "$sid_check" in
+                        S00-*) ;; # include smoke
+                        L1-001|L1-002|L1-003) ;; # 3 cheapest L1
+                        L2-001|L2-002) ;; # MCP format checks (tool_use likely)
+                        *) continue ;;
+                    esac
                     ;;
                 full)
                     # Full runs L1+L2+L3, skips S0
