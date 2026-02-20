@@ -30,10 +30,10 @@ status: active
 | 6 | Testability | 1 | 0 | 1 | 0.7 | Core: 4 tests/167 files; Node: 0 tests; CLI: 7 test files |
 | 7 | Release Discipline | 3 | 3 | -- | 3.0 | Pinning, manifest, bundle, release CI -- all good |
 | 8 | Operability | 3 | 3 | -- | 3.0 | Benchmarks, runbooks, ops-evidence, demo -- comprehensive |
-| 9 | Footguns | 1 | 2 | -- | 1.3 | Debug artifacts (dd/dump), silent catches, typo in class name |
+| 9 | Footguns | 2 | 2 | -- | 2.0 | ~~Debug artifacts~~ **FIXED** (dd/dump removed); typo in class name remains |
 | 10 | Maintainability | 2 | 2 | -- | 2.0 | strict_types missing in 1 file; CompileStandartsTrait typo |
 
-**Overall Score: 20.0 / 30 (67%)**
+**Overall Score: 20.7 / 30 (69%)**
 
 ## Category Details
 
@@ -49,7 +49,7 @@ No sources of non-determinism found. No `rand()`, `shuffle()`, `mt_rand()`, `arr
 
 ### 3. Input Validation (2/3)
 
-`McpSchemaTrait` provides 3 validation modes (`callJson`, `callValidatedJson`, schema generation). However, `self::callJson()` at line 28 uses early static binding instead of `static::callJson()`, breaking LSB in subclasses. Not all MCP call sites use validated variants.
+`McpSchemaTrait` provides 3 validation modes (`callJson`, `callValidatedJson`, schema generation). ~~`self::callJson()` at line 28 uses early static binding~~ **FIXED** — now uses `static::` for proper LSB. Not all MCP call sites use validated variants.
 
 ### 4. Security (1/3)
 
@@ -85,11 +85,11 @@ Strong: dependency pinning (`pins.json`), release manifest, build bundle script 
 
 Comprehensive: benchmark suite (standard + LLM), ops evidence collection, failure runbooks, demo/pilot pack, observability documentation, ADR/ADV decision records.
 
-### 9. Footguns (1.3/3)
+### 9. Footguns (2.0/3)
 
-**Core (1/3)**:
+**Core (2/3)**:
 - ~~2 commented-out `dd()` blocks in `XmlBuilder.php`~~ **FIXED**
-- `dump()` in production fallback in `ConvertCommand.php:173`
+- ~~`dump()` in production fallback in `ConvertCommand.php:173`~~ **FIXED** (→ fwrite STDERR)
 - `CompileStandartsTrait.php` -- typo propagates to 3 files
 - `HelloScript.php` -- scaffold with unused `Http` import
 
@@ -106,11 +106,11 @@ Comprehensive: benchmark suite (standard + LLM), ops evidence collection, failur
 
 ## Risk Matrix
 
-| Risk Level | Count | Action |
-|------------|-------|--------|
-| P0 (Critical) | 12 | Fix immediately, see FIX-QUEUE.md |
-| P1 (Important) | 5 | Plan for next sprint |
-| P2 (Nice to have) | 3 | Backlog |
+| Risk Level | Total | Fixed | Open | Action |
+|------------|-------|-------|------|--------|
+| P0 (Critical) | 12 | 6 | 4 | Fix immediately, see FIX-QUEUE.md |
+| P1 (Important) | 5 | 0 | 5 | Plan for next sprint |
+| P2 (Nice to have) | 5 | 0 | 5 | Backlog |
 
 ## Audit Methodology
 

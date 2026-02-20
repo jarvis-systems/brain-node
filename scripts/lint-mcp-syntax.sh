@@ -9,7 +9,7 @@
 #   2 - Configuration error
 #
 
-set -e
+set -euo pipefail
 
 # Colors
 RED='\033[0;31m'
@@ -105,11 +105,11 @@ echo ""
 
 # Default: STRICT (fail on legacy). Use --warn to downgrade.
 STRICT_MODE="${STRICT_MCP_LINT:-1}"
-if [[ "$1" == "--warn" ]] || [[ "$1" == "-w" ]]; then
+if [[ "${1:-}" == "--warn" ]] || [[ "${1:-}" == "-w" ]]; then
     STRICT_MODE=0
 fi
 # Legacy flag support
-if [[ "$1" == "--strict" ]] || [[ "$1" == "-s" ]]; then
+if [[ "${1:-}" == "--strict" ]] || [[ "${1:-}" == "-s" ]]; then
     STRICT_MODE=1
 fi
 

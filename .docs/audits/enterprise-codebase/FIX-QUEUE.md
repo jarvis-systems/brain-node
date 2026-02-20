@@ -39,10 +39,10 @@ status: active
 |-------|-------|
 | File | `core/src/Console/Commands/ConvertCommand.php:173` |
 | Risk | Debug output leak in production fallback path |
-| Fix | Remove `dump()` call or replace with proper logging |
+| Fix | Replaced `dump()` with `fwrite(STDERR, json_encode(...))` — preserves debug utility, redirects to stderr |
 | Size | 1 line |
-| Status | Open |
-| Validate | `php -l core/src/Console/Commands/ConvertCommand.php` |
+| Status | **FIXED** |
+| Validate | `php -l core/src/Console/Commands/ConvertCommand.php` + `audit-enterprise.sh` Check 4 (debug artifacts) = PASS |
 
 ### P0-004: CompileStandartsTrait typo
 
@@ -90,10 +90,10 @@ status: active
 |-------|-------|
 | Files | `scripts/verify-compile-metrics.sh:12`, `scripts/lint-mcp-syntax.sh:12`, `scripts/benchmark-suite.sh:14` |
 | Risk | `set -e` only — unset vars expand to empty string, pipe errors swallowed |
-| Fix | Change `set -e` to `set -euo pipefail` |
-| Size | 3 lines across 3 files |
-| Status | Open |
-| Validate | `bash -n` on each file |
+| Fix | Changed `set -e` to `set -euo pipefail` + fixed `$1` → `${1:-}` for `-u` compatibility |
+| Size | 3 lines + 2 `$1` fixes across 3 files |
+| Status | **FIXED** |
+| Validate | `bash -n` on each file + `audit-enterprise.sh` Check 7 (shell safety) = PASS |
 
 ### P0-009: HelloScript.php dead code
 
@@ -132,12 +132,12 @@ status: active
 
 | Field | Value |
 |-------|-------|
-| File | `core/src/Mcp/Traits/McpSchemaTrait.php:28` |
-| Risk | `self::callJson()` breaks late static binding if method overridden in subclass |
-| Fix | Change `self::` to `static::` |
-| Size | 1 line |
-| Status | Open |
-| Validate | `php -l` + MCP schema tests |
+| File | `core/src/Mcp/Traits/McpSchemaTrait.php:27-28` |
+| Risk | `self::callJson()` and `self::schema()` break late static binding if methods overridden in subclass |
+| Fix | Changed both `self::` to `static::` on lines 27-28 |
+| Size | 2 lines |
+| Status | **FIXED** |
+| Validate | `php -l` + `audit-enterprise.sh` Check 9 (trait LSB) — McpSchemaTrait clean |
 
 ## P1 — Important (Next Sprint)
 
@@ -211,7 +211,18 @@ status: active
 
 | Priority | Total | Fixed | Reclassified | Open |
 |----------|-------|-------|--------------|------|
-| P0 | 12 | 3 | 2 (to P2) | 7 |
+| P0 | 12 | 6 | 2 (to P2) | 4 |
 | P1 | 5 | 0 | 0 | 5 |
 | P2 | 3+2 | 0 | 0 | 5 |
-| **Total** | **20** | **3** | **2** | **17** |
+| **Total** | **20** | **6** | **2** | **14** |
+
+### Audit Check Coverage
+
+| Fix | Regression Prevention |
+|-----|----------------------|
+| P0-001 (strict_types) | `audit-enterprise.sh` Check 1 (PHP syntax) |
+| P0-002 (dd artifacts) | `audit-enterprise.sh` Check 4 (debug artifacts) |
+| P0-003 (dump→stderr) | `audit-enterprise.sh` Check 4 (debug artifacts) |
+| P0-007 (CI timeout) | YAML syntax validation |
+| P0-008 (pipefail) | `audit-enterprise.sh` Check 7 (shell safety) |
+| P0-012 (self→static) | `audit-enterprise.sh` Check 9 (trait LSB) |

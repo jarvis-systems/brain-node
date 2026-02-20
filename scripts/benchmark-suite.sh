@@ -11,7 +11,7 @@
 #   1 - One or more scenarios failed
 #
 
-set -e
+set -euo pipefail
 
 # Colors
 RED='\033[0;31m'
@@ -28,7 +28,7 @@ CLAUDE_MD="$CLAUDE_DIR/CLAUDE.md"
 CORE_DIR="$PROJECT_ROOT/core"
 
 JSON_MODE=false
-[ "$1" = "--json" ] && JSON_MODE=true
+[ "${1:-}" = "--json" ] && JSON_MODE=true
 
 TOTAL=0
 PASSED=0

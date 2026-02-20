@@ -13,6 +13,7 @@
 #   - Hardcoded user paths
 #   - Shell script safety headers
 #   - No-op escape methods (contract lies)
+#   - self:: in trait files (LSB violations)
 #
 # Output: dist/audit-report.json + stdout summary
 #
@@ -88,7 +89,7 @@ add_category() {
 
 # ── Check 1: PHP syntax ──────────────────────────────────────────────────
 
-log "${BOLD}[1/8] PHP syntax check${NC}"
+log "${BOLD}[1/9] PHP syntax check${NC}"
 
 PHP_ERRORS=0
 PHP_FINDINGS="[]"
@@ -125,7 +126,7 @@ add_category "php-syntax" "$([ $PHP_ERRORS -eq 0 ] && echo pass || echo fail)" "
 
 # ── Check 2: PHPUnit (if available) ─────────────────────────────────────
 
-log "${BOLD}[2/8] PHPUnit tests${NC}"
+log "${BOLD}[2/9] PHPUnit tests${NC}"
 
 TEST_FINDINGS="[]"
 TEST_COUNT=0
@@ -144,7 +145,7 @@ add_category "phpunit" "$([ $TEST_COUNT -eq 0 ] && echo pass || echo fail)" "$TE
 
 # ── Check 3: Silent catch blocks ────────────────────────────────────────
 
-log "${BOLD}[3/8] Silent catch blocks${NC}"
+log "${BOLD}[3/9] Silent catch blocks${NC}"
 
 CATCH_FINDINGS="[]"
 CATCH_COUNT=0
@@ -204,7 +205,7 @@ add_category "silent-catches" "$([ $CATCH_COUNT -eq 0 ] && echo pass || echo war
 
 # ── Check 4: Debug artifacts ────────────────────────────────────────────
 
-log "${BOLD}[4/8] Debug artifacts${NC}"
+log "${BOLD}[4/9] Debug artifacts${NC}"
 
 DEBUG_FINDINGS="[]"
 DEBUG_COUNT=0
@@ -221,6 +222,9 @@ while IFS=: read -r file line content; do
     [[ "$relative" == .docs/* ]] && continue
     # Skip this audit script itself
     [[ "$relative" == scripts/audit-enterprise.sh ]] && continue
+    # Skip legitimate library method calls (Yaml::dump, ->dump, etc.)
+    [[ "$content" == *"::dump("* ]] && continue
+    [[ "$content" == *"->dump("* ]] && continue
     DEBUG_COUNT=$((DEBUG_COUNT + 1))
     DEBUG_FINDINGS=$(echo "$DEBUG_FINDINGS" | jq \
         --arg file "$relative" \
@@ -237,7 +241,7 @@ add_category "debug-artifacts" "$([ $DEBUG_COUNT -eq 0 ] && echo pass || echo wa
 
 # ── Check 5: TODO/FIXME markers ────────────────────────────────────────
 
-log "${BOLD}[5/8] TODO/FIXME markers${NC}"
+log "${BOLD}[5/9] TODO/FIXME markers${NC}"
 
 TODO_FINDINGS="[]"
 TODO_COUNT=0
@@ -269,7 +273,7 @@ add_category "todo-fixme" "$([ $TODO_COUNT -eq 0 ] && echo pass || echo info)" "
 
 # ── Check 6: Unsafe patterns ───────────────────────────────────────────
 
-log "${BOLD}[6/8] Unsafe patterns (eval/shell_exec/die/exit)${NC}"
+log "${BOLD}[6/9] Unsafe patterns (eval/shell_exec/die/exit)${NC}"
 
 UNSAFE_FINDINGS="[]"
 UNSAFE_COUNT=0
@@ -316,7 +320,7 @@ add_category "unsafe-patterns" "$([ $UNSAFE_COUNT -eq 0 ] && echo pass || echo w
 
 # ── Check 7: Shell script safety ────────────────────────────────────────
 
-log "${BOLD}[7/8] Shell script safety headers${NC}"
+log "${BOLD}[7/9] Shell script safety headers${NC}"
 
 SHELL_FINDINGS="[]"
 SHELL_COUNT=0
@@ -344,7 +348,7 @@ add_category "shell-safety" "$([ $SHELL_COUNT -eq 0 ] && echo pass || echo warn)
 
 # ── Check 8: No-op escape methods ───────────────────────────────────────
 
-log "${BOLD}[8/8] No-op escape method detection${NC}"
+log "${BOLD}[8/9] No-op escape method detection${NC}"
 
 NOOP_FINDINGS="[]"
 NOOP_COUNT=0
@@ -379,6 +383,33 @@ if [[ $NOOP_COUNT -eq 0 ]]; then
     log "  ${GREEN}PASS${NC} No no-op escape methods"
 fi
 add_category "noop-escape" "$([ $NOOP_COUNT -eq 0 ] && echo pass || echo warn)" "$NOOP_COUNT" "$NOOP_FINDINGS"
+
+# ── Check 9: self:: in trait files ─────────────────────────────────────
+
+log "${BOLD}[9/9] Late static binding in traits${NC}"
+
+LSB_FINDINGS="[]"
+LSB_COUNT=0
+
+# Traits should use static:: not self:: for methods that may be overridden
+while IFS=: read -r file line content; do
+    [[ -z "$file" ]] && continue
+    relative="${file#$PROJECT_ROOT/}"
+    [[ "$relative" == vendor/* ]] && continue
+    [[ "$relative" == */vendor/* ]] && continue
+    LSB_COUNT=$((LSB_COUNT + 1))
+    LSB_FINDINGS=$(echo "$LSB_FINDINGS" | jq \
+        --arg file "$relative" \
+        --arg line "$line" \
+        --arg content "$(echo "$content" | head -c 200)" \
+        '. + [{"file": $file, "line": ($line | tonumber), "content": $content}]')
+    log "  ${YELLOW}WARN${NC} $relative:$line — self:: in trait (should be static::)"
+done < <(find "$PROJECT_ROOT/core/src" "$PROJECT_ROOT/node" -name '*Trait*.php' -print0 2>/dev/null | xargs -0 grep -rn '\bself::' 2>/dev/null || true)
+
+if [[ $LSB_COUNT -eq 0 ]]; then
+    log "  ${GREEN}PASS${NC} No self:: in trait files"
+fi
+add_category "trait-lsb" "$([ $LSB_COUNT -eq 0 ] && echo pass || echo warn)" "$LSB_COUNT" "$LSB_FINDINGS"
 
 # ── Output JSON report ──────────────────────────────────────────────────
 
