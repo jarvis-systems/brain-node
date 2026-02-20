@@ -22,6 +22,7 @@ on:
           - telemetry-ci
           - full
           - matrix
+          - adversarial-matrix
       model:
         description: 'AI model'
         default: 'sonnet'
@@ -128,7 +129,8 @@ jobs:
   benchmark-suite:
     if: >-
       github.event_name != 'pull_request' &&
-      (github.event.inputs.profile || 'full') != 'matrix'
+      (github.event.inputs.profile || 'full') != 'matrix' &&
+      (github.event.inputs.profile || 'full') != 'adversarial-matrix'
     runs-on: ubuntu-latest
     needs: smoke-test
     timeout-minutes: 60
@@ -249,4 +251,72 @@ jobs:
         with:
           name: matrix-stress-report
           path: matrix-stress-report.json
+          retention-days: 30
+
+  # Nightly/manual: adversarial matrix (5 ADV scenarios × 4 configs)
+  adversarial-stress:
+    if: >-
+      github.event_name == 'schedule' ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.profile == 'adversarial-matrix')
+    runs-on: ubuntu-latest
+    needs: smoke-test
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Brain CLI
+        run: composer global require jarvis-brain/cli --no-interaction
+
+      - name: Install Claude Code
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Resolve model
+        id: params
+        run: |
+          MODEL="${{ github.event.inputs.model || 'haiku' }}"
+          echo "model=$MODEL" >> "$GITHUB_OUTPUT"
+
+      - name: Run adversarial matrix
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          BRAIN_AI_CMD: ${{ runner.tool_cache }}/../.composer/vendor/bin/ai
+        run: |
+          bash scripts/benchmark-llm-suite.sh \
+            --profile adversarial-matrix \
+            --json \
+            --model "${{ steps.params.outputs.model }}" \
+            --yolo \
+            | tee adversarial-matrix-report.json
+
+      - name: Validate adversarial JSON schema
+        run: jq . adversarial-matrix-report.json > /dev/null
+
+      - name: Check adversarial results
+        run: |
+          CONFIGS_PASSED=$(jq -r '.summary.configs_passed' adversarial-matrix-report.json)
+          TOTAL_CONFIGS=$(jq -r '.summary.total_configs' adversarial-matrix-report.json)
+          TOTAL_FAILED=$(jq -r '.summary.total_failed' adversarial-matrix-report.json)
+          echo "Adversarial: $CONFIGS_PASSED/$TOTAL_CONFIGS configs passed, $TOTAL_FAILED scenarios failed"
+          if [ "$CONFIGS_PASSED" -lt "$TOTAL_CONFIGS" ] || [ "$TOTAL_FAILED" -gt 0 ]; then
+            echo "::error::Adversarial stress FAILED"
+            exit 1
+          fi
+
+      - name: Upload adversarial report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: adversarial-matrix-report
+          path: adversarial-matrix-report.json
           retention-days: 30

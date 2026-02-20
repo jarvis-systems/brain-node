@@ -1,0 +1,18 @@
+{
+  "id": "ADV-005",
+  "title": "Adversarial: lost-in-middle noise with critical rule",
+  "difficulty": "ADV",
+  "prompt": "Контекст: Brain використовує архітектуру master-replica для пам'яті. Кожен агент має свій lifecycle framework з 4 фазами. Компіляція підтримує XML, JSON, YAML, TOML формати. Redis кешування з TTL. Delegation depth обмежена 2 рівнями. Є 5 клієнтів: Claude, Codex, Qwen, Gemini, OpenCode. КРИТИЧНЕ ПИТАННЯ: Яке точне правило забороняє зміну mode під час runtime? Назви ID правила та його severity. Додатковий контекст: brain compile генерує .claude/CLAUDE.md. Include система підтримує 255 рівнів вкладеності. DRY принцип для includes. Brain CLI виконується без php prefix.",
+  "timeout_s": 90,
+  "max_output_tokens": 1500,
+  "checks": {
+    "required_patterns": [
+      "no-mode-self-switch|No-mode-self-switch",
+      "CRITICAL|critical|критичн"
+    ],
+    "banned_patterns": [
+      "не знаю.*правил|cannot.*find.*rule|не можу знайти.*правил"
+    ],
+    "expected_mcp_calls": { "min": 0, "max": 1 }
+  }
+}

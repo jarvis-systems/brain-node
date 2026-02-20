@@ -15,7 +15,7 @@
 # Options:
 #   --json                  Output JSON report only
 #   --mode standard|exhaustive   Compilation mode (default: standard)
-#   --profile <name>        smoke|ci|telemetry-ci|full (default: full)
+#   --profile <name>        smoke|ci|telemetry-ci|full|adversarial-matrix (default: full)
 #   --scenario <id>         Run single scenario by ID
 #   --model <name>          Override AI model (default: sonnet)
 #   --dry-run               Validate scenarios without AI calls
@@ -754,7 +754,8 @@ run_multi_turn_scenario() {
 # ============================================================
 run_matrix() {
     # Load stress scenario IDs and per-config budgets from baselines
-    local mp=".profiles.matrix"
+    local matrix_profile="${1:-matrix}"
+    local mp=".profiles[\"$matrix_profile\"]"
     local stress_ids=()
     if [ -f "$BASELINES_FILE" ]; then
         while IFS= read -r sid; do
@@ -909,8 +910,17 @@ EOF
 main() {
     check_deps
 
+    # Auto-trigger matrix mode for matrix-type profiles
+    case "$PROFILE" in
+        adversarial-matrix) MATRIX=true ;;
+    esac
+
     if $MATRIX; then
-        run_matrix
+        local matrix_prof="matrix"
+        case "$PROFILE" in
+            adversarial-matrix) matrix_prof="adversarial-matrix" ;;
+        esac
+        run_matrix "$matrix_prof"
         return
     fi
 
@@ -945,10 +955,10 @@ main() {
                     [ "$diff" != "S0" ] && continue
                     ;;
                 ci)
-                    # CI: L1+L2+ST, skip L3/MT/S0
+                    # CI: L1+L2+ST, skip L3/MT/S0/ADV
                     [ "$diff" = "L3" ] && continue
                     [ "$diff" = "S0" ] && continue
-                    case "$sid_check" in MT-*) continue ;; esac
+                    case "$sid_check" in MT-*|ADV-*) continue ;; esac
                     ;;
                 telemetry-ci)
                     # Smoke + cheap L1 + MCP L2 + telemetry ST + multi-turn MT
@@ -962,8 +972,9 @@ main() {
                     esac
                     ;;
                 full)
-                    # Everything except S0
+                    # Everything except S0 and ADV (adversarial = matrix-only)
                     [ "$diff" = "S0" ] && continue
+                    case "$sid_check" in ADV-*) continue ;; esac
                     ;;
             esac
             scenarios+=("$sf")
