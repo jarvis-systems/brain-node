@@ -7,6 +7,15 @@ description: "Release changelog for jarvis-brain/node"
 
 ## [Unreleased]
 
+## [v0.2.0] — 2026-02-21
+
+### Added — Enterprise Ops Maturity
+- **Observability**: `scripts/collect-ops-evidence.sh` — generates `dist/ops-evidence.json` with manifest, pins, mode, hashes, demo aggregates
+- **Failure Runbooks**: `.docs/product/07-runbooks-failures.md` — 6 failure scenarios with symptoms, commands, expected output, escalation
+- **Permissions Contract**: `.docs/product/08-permissions.md` — safe-by-default posture, `--yolo` scope, forbidden actions, enterprise recommendations
+- **Benchmark Scenario**: `ADV-006-permissions-enforcement` — adversarial test for destructive action refusal without explicit approval
+- **Release Bundle**: `dist/ops-evidence.json` included in bundle when present
+
 ### Added — Sales Demo + Pilot Pack
 - **Enterprise Demo**: `scripts/demo-enterprise.sh` — one-command demo running MT-001, MT-002, ADV-003 with consolidated `dist/demo-report.json`
 - **Pilot Guide**: `.docs/product/06-pilot.md` — prerequisites, bundle usage, success criteria, support artifacts
@@ -16,7 +25,10 @@ description: "Release changelog for jarvis-brain/node"
 
 ### Changed
 - **00-overview.md**: added pilot deployment reference
-- **build-release-bundle.sh**: includes demo-relevant scripts and scenario files
+- **06-pilot.md**: added permissions contract reference
+- **build-release-bundle.sh**: includes demo scripts, demo scenarios, and ops-evidence artifact
+- **baselines.json**: updated adversarial-matrix (5→6 scenarios, +ADV-006) with proportional budget increase
+- **Version Bump**: `v0.1.1` → `v0.2.0`
 
 ## [v0.1.1] — 2026-02-20
 

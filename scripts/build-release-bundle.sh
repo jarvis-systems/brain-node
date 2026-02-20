@@ -110,6 +110,12 @@ for DEMO_SID in MT-001 MT-002 ADV-003; do
     done
 done
 
+# Ops evidence (optional — include if previously generated)
+if [[ -f "${DIST_DIR}/ops-evidence.json" ]]; then
+    mkdir -p "$STAGING/dist"
+    cp "${DIST_DIR}/ops-evidence.json" "$STAGING/dist/"
+fi
+
 # Count files
 FILE_COUNT=$(find "$STAGING" -type f | wc -l | tr -d ' ')
 echo "Staged ${FILE_COUNT} files"

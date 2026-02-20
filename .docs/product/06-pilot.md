@@ -86,3 +86,7 @@ Estimates based on benchmark baselines. Actual costs depend on MCP response time
 **Scenario timeout**: Default timeouts are 180s for multi-turn, 60s for adversarial. Slow network or MCP servers may cause timeouts. Check MCP server health first.
 
 **All scenarios fail with "no output"**: The AI CLI command is not found or not configured. Verify `ai --version` works. Set `BRAIN_AI_CMD` env var if the CLI is at a non-standard path.
+
+## Permissions
+
+The demo script uses `--yolo` to enable unattended multi-turn execution. For the full permissions model — safe-by-default posture, what `--yolo` enables, forbidden actions, and enterprise recommendations — see the [Permissions Contract](08-permissions.md).
