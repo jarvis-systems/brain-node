@@ -1,0 +1,26 @@
+{
+  "generated": "2026-02-20T20:58:02Z",
+  "node": {
+    "commit": "7c09b07644a652f9ef4d645be209599f670c0757",
+    "version": "v0.1.0"
+  },
+  "core": {
+    "version": "v0.0.1"
+  },
+  "cli": {
+    "version": "Brain CLI v0.0.1"
+  },
+  "pins": {
+  "vector-memory-mcp": "1.9.3",
+  "vector-task-mcp": "1.7.3"
+},
+  "pin_strict": "0",
+  "compilation": {
+    "strict_mode": "paranoid",
+    "cognitive_level": "exhaustive"
+  },
+  "benchmarks": {
+    "baselines_date": "unknown",
+    "total_scenarios": 2
+  }
+}

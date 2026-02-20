@@ -11,6 +11,7 @@ on:
       - '.opencode/**'
       - 'AGENTS.md'
       - 'agent-schema.json'
+      - 'pins.json'
   pull_request:
     paths:
       - 'core/src/**'
@@ -21,6 +22,7 @@ on:
       - '.opencode/**'
       - 'AGENTS.md'
       - 'agent-schema.json'
+      - 'pins.json'
 
 jobs:
   lint-and-test:
@@ -52,6 +54,11 @@ jobs:
 
       - name: Validate baselines JSON
         run: jq empty .docs/benchmarks/baselines/baselines.json
+
+      - name: Verify pin policy
+        run: bash scripts/verify-pins.sh
+        env:
+          PIN_STRICT: ${{ vars.PIN_STRICT || '0' }}
 
       - name: Compile discipline check
         run: |

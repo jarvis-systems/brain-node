@@ -5,7 +5,18 @@ description: "Release changelog for jarvis-brain/node"
 
 # Changelog
 
-## [Unreleased] — 2026-02-20
+## [Unreleased]
+
+## [v0.1.0] — 2026-02-20
+
+### Added — Productization v1
+- **Operator Contract**: 6 product docs in `.docs/product/` (overview, installation, configuration, runbooks, security model, support)
+- **Dependency Pinning**: `pins.json` for MCP version control, compile-time pin resolution in CLI, `PIN_STRICT` env var
+- **Pin Verification**: `scripts/verify-pins.sh` validates `.mcp.json` against `pins.json`
+- **Build Manifest**: `scripts/generate-manifest.sh` generates reproducible `.docs/releases/manifest.json`
+- **CI Gate**: pin policy verification step in `brain-lint.yml`
+- **Release Guide**: `RELEASE.md` with step-by-step release checklist
+- **Version Bump**: project version `v0.0.1` → `v0.1.0`
 
 ### Added — Benchmark Suite v2
 - **32 scenarios** across 7 difficulty categories (L1, L2, L3, ST, MT, ADV, S0)

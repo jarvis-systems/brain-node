@@ -3,7 +3,7 @@
   "description": "The Brain Node for Agent Management",
   "keywords": ["jarvis", "brain", "node"],
   "type": "project",
-  "version": "v0.0.1",
+  "version": "v0.1.0",
   "license": "MIT",
   "authors": [
     {

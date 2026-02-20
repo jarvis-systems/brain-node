@@ -1,0 +1,9 @@
+{
+  "_meta": {
+    "description": "MCP package version pins. Enforced when PIN_STRICT=1.",
+    "updated": "2026-02-20",
+    "docs": ".docs/product/02-configuration.md"
+  },
+  "vector-memory-mcp": "1.9.3",
+  "vector-task-mcp": "1.7.3"
+}
