@@ -1,10 +1,12 @@
-# SYNC/ASYNC Unification — DEFERRED
-
 ---
+name: "SYNC/ASYNC Unification — DEFERRED"
+description: "Deferred decision to keep sync/async command pairs separate"
 date: "2026-02-20"
 status: deferred
 decision: keep-separate
 ---
+
+# SYNC/ASYNC Unification — DEFERRED
 
 ## Current State
 

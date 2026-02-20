@@ -1,3 +1,10 @@
+---
+name: "Brain Working Challenge"
+description: "Interactive quality game for Brain instruction and command optimization"
+type: "challenge"
+date: "2026-02-20"
+---
+
 # Challenge
 Зіграти зі мною і з моїм бро-агентом в гру, але це вже Brain Working, це вже максимально відповідальний рівень, це вже робота над брейном. Робота над Brain-інструкціями і Brain-командами, над їхньою ефективністю, тому максимальна серйозність і вітповідальність, так що максимальний reasoning. Назвем цю гру «Перетвори сумбур в якість».
 

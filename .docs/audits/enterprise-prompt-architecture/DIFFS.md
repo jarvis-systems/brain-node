@@ -1,8 +1,10 @@
-# Enterprise Prompt Architecture — Changed Files
-
 ---
+name: "Enterprise Prompt Architecture — Changed Files"
+description: "Detailed diff of files changed during enterprise prompt architecture audit"
 date: "2026-02-20"
 ---
+
+# Enterprise Prompt Architecture — Changed Files
 
 ## Phase 1: Deep-Cognitive Gating (3 files in `core/`)
 

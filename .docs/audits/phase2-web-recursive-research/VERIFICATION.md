@@ -1,8 +1,10 @@
-# Phase 2: WebRecursiveResearchInclude Gating — VERIFICATION
-
 ---
+name: "Phase 2: WebRecursiveResearchInclude Gating — VERIFICATION"
+description: "Verification procedures for Phase 2 WebRecursiveResearchInclude gating"
 date: "2026-02-20"
 ---
+
+# Phase 2: WebRecursiveResearchInclude Gating — VERIFICATION
 
 ## Automated
 

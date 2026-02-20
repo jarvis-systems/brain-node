@@ -1,13 +1,13 @@
-# Brain Integration Guide
-
 ---
-name: "Brain Integration Guide"
+name: "Vector Task Brain Integration Guide"
 description: "Metacognitive constitution for Brain-Cookbook-Task-Memory orchestration"
 part: 1
 type: "guide"
 date: "2026-02-19"
 version: "1.0.0"
 ---
+
+# Brain Integration Guide
 
 ## Purpose
 

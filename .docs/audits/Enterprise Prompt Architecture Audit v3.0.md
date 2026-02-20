@@ -1,3 +1,11 @@
+---
+name: "Enterprise Prompt Architecture Audit v3.0"
+description: "Deep research digest and actionable audit of Brain prompt architecture"
+type: "audit"
+version: "3.0"
+date: "2026-02-20"
+---
+
 # Enterprise Prompt Architecture Audit v3.0
 
 1) Deep Research Digest

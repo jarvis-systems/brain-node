@@ -1,0 +1,105 @@
+name: Brain LLM Benchmark
+
+on:
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: 'Benchmark profile'
+        default: 'full'
+        type: choice
+        options:
+          - smoke
+          - ci
+          - full
+      model:
+        description: 'AI model'
+        default: 'sonnet'
+        type: choice
+        options:
+          - haiku
+          - sonnet
+          - opus
+
+jobs:
+  smoke-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Brain CLI
+        run: composer global require jarvis-brain/cli --no-interaction
+
+      - name: Install Claude Code
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Run smoke test
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          BRAIN_AI_CMD: ${{ runner.tool_cache }}/../.composer/vendor/bin/ai
+        run: bash scripts/benchmark-llm-suite.sh --scenario S00 --json --model haiku
+        continue-on-error: true
+
+  benchmark-suite:
+    runs-on: ubuntu-latest
+    needs: smoke-test
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Brain CLI
+        run: composer global require jarvis-brain/cli --no-interaction
+
+      - name: Install Claude Code
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Resolve profile and model
+        id: params
+        run: |
+          PROFILE="${{ github.event.inputs.profile || 'ci' }}"
+          MODEL="${{ github.event.inputs.model || 'sonnet' }}"
+          echo "profile=$PROFILE" >> "$GITHUB_OUTPUT"
+          echo "model=$MODEL" >> "$GITHUB_OUTPUT"
+
+      - name: Run benchmark suite
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          BRAIN_AI_CMD: ${{ runner.tool_cache }}/../.composer/vendor/bin/ai
+        run: |
+          bash scripts/benchmark-llm-suite.sh \
+            --json \
+            --profile "${{ steps.params.outputs.profile }}" \
+            --model "${{ steps.params.outputs.model }}" \
+            | tee benchmark-report.json
+
+      - name: Upload benchmark report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: benchmark-report
+          path: benchmark-report.json
+          retention-days: 30

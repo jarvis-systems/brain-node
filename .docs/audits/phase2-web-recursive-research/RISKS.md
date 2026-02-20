@@ -1,8 +1,10 @@
-# Phase 2: WebRecursiveResearchInclude Gating — RISKS
-
 ---
+name: "Phase 2: WebRecursiveResearchInclude Gating — RISKS"
+description: "Risk assessment for Phase 2 WebRecursiveResearchInclude gating"
 date: "2026-02-20"
 ---
+
+# Phase 2: WebRecursiveResearchInclude Gating — RISKS
 
 ## Residual Risks
 

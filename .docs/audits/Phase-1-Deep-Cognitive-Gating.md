@@ -1,13 +1,14 @@
-# Phase 1: Deep-Cognitive Gating
-
 ---
 name: "Phase 1: Deep-Cognitive Gating"
+description: "Audit phase 1: compile-time deep-cognitive gating to reduce standard prompt by 31%"
 type: "audit"
 version: "1.0.0"
 date: "2026-02-20"
 status: "implemented"
 prerequisite: "enterprise-readiness.md"
 ---
+
+# Phase 1: Deep-Cognitive Gating
 
 ## Executive Summary
 

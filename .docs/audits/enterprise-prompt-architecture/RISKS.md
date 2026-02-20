@@ -1,8 +1,10 @@
-# Enterprise Prompt Architecture — Residual Risks
-
 ---
+name: "Enterprise Prompt Architecture — Residual Risks"
+description: "Residual risk assessment for enterprise prompt architecture audit"
 date: "2026-02-20"
 ---
+
+# Enterprise Prompt Architecture — Residual Risks
 
 ## Active Residual Risks
 

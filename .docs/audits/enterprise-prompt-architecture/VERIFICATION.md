@@ -1,8 +1,10 @@
-# Enterprise Prompt Architecture — Verification Commands
-
 ---
+name: "Enterprise Prompt Architecture — Verification Commands"
+description: "Verification commands and procedures for enterprise prompt architecture audit"
 date: "2026-02-20"
 ---
+
+# Enterprise Prompt Architecture — Verification Commands
 
 ## Automated Verification (single command)
 

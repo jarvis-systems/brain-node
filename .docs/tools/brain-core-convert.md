@@ -1,3 +1,10 @@
+---
+name: "brain-core convert"
+description: "Single-file compilation tool for debugging and inspecting individual Brain source files"
+type: "tool"
+date: "2026-02-20"
+---
+
 # brain-core convert — Single-File Compilation Tool
 
 Debug and inspect individual Brain source files without running full `brain compile`.

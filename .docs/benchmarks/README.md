@@ -1,3 +1,10 @@
+---
+name: "Brain LLM Benchmark Suite"
+description: "Behavioral benchmarks for compiled Brain/agents via Brain CLI with telemetry"
+type: "benchmark"
+date: "2026-02-20"
+---
+
 # Brain LLM Benchmark Suite
 
 Behavioral benchmarks for compiled Brain/agents via Brain CLI `--ask --json` mode.
@@ -10,6 +17,7 @@ Each scenario sends a prompt through the full Brain pipeline (compile → claude
 
 | Level | Complexity | Description | Scenarios |
 |-------|-----------|-------------|-----------|
+| S0 | Smoke | Pipeline health check: compile → run → parse | 1 |
 | L1 | Tiny | Knowledge retrieval: rules, constraints, ecosystem | 7 |
 | L2 | Normal | Applied knowledge: MCP formats, policies, protocols | 7 |
 | L3 | Hard | Governance reasoning: violations, conflicts, mode matrix | 7 |
@@ -22,38 +30,28 @@ Each scenario sends a prompt through the full Brain pipeline (compile → claude
 | `banned_patterns` | Regex patterns that MUST NOT appear in response |
 | `global-banned` | Applied to ALL scenarios: uncertainty triggers |
 | `token-budget` | Output tokens <= scenario max |
+| `dto-schema` | All 3 DTO types present in JSONL output (init + message + result) |
+| `duration` | Execution time within scenario timeout |
 | `mode-leakage` | Deep-only content absent in standard mode |
 
 ## How to Run
 
-### Local (full suite)
+### Composer aliases (recommended)
+
+```bash
+composer benchmark              # Full suite, interactive
+composer benchmark:smoke        # S00 smoke test only (haiku, fast)
+composer benchmark:ci           # CI profile (L1+L2, haiku, JSON)
+composer benchmark:dry          # Dry-run: validate scenarios, no AI calls
+```
+
+### Direct script
 
 ```bash
 scripts/benchmark-llm-suite.sh --mode standard --model sonnet
-```
-
-### Local (CI profile — L1+L2 only)
-
-```bash
-scripts/benchmark-llm-suite.sh --mode standard --profile ci --model sonnet
-```
-
-### Single scenario
-
-```bash
+scripts/benchmark-llm-suite.sh --profile smoke --model haiku
 scripts/benchmark-llm-suite.sh --scenario L1-001 --model sonnet
-```
-
-### Dry-run (validate scenarios, no AI calls)
-
-```bash
-scripts/benchmark-llm-suite.sh --dry-run
-```
-
-### JSON output (for CI parsing)
-
-```bash
-scripts/benchmark-llm-suite.sh --json --mode standard --profile ci --model sonnet
+scripts/benchmark-llm-suite.sh --dry-run --json
 ```
 
 ## Options
@@ -62,7 +60,7 @@ scripts/benchmark-llm-suite.sh --json --mode standard --profile ci --model sonne
 |------|---------|-------------|
 | `--json` | off | Output JSON report only |
 | `--mode` | standard | Compilation mode: standard, exhaustive, paranoid |
-| `--profile` | full | ci = L1+L2, full = all levels |
+| `--profile` | full | smoke = S0 only, ci = L1+L2, full = L1+L2+L3 |
 | `--scenario` | all | Run single scenario by ID substring |
 | `--model` | sonnet | AI model: sonnet, opus, haiku |
 | `--dry-run` | off | Validate scenario files without AI calls |
@@ -108,7 +106,7 @@ Create a JSON file in `.docs/benchmarks/scenarios/`:
 
 **Rules:**
 
-- `id` format: `L{N}-{NNN}` (L1/L2/L3 + sequence number)
+- `id` format: `S00-{NNN}` for smoke, `L{N}-{NNN}` for L1/L2/L3
 - `prompt` should be in Ukrainian (Brain responds in Ukrainian)
 - Patterns are POSIX extended regex (case-insensitive via grep -iE)
 - Use `|` for alternatives in patterns
@@ -120,6 +118,7 @@ Create a JSON file in `.docs/benchmarks/scenarios/`:
 
 | ID | Area | Tests |
 |----|------|-------|
+| S00-000 | Smoke | Pipeline health: compile → run → parse DTOs |
 | L1-001 | VectorMemory | Iron rules names + severity |
 | L1-002 | Delegation | Max depth + chain levels |
 | L1-003 | Compilation | Source vs compiled dirs |
@@ -156,46 +155,59 @@ When source includes change, scenario checks may need updating.
 
 ## Limitations
 
-1. **No direct tool call tracking**: Brain CLI DTOs don't include MCP tool_use events. Behavioral checks are indirect (response text analysis).
-2. **Non-determinism**: AI responses vary between runs. Pattern checks are designed to be resilient (multiple alternatives via `|`), but false failures are possible.
-3. **Token costs**: Each run burns real API tokens. Use appropriate model/profile.
-4. **Single-turn only**: `--ask` mode is single-turn. Multi-turn agent delegation is not testable.
-5. **Language coupling**: Prompts and some checks assume Ukrainian-language responses per Brain configuration.
+1. **Non-determinism**: AI responses vary between runs. Pattern checks are designed to be resilient (multiple alternatives via `|`), but false failures are possible.
+2. **Token costs**: Each run burns real API tokens. Use appropriate model/profile.
+3. **Single-turn only**: `--ask` mode is single-turn. Multi-turn agent delegation is not testable.
+4. **Language coupling**: Prompts and some checks assume Ukrainian-language responses per Brain configuration.
+
+## Telemetry: tool_use Tracking
+
+The benchmark runner captures MCP tool_use events emitted by Brain CLI via the `ToolUse` DTO. This provides observability into which tools the Brain invokes during each scenario.
+
+**How it works:**
+
+1. Brain CLI emits `{type: "tool_use", name: "...", id: "...", input: {...}}` JSONL lines alongside `message` and `result` DTOs
+2. The runner counts tool_use lines per scenario → `mcp_calls_count`
+3. Report aggregates → `total_mcp_calls`
+
+**CLI changes (for reference):**
+
+- `ToolUse` DTO: `cli/src/Dto/ProcessOutput/ToolUse.php`
+- Message parsing fix: `ClaudeClient::processParseOutputMessage()` now iterates ALL content blocks (text + tool_use), not just `content[0]`
+- Pipeline emit: `ProcessTrait::processParseOutput()` emits ToolUse DTOs after Message DTOs
+
+**Backward compatible:** Existing consumers that switch on `type` field simply ignore unknown types.
 
 ## CI Integration
 
-Add to your CI pipeline:
+GitHub Actions workflow: `.github/workflows/brain-benchmark.yml`
 
-```yaml
-benchmark-llm:
-  stage: test
-  script:
-    - scripts/benchmark-llm-suite.sh --json --mode standard --profile ci --model haiku
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule"
-    - if: $CI_PIPELINE_SOURCE == "web"
-  allow_failure: true
-```
+**Jobs:**
 
-For nightly/manual runs with full suite:
+| Job | Trigger | Profile | Model | Purpose |
+|-----|---------|---------|-------|---------|
+| `smoke-test` | Every run | S00 only | haiku | Quick pipeline gate (< 2 min) |
+| `benchmark-suite` | After smoke | Input or `ci` | Input or `sonnet` | Full benchmark with artifact upload |
 
-```yaml
-benchmark-llm-full:
-  stage: test
-  script:
-    - scripts/benchmark-llm-suite.sh --json --mode standard --profile full --model sonnet
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule"
-    - when: manual
-  allow_failure: true
-```
+**Triggers:**
+- Nightly at 03:00 UTC (schedule)
+- Manual dispatch with profile/model selection
+
+**Requirements:**
+- `ANTHROPIC_API_KEY` secret
+- `jarvis-brain/cli` (composer global)
+- `@anthropic-ai/claude-code` (npm global)
+
+**Artifacts:** `benchmark-report.json` retained 30 days.
+
+**Dry-run validation** (no secrets needed) runs in `brain-lint.yml` on every push/PR.
 
 ## JSON Report Schema
 
 ```json
 {
-  "total": 21,
-  "passed": 21,
+  "total": 22,
+  "passed": 22,
   "failed": 0,
   "errors": 0,
   "pass_rate": "100.0%",
@@ -206,6 +218,7 @@ benchmark-llm-full:
   "dry_run": false,
   "total_input_tokens": 1500,
   "total_output_tokens": 4200,
+  "total_mcp_calls": 12,
   "total_duration_ms": 85000,
   "scenarios": [
     {
@@ -216,9 +229,12 @@ benchmark-llm-full:
       "duration_ms": 8500,
       "input_tokens": 150,
       "output_tokens": 420,
+      "mcp_calls_count": 2,
       "response_chars": 1200,
       "checks": [
         {"check": "response-received", "status": "PASS"},
+        {"check": "dto-schema", "status": "PASS", "detail": "init=1 msg=1 result=1"},
+        {"check": "duration", "status": "PASS", "detail": "8500ms <= 120000ms"},
         {"check": "global-banned:when", "status": "PASS"},
         {"check": "required:mcp-json-only", "status": "PASS", "detail": "2 matches"},
         {"check": "token-budget", "status": "PASS", "detail": "420 <= 1500"}

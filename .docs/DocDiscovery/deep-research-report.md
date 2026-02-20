@@ -1,3 +1,10 @@
+---
+name: "Enterprise Prompt Engineering Deep Research Report"
+description: "Independent enterprise audit of prompt engineering and cookbook approach for LLM in production"
+type: "research"
+date: "2026-02-20"
+---
+
 # Незалежний enterprise-аудит Prompt Engineering та Cookbook-підходу для LLM у production
 
 ## Executive summary

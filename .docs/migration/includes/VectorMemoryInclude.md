@@ -1,12 +1,14 @@
-# VectorMemoryInclude Migration Contract
-
 ---
+name: "VectorMemoryInclude Migration Contract"
+description: "Migration contract for VectorMemoryInclude: transform to cookbook-delegating iron rules"
 file: "core/src/Includes/Universal/VectorMemoryInclude.php"
 checkpoint: "B"
 status: "planned"
 lines_before: 124
 lines_target: ~50
 ---
+
+# VectorMemoryInclude Migration Contract
 
 ## Migration Summary
 

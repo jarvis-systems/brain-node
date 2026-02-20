@@ -1,0 +1,14 @@
+{
+  "id": "S00-000",
+  "title": "Live smoke test — pipeline health check",
+  "difficulty": "S0",
+  "prompt": "Коротко: яка твоя основна роль в системі Brain?",
+  "timeout_s": 60,
+  "max_output_tokens": 500,
+  "checks": {
+    "required_patterns": [
+      "оркестр|делегу|координ|orchestrat"
+    ],
+    "banned_patterns": []
+  }
+}

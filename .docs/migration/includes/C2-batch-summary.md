@@ -1,11 +1,13 @@
-# C2 Batch Migration Summary
-
 ---
+name: "C2 Batch Migration Summary"
+description: "Summary of C2 batch migration: 34 files migrated from legacy pseudo-JSON to PHP API"
 type: "migration-summary"
 checkpoint: "C2"
 status: "completed"
 date: "2026-02-20"
 ---
+
+# C2 Batch Migration Summary
 
 ## Overview
 

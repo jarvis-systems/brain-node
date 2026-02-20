@@ -1,8 +1,10 @@
-# Phase 2: WebRecursiveResearchInclude Gating — DIFF
-
 ---
+name: "Phase 2: WebRecursiveResearchInclude Gating — DIFF"
+description: "File diffs for Phase 2 WebRecursiveResearchInclude gating implementation"
 date: "2026-02-20"
 ---
+
+# Phase 2: WebRecursiveResearchInclude Gating — DIFF
 
 ## Modified Files
 

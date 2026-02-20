@@ -1,6 +1,6 @@
-# CompilationSystemKnowledgeInclude Mode Gating
-
 ---
+name: "CompilationSystemKnowledgeInclude Mode Gating"
+description: "Migration plan for CompilationSystemKnowledgeInclude deep-cognitive gating"
 file: "core/src/Includes/Universal/CompilationSystemKnowledgeInclude.php"
 type: "migration"
 status: "proposed"
@@ -9,6 +9,8 @@ lines_before: 332
 lines_target_minimal: ~80
 lines_target_full: ~332
 ---
+
+# CompilationSystemKnowledgeInclude Mode Gating
 
 ## Problem
 

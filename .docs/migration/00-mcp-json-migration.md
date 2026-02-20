@@ -1,5 +1,3 @@
-# MCP JSON Migration RFC
-
 ---
 name: "MCP JSON Migration RFC"
 description: "Canonical JSON format for MCP tool calls with schema validation"
@@ -9,6 +7,8 @@ date: "2026-02-19"
 status: "approved"
 checkpoint: "A"
 ---
+
+# MCP JSON Migration RFC
 
 ## Executive Summary
 

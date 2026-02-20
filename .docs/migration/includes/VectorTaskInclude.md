@@ -1,12 +1,14 @@
-# VectorTaskInclude Migration Contract
-
 ---
+name: "VectorTaskInclude Migration Contract"
+description: "Migration contract for VectorTaskInclude: transform to cookbook-delegating iron rules"
 file: "core/src/Includes/Universal/VectorTaskInclude.php"
 checkpoint: "B"
 status: "planned"
 lines_before: 183
 lines_target: ~60
 ---
+
+# VectorTaskInclude Migration Contract
 
 ## Migration Summary
 

@@ -1,8 +1,10 @@
-# Phase 2: WebRecursiveResearchInclude Gating — PLAN
-
 ---
+name: "Phase 2: WebRecursiveResearchInclude Gating — PLAN"
+description: "Implementation plan for Phase 2 WebRecursiveResearchInclude gating"
 date: "2026-02-20"
 ---
+
+# Phase 2: WebRecursiveResearchInclude Gating — PLAN
 
 ## Candidate Selection
 

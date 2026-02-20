@@ -1,10 +1,12 @@
-# Enterprise Prompt Architecture — Checkpoint Summary
-
 ---
+name: "Enterprise Prompt Architecture — Checkpoint Summary"
+description: "Status checkpoint summary for enterprise prompt architecture audit"
 date: "2026-02-20"
 version: "1.0.0"
 status: "checkpoint"
 ---
+
+# Enterprise Prompt Architecture — Checkpoint Summary
 
 ## Current Baseline
 

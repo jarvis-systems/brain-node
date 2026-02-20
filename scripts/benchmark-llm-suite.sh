@@ -39,8 +39,18 @@ NC='\033[0m'
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 SCENARIOS_DIR="$PROJECT_ROOT/.docs/benchmarks/scenarios"
-AI_CMD="$PROJECT_ROOT/cli/bin/ai"
 TMP_DIR=$(mktemp -d)
+
+# CLI path resolution: env → local → global
+if [ -n "${BRAIN_AI_CMD:-}" ]; then
+    AI_CMD="$BRAIN_AI_CMD"
+elif [ -x "$PROJECT_ROOT/cli/bin/ai" ]; then
+    AI_CMD="$PROJECT_ROOT/cli/bin/ai"
+elif command -v ai &>/dev/null; then
+    AI_CMD="ai"
+else
+    AI_CMD=""
+fi
 
 trap 'rm -rf "$TMP_DIR"' EXIT
 
@@ -88,8 +98,11 @@ check_deps() {
         echo "ERROR: jq is required. Install: brew install jq" >&2
         ok=false
     fi
-    if [ ! -x "$AI_CMD" ]; then
-        echo "ERROR: Brain CLI not found at $AI_CMD" >&2
+    if [ -z "$AI_CMD" ]; then
+        echo "ERROR: Brain CLI not found. Set BRAIN_AI_CMD, place cli/bin/ai locally, or install 'ai' globally." >&2
+        ok=false
+    elif [ ! -x "$AI_CMD" ] && ! command -v "$AI_CMD" &>/dev/null; then
+        echo "ERROR: Brain CLI not executable: $AI_CMD" >&2
         ok=false
     fi
     if [ ! -d "$SCENARIOS_DIR" ]; then
@@ -107,6 +120,7 @@ ERRORS=0
 TOTAL_INPUT_TOKENS=0
 TOTAL_OUTPUT_TOKENS=0
 TOTAL_DURATION_MS=0
+TOTAL_MCP_CALLS=0
 RESULTS=()
 
 # Global banned patterns (applied to ALL scenarios in ALL modes)
@@ -126,9 +140,11 @@ parse_cli_output() {
     local raw_file="$1"
     local msg_file="$2"
     local metrics_file="$3"
+    local tools_file="$4"
 
     > "$msg_file"
     echo "0 0" > "$metrics_file"
+    > "$tools_file"
 
     while IFS= read -r line; do
         [ -z "$line" ] && continue
@@ -137,6 +153,11 @@ parse_cli_output() {
         case "$dtype" in
             message)
                 echo "$line" | jq -r '.content // ""' 2>/dev/null >> "$msg_file"
+                ;;
+            tool_use)
+                local tname
+                tname=$(echo "$line" | jq -r '.name // ""' 2>/dev/null)
+                echo "$tname" >> "$tools_file"
                 ;;
             result)
                 local it ot
@@ -181,6 +202,7 @@ run_scenario() {
     local input_tokens=0
     local output_tokens=0
     local duration_ms=0
+    local mcp_calls=0
 
     if $DRY_RUN; then
         log "  ${DIM}[DRY-RUN] Scenario validated, AI call skipped${NC}"
@@ -220,12 +242,15 @@ run_scenario() {
         # Parse output
         local msg_file="$TMP_DIR/msg_${sid}.txt"
         local metrics_file="$TMP_DIR/metrics_${sid}.txt"
-        parse_cli_output "$raw_file" "$msg_file" "$metrics_file"
+        local tools_file="$TMP_DIR/tools_${sid}.txt"
+        parse_cli_output "$raw_file" "$msg_file" "$metrics_file" "$tools_file"
 
         response_text=$(cat "$msg_file" 2>/dev/null || echo "")
         read -r input_tokens output_tokens < "$metrics_file" 2>/dev/null || true
         input_tokens=${input_tokens:-0}
         output_tokens=${output_tokens:-0}
+        mcp_calls=$(wc -l < "$tools_file" 2>/dev/null | tr -d ' ')
+        mcp_calls=${mcp_calls:-0}
 
         # Check: response received
         if [ -z "$response_text" ] || [ "$response_text" = "null" ]; then
@@ -235,6 +260,31 @@ run_scenario() {
             checks+=("{\"check\":\"response-received\",\"status\":\"FAIL\",\"detail\":\"empty response\"}")
         else
             checks+=("{\"check\":\"response-received\",\"status\":\"PASS\"}")
+        fi
+
+        # Check: DTO schema (init + message + result present)
+        local has_init has_message has_result
+        has_init=$(grep -c '"type":"init"' "$raw_file" 2>/dev/null || echo "0")
+        has_message=$(grep -c '"type":"message"' "$raw_file" 2>/dev/null || echo "0")
+        has_result=$(grep -c '"type":"result"' "$raw_file" 2>/dev/null || echo "0")
+        if [ "$has_init" -gt 0 ] && [ "$has_message" -gt 0 ] && [ "$has_result" -gt 0 ]; then
+            checks+=("{\"check\":\"dto-schema\",\"status\":\"PASS\",\"detail\":\"init=$has_init msg=$has_message result=$has_result\"}")
+            log "  ${GREEN}[PASS] dto-schema: init=$has_init msg=$has_message result=$has_result${NC}"
+        else
+            checks+=("{\"check\":\"dto-schema\",\"status\":\"FAIL\",\"detail\":\"init=$has_init msg=$has_message result=$has_result\"}")
+            scenario_status="FAIL"
+            log "  ${RED}[FAIL] dto-schema: init=$has_init msg=$has_message result=$has_result (all 3 required)${NC}"
+        fi
+
+        # Check: duration within timeout
+        local timeout_ms=$((stimeout * 1000))
+        if [ "$duration_ms" -le "$timeout_ms" ]; then
+            checks+=("{\"check\":\"duration\",\"status\":\"PASS\",\"detail\":\"${duration_ms}ms <= ${timeout_ms}ms\"}")
+            log "  ${GREEN}[PASS] duration: ${duration_ms}ms <= ${timeout_ms}ms${NC}"
+        else
+            checks+=("{\"check\":\"duration\",\"status\":\"FAIL\",\"detail\":\"${duration_ms}ms > ${timeout_ms}ms\"}")
+            scenario_status="FAIL"
+            log "  ${RED}[FAIL] duration: ${duration_ms}ms > ${timeout_ms}ms${NC}"
         fi
 
         # Check: global banned patterns
@@ -312,7 +362,7 @@ run_scenario() {
             done
         fi
 
-        log "  ${DIM}tokens: in=$input_tokens out=$output_tokens | ${#response_text} chars | ${duration_ms}ms${NC}"
+        log "  ${DIM}tokens: in=$input_tokens out=$output_tokens | mcp=$mcp_calls | ${#response_text} chars | ${duration_ms}ms${NC}"
     fi
 
     # Update counters
@@ -325,6 +375,7 @@ run_scenario() {
     TOTAL_INPUT_TOKENS=$((TOTAL_INPUT_TOKENS + input_tokens))
     TOTAL_OUTPUT_TOKENS=$((TOTAL_OUTPUT_TOKENS + output_tokens))
     TOTAL_DURATION_MS=$((TOTAL_DURATION_MS + duration_ms))
+    TOTAL_MCP_CALLS=$((TOTAL_MCP_CALLS + mcp_calls))
 
     # Record result JSON
     local checks_json=""
@@ -332,7 +383,7 @@ run_scenario() {
         checks_json=$(IFS=,; echo "${checks[*]}")
     fi
     local rchars=${#response_text}
-    RESULTS+=("{\"id\":\"$sid\",\"title\":\"$stitle\",\"difficulty\":\"$sdiff\",\"status\":\"$scenario_status\",\"duration_ms\":$duration_ms,\"input_tokens\":$input_tokens,\"output_tokens\":$output_tokens,\"response_chars\":$rchars,\"checks\":[$checks_json]}")
+    RESULTS+=("{\"id\":\"$sid\",\"title\":\"$stitle\",\"difficulty\":\"$sdiff\",\"status\":\"$scenario_status\",\"duration_ms\":$duration_ms,\"input_tokens\":$input_tokens,\"output_tokens\":$output_tokens,\"mcp_calls_count\":$mcp_calls,\"response_chars\":$rchars,\"checks\":[$checks_json]}")
 }
 
 # ============================================================
@@ -361,12 +412,24 @@ main() {
     else
         for sf in "$SCENARIOS_DIR"/*.json; do
             [ -f "$sf" ] || continue
-            # Profile filter: ci skips L3
-            if [ "$PROFILE" = "ci" ]; then
-                local diff
-                diff=$(jq -r '.difficulty' "$sf" 2>/dev/null)
-                [ "$diff" = "L3" ] && continue
-            fi
+            local diff
+            diff=$(jq -r '.difficulty' "$sf" 2>/dev/null)
+            # Profile filter
+            case "$PROFILE" in
+                smoke)
+                    # Smoke runs only S0 scenarios
+                    [ "$diff" != "S0" ] && continue
+                    ;;
+                ci)
+                    # CI runs L1+L2, skips L3 and S0
+                    [ "$diff" = "L3" ] && continue
+                    [ "$diff" = "S0" ] && continue
+                    ;;
+                full)
+                    # Full runs L1+L2+L3, skips S0
+                    [ "$diff" = "S0" ] && continue
+                    ;;
+            esac
             scenarios+=("$sf")
         done
     fi
@@ -394,7 +457,7 @@ main() {
         local rate="0.0"
         [ "$TOTAL" -gt 0 ] && rate=$(echo "scale=1; $PASSED * 100 / $TOTAL" | bc)
         cat <<EOF
-{"total":$TOTAL,"passed":$PASSED,"failed":$FAILED,"errors":$ERRORS,"pass_rate":"${rate}%","mode":"$MODE","cognitive":"$COGNITIVE","profile":"$PROFILE","model":"$MODEL","dry_run":$DRY_RUN,"total_input_tokens":$TOTAL_INPUT_TOKENS,"total_output_tokens":$TOTAL_OUTPUT_TOKENS,"total_duration_ms":$TOTAL_DURATION_MS,"scenarios":[$results_json]}
+{"total":$TOTAL,"passed":$PASSED,"failed":$FAILED,"errors":$ERRORS,"pass_rate":"${rate}%","mode":"$MODE","cognitive":"$COGNITIVE","profile":"$PROFILE","model":"$MODEL","dry_run":$DRY_RUN,"total_input_tokens":$TOTAL_INPUT_TOKENS,"total_output_tokens":$TOTAL_OUTPUT_TOKENS,"total_mcp_calls":$TOTAL_MCP_CALLS,"total_duration_ms":$TOTAL_DURATION_MS,"scenarios":[$results_json]}
 EOF
     else
         echo ""
@@ -404,6 +467,7 @@ EOF
         echo "LLM Benchmark: $PASSED/$TOTAL passed ($rate%)"
         echo "  Mode: $MODE/$COGNITIVE | Model: $MODEL | Profile: $PROFILE"
         echo "  Tokens: in=$TOTAL_INPUT_TOKENS out=$TOTAL_OUTPUT_TOKENS"
+        echo "  MCP calls: $TOTAL_MCP_CALLS"
         echo "  Duration: ${TOTAL_DURATION_MS}ms"
         echo ""
         if [ "$FAILED" -gt 0 ] || [ "$ERRORS" -gt 0 ]; then
