@@ -115,6 +115,25 @@ All secret scanning commands in this playbook reference canonical patterns from 
 | Tier-1 (prefix) | `grep -cE` canonical patterns against `git log --all -p` | Known prefixes. Misses Packagist, Bearer. | Pre-flight + quick post-cleanup |
 | Tier-2 (exact) | `grep -cF -f /tmp/secrets-to-remove.txt` (old exact values) against `git log --all -p` | 100% — exact values, zero false negatives. | Final verify on old repo. Not needed for Option C new repo. |
 
+### History Scan (Low-Noise, Redacted)
+
+Raw Tier-1 (`git log --all -p | grep -cE`) produces inflated counts (~1M+) because documentation files (`.docs/`, `*.md`, compiled `.claude/` output) legitimately reference the same regex patterns. This makes evidence non-enterprise.
+
+`scripts/scan-secrets-history.sh` solves this by:
+
+1. Extracting canonical patterns from `scan-secrets.sh` (single source of truth).
+2. Using `git log -G` with pathspec exclusions (`.docs/`, `*.md`, scan scripts, compiled output).
+3. Outputting only: match counts, affected commit hashes, affected file paths — **never content**.
+4. Exit code: `0` = clean history, `2` = matches found.
+
+Usage:
+```
+bash scripts/scan-secrets-history.sh          # Human-readable (redacted)
+bash scripts/scan-secrets-history.sh --json   # Machine-readable
+```
+
+This replaces raw `git log -p | grep -cE` for evidence purposes. Tier-2 (exact old values) remains unchanged.
+
 ## Decision Matrix
 
 | Criteria | A: BFG Rewrite | B: Fresh Repo Reset | C: New Canon Repo |
