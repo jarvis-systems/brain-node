@@ -25,9 +25,9 @@ Every merge to `master` MUST satisfy ALL gates below. A single FAIL = merge bloc
 | 8 | Benchmark Dry-Run | `composer benchmark:dry` (0 errors) | YES | `brain-benchmark.yml` → `scripts/benchmark-llm-suite.sh` |
 | 9 | Release Gate | Version/pin/manifest/bundle validation | YES | `brain-release.yml` → `scripts/build-release-bundle.sh` |
 
-## Enterprise Audit Sub-Gates (18 Checks)
+## Enterprise Audit Sub-Gates (19 Checks)
 
-All 18 checks in `audit-enterprise.sh` must PASS or WARN (no FAIL):
+All 19 checks in `audit-enterprise.sh` must PASS or WARN (no FAIL):
 
 | Check | What it catches | Severity |
 |-------|----------------|----------|
@@ -49,6 +49,7 @@ All 18 checks in `audit-enterprise.sh` must PASS or WARN (no FAIL):
 | 16. Degradation observability | Catch blocks without logging/fallback signal | WARN |
 | 17. Version consistency | Root vs core `composer.json` version mismatch | FAIL |
 | 18. MCP schema bypass | Raw `::call()` on schema-enabled MCP without `@mcp-schema-bypass` | FAIL |
+| 19. Compile clean-worktree | `brain compile` produces new uncommitted changes (source ↔ artifact drift) | FAIL |
 
 ## CI Supply Chain
 

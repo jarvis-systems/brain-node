@@ -253,4 +253,4 @@ Stale counts corrected to match actual gate output. No score changes.
 | `bash scripts/audit-enterprise.sh` | PASS:19, WARN:0, FAIL:0 |
 | `brain docs --validate` | 71 valid, 0 invalid, 66 warnings |
 
-**Residual stale references (out of scope, tracked):** ENTERPRISE-DOD.md still says "18 Checks" — requires separate doc update. CLAUDE.md Testing section lists 17 test files — compiled artifact, updated on next `brain compile`.
+**Residual stale references (out of scope, tracked):** CLAUDE.md Testing section lists 17 test files — compiled artifact, updated on next `brain compile`.
