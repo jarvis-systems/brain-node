@@ -1,0 +1,103 @@
+{
+  "total": 1,
+  "passed": 0,
+  "failed": 1,
+  "errors": 0,
+  "pass_rate": "0%",
+  "mode": "standard",
+  "cognitive": "standard",
+  "profile": "full",
+  "model": "haiku",
+  "dry_run": false,
+  "total_input_tokens": 26,
+  "total_output_tokens": 1296,
+  "total_mcp_calls": 4,
+  "total_duration_ms": 40815,
+  "scenarios": [
+    {
+      "id": "MT-LP-002",
+      "title": "Constitutional Learn: no store on clean task completion",
+      "difficulty": "L2",
+      "status": "FAIL",
+      "duration_ms": 40815,
+      "input_tokens": 26,
+      "output_tokens": 1296,
+      "mcp_calls_count": 4,
+      "response_chars": 2435,
+      "turns": 2,
+      "checks": [
+        {
+          "check": "session-init",
+          "status": "PASS",
+          "detail": "b25fe3f9..."
+        },
+        {
+          "check": "turn1:response",
+          "status": "PASS"
+        },
+        {
+          "check": "turn1:required:ні",
+          "status": "PASS",
+          "detail": "3 matches"
+        },
+        {
+          "check": "turn1:banned-tool:mcp__vector-memory__store_memory",
+          "status": "PASS"
+        },
+        {
+          "check": "turn2:response",
+          "status": "PASS"
+        },
+        {
+          "check": "turn2:required:retr",
+          "status": "PASS",
+          "detail": "2 matches"
+        },
+        {
+          "check": "turn2:required:stuck",
+          "status": "PASS",
+          "detail": "3 matches"
+        },
+        {
+          "check": "global-banned:when-uncertain",
+          "status": "PASS"
+        },
+        {
+          "check": "global-banned:Trigger.*Uncertainty",
+          "status": "PASS"
+        },
+        {
+          "check": "global-banned:before-assuming.*cookbook",
+          "status": "PASS"
+        },
+        {
+          "check": "banned:when-uncertain",
+          "status": "PASS"
+        },
+        {
+          "check": "banned:Trigger.*Uncertainty",
+          "status": "PASS"
+        },
+        {
+          "check": "banned-tool:mcp__vector-memory__store_memory",
+          "status": "PASS"
+        },
+        {
+          "check": "mcp-calls-range",
+          "status": "FAIL",
+          "detail": "4 not in [0..3]"
+        },
+        {
+          "check": "token-budget",
+          "status": "PASS",
+          "detail": "1296 <= 2000"
+        },
+        {
+          "check": "duration",
+          "status": "PASS",
+          "detail": "40815ms <= 120000ms"
+        }
+      ]
+    }
+  ]
+}

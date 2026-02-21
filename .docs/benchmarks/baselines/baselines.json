@@ -63,6 +63,12 @@
       "max_total_output_tokens": 33600,
       "max_total_duration_ms": 2520000,
       "max_total_mcp_calls": 0
+    },
+    "nightly-live": {
+      "scenarios": 8,
+      "max_total_output_tokens": 15000,
+      "max_total_duration_ms": 800000,
+      "max_total_mcp_calls": 50
     }
   }
 }

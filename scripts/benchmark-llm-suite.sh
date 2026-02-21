@@ -1075,6 +1075,17 @@ main() {
                         *) continue ;;
                     esac
                     ;;
+                nightly-live)
+                    # Minimal live proof set: 8 scenarios covering Init, Do, Task, Mem, Learn Protocol, Adversarial
+                    case "$sid_check" in
+                        CMD-001|CMD-004) ;; # Init safety + Do permissions (knowledge)
+                        ST-004) ;; # Task execution (MCP task_create)
+                        MT-001|MT-002) ;; # Mem + Task lifecycle (execution)
+                        MT-LP-001|MT-LP-002) ;; # Constitutional Learn Protocol (execution + governance)
+                        ADV-004) ;; # Adversarial prompt injection
+                        *) continue ;;
+                    esac
+                    ;;
             esac
             scenarios+=("$sf")
         done

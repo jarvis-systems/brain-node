@@ -1,0 +1,120 @@
+{
+  "total": 1,
+  "passed": 0,
+  "failed": 1,
+  "errors": 0,
+  "pass_rate": "0%",
+  "mode": "standard",
+  "cognitive": "standard",
+  "profile": "full",
+  "model": "haiku",
+  "dry_run": false,
+  "total_input_tokens": 37,
+  "total_output_tokens": 1254,
+  "total_mcp_calls": 5,
+  "total_duration_ms": 44230,
+  "scenarios": [
+    {
+      "id": "MT-LP-001",
+      "title": "Constitutional Learn: store lesson on trigger signal",
+      "difficulty": "L2",
+      "status": "FAIL",
+      "duration_ms": 44230,
+      "input_tokens": 37,
+      "output_tokens": 1254,
+      "mcp_calls_count": 5,
+      "response_chars": 1885,
+      "turns": 2,
+      "checks": [
+        {
+          "check": "session-init",
+          "status": "PASS",
+          "detail": "77bc94f4..."
+        },
+        {
+          "check": "turn1:response",
+          "status": "PASS"
+        },
+        {
+          "check": "turn1:required:store",
+          "status": "PASS",
+          "detail": "2 matches"
+        },
+        {
+          "check": "turn1:mcp-range",
+          "status": "FAIL",
+          "detail": "0 not in [1..5]"
+        },
+        {
+          "check": "turn1:expected-tool:mcp__vector-memory__store_memory",
+          "status": "FAIL",
+          "detail": "not in tool_use events"
+        },
+        {
+          "check": "turn2:response",
+          "status": "PASS"
+        },
+        {
+          "check": "turn2:required:FAILURE",
+          "status": "PASS",
+          "detail": "2 matches"
+        },
+        {
+          "check": "turn2:required:ROOT.CAUSE",
+          "status": "PASS",
+          "detail": "1 matches"
+        },
+        {
+          "check": "turn2:required:FIX",
+          "status": "PASS",
+          "detail": "2 matches"
+        },
+        {
+          "check": "turn2:required:PREVENTION",
+          "status": "PASS",
+          "detail": "1 matches"
+        },
+        {
+          "check": "global-banned:when-uncertain",
+          "status": "PASS"
+        },
+        {
+          "check": "global-banned:Trigger.*Uncertainty",
+          "status": "PASS"
+        },
+        {
+          "check": "global-banned:before-assuming.*cookbook",
+          "status": "PASS"
+        },
+        {
+          "check": "banned:when-uncertain",
+          "status": "PASS"
+        },
+        {
+          "check": "banned:Trigger.*Uncertainty",
+          "status": "PASS"
+        },
+        {
+          "check": "expected-tool:mcp__vector-memory__store_memory",
+          "status": "FAIL",
+          "detail": "not in tool_use events"
+        },
+        {
+          "check": "mcp-calls-range",
+          "status": "PASS",
+          "detail": "5 in [1..7]"
+        },
+        {
+          "check": "token-budget",
+          "status": "PASS",
+          "detail": "1254 <= 3000"
+        },
+        {
+          "check": "duration",
+          "status": "PASS",
+          "detail": "44230ms <= 180000ms"
+        }
+      ]
+    }
+  ]
+}

@@ -21,6 +21,7 @@
 #   - Secret patterns in tracked files
 #   - Hardcoded user paths in tracked source files
 #   - Version consistency (core vs root composer.json)
+#   - MCP schema bypass: raw ::call() on schema-enabled MCPs without @mcp-schema-bypass
 #
 # Output: dist/audit-report.json + stdout summary
 #
@@ -97,7 +98,7 @@ add_category() {
 
 # ── Check 1: PHP syntax ──────────────────────────────────────────────────
 
-log "${BOLD}[1/17] PHP syntax check${NC}"
+log "${BOLD}[1/18] PHP syntax check${NC}"
 
 PHP_ERRORS=0
 PHP_FINDINGS="[]"
@@ -134,7 +135,7 @@ add_category "php-syntax" "$([ $PHP_ERRORS -eq 0 ] && echo pass || echo fail)" "
 
 # ── Check 2: PHPUnit (if available) ─────────────────────────────────────
 
-log "${BOLD}[2/17] PHPUnit tests${NC}"
+log "${BOLD}[2/18] PHPUnit tests${NC}"
 
 TEST_FINDINGS="[]"
 TEST_COUNT=0
@@ -153,7 +154,7 @@ add_category "phpunit" "$([ $TEST_COUNT -eq 0 ] && echo pass || echo fail)" "$TE
 
 # ── Check 3: Silent catch blocks ────────────────────────────────────────
 
-log "${BOLD}[3/17] Silent catch blocks${NC}"
+log "${BOLD}[3/18] Silent catch blocks${NC}"
 
 CATCH_FINDINGS="[]"
 CATCH_COUNT=0
@@ -213,7 +214,7 @@ add_category "silent-catches" "$([ $CATCH_COUNT -eq 0 ] && echo pass || echo war
 
 # ── Check 4: Debug artifacts ────────────────────────────────────────────
 
-log "${BOLD}[4/17] Debug artifacts${NC}"
+log "${BOLD}[4/18] Debug artifacts${NC}"
 
 DEBUG_FINDINGS="[]"
 DEBUG_COUNT=0
@@ -249,7 +250,7 @@ add_category "debug-artifacts" "$([ $DEBUG_COUNT -eq 0 ] && echo pass || echo wa
 
 # ── Check 5: TODO/FIXME markers ────────────────────────────────────────
 
-log "${BOLD}[5/17] TODO/FIXME markers${NC}"
+log "${BOLD}[5/18] TODO/FIXME markers${NC}"
 
 TODO_FINDINGS="[]"
 TODO_COUNT=0
@@ -281,7 +282,7 @@ add_category "todo-fixme" "$([ $TODO_COUNT -eq 0 ] && echo pass || echo info)" "
 
 # ── Check 6: Unsafe patterns ───────────────────────────────────────────
 
-log "${BOLD}[6/17] Unsafe patterns (eval/shell_exec/die/exit)${NC}"
+log "${BOLD}[6/18] Unsafe patterns (eval/shell_exec/die/exit)${NC}"
 
 UNSAFE_FINDINGS="[]"
 UNSAFE_COUNT=0
@@ -328,7 +329,7 @@ add_category "unsafe-patterns" "$([ $UNSAFE_COUNT -eq 0 ] && echo pass || echo w
 
 # ── Check 7: Shell script safety ────────────────────────────────────────
 
-log "${BOLD}[7/17] Shell script safety headers${NC}"
+log "${BOLD}[7/18] Shell script safety headers${NC}"
 
 SHELL_FINDINGS="[]"
 SHELL_COUNT=0
@@ -356,7 +357,7 @@ add_category "shell-safety" "$([ $SHELL_COUNT -eq 0 ] && echo pass || echo warn)
 
 # ── Check 8: No-op escape methods ───────────────────────────────────────
 
-log "${BOLD}[8/17] No-op escape method detection${NC}"
+log "${BOLD}[8/18] No-op escape method detection${NC}"
 
 NOOP_FINDINGS="[]"
 NOOP_COUNT=0
@@ -394,7 +395,7 @@ add_category "noop-escape" "$([ $NOOP_COUNT -eq 0 ] && echo pass || echo warn)" 
 
 # ── Check 9: self:: in trait files ─────────────────────────────────────
 
-log "${BOLD}[9/17] Late static binding in traits${NC}"
+log "${BOLD}[9/18] Late static binding in traits${NC}"
 
 LSB_FINDINGS="[]"
 LSB_COUNT=0
@@ -421,7 +422,7 @@ add_category "trait-lsb" "$([ $LSB_COUNT -eq 0 ] && echo pass || echo warn)" "$L
 
 # ── Check 10: Known typos ──────────────────────────────────────────────
 
-log "${BOLD}[10/17] Known typos in codebase${NC}"
+log "${BOLD}[10/18] Known typos in codebase${NC}"
 
 TYPO_FINDINGS="[]"
 TYPO_COUNT=0
@@ -451,7 +452,7 @@ add_category "known-typos" "$([ $TYPO_COUNT -eq 0 ] && echo pass || echo fail)" 
 
 # ── Check 11: Dev deps in production require ───────────────────────────
 
-log "${BOLD}[11/17] Dev dependencies in production require${NC}"
+log "${BOLD}[11/18] Dev dependencies in production require${NC}"
 
 DEVDEP_FINDINGS="[]"
 DEVDEP_COUNT=0
@@ -482,7 +483,7 @@ add_category "dev-deps-prod" "$([ $DEVDEP_COUNT -eq 0 ] && echo pass || echo fai
 
 # ── Check 12: PHPStan (static analysis) ───────────────────────────────
 
-log "${BOLD}[12/17] PHPStan static analysis${NC}"
+log "${BOLD}[12/18] PHPStan static analysis${NC}"
 
 PHPSTAN_FINDINGS="[]"
 PHPSTAN_COUNT=0
@@ -501,7 +502,7 @@ add_category "phpstan" "$([ $PHPSTAN_COUNT -eq 0 ] && echo pass || echo fail)" "
 
 # ── Check 13: strict_types declaration ─────────────────────────────────
 
-log "${BOLD}[13/17] Missing declare(strict_types=1)${NC}"
+log "${BOLD}[13/18] Missing declare(strict_types=1)${NC}"
 
 STRICT_FINDINGS="[]"
 STRICT_COUNT=0
@@ -540,7 +541,7 @@ add_category "strict-types" "$([ $STRICT_COUNT -eq 0 ] && echo pass || echo fail
 
 # ── Check 14: Secret patterns in tracked files ─────────────────────────
 
-log "${BOLD}[14/17] Secret patterns in tracked files${NC}"
+log "${BOLD}[14/18] Secret patterns in tracked files${NC}"
 
 SECRET_FINDINGS="[]"
 SECRET_COUNT=0
@@ -580,7 +581,7 @@ add_category "secrets" "$([ $SECRET_COUNT -eq 0 ] && echo pass || echo fail)" "$
 
 # ── Check 15: Hardcoded user paths ────────────────────────────────────
 
-log "${BOLD}[15/17] Hardcoded user paths in tracked source files${NC}"
+log "${BOLD}[15/18] Hardcoded user paths in tracked source files${NC}"
 
 HPATH_FINDINGS="[]"
 HPATH_COUNT=0
@@ -621,7 +622,7 @@ add_category "hardcoded-paths" "$([ $HPATH_COUNT -eq 0 ] && echo pass || echo wa
 
 # ── Check 16: Degradation observability ────────────────────────────────
 
-log "${BOLD}[16/17] Degradation observability in catch blocks${NC}"
+log "${BOLD}[16/18] Degradation observability in catch blocks${NC}"
 
 DEGRAD_COUNT=0
 DEGRAD_FINDINGS="[]"
@@ -663,7 +664,7 @@ add_category "degradation-observability" "$([ $DEGRAD_COUNT -eq 0 ] && echo pass
 
 # ── Check 17: Version consistency ─────────────────────────────────────
 
-log "${BOLD}[17/17] Version consistency${NC}"
+log "${BOLD}[17/18] Version consistency${NC}"
 
 VER_FINDINGS="[]"
 VER_COUNT=0
@@ -682,6 +683,59 @@ else
     log "  ${GREEN}PASS${NC} root=$ROOT_VERSION, core=$CORE_VERSION — consistent"
 fi
 add_category "version-consistency" "$([ $VER_COUNT -eq 0 ] && echo pass || echo fail)" "$VER_COUNT" "$VER_FINDINGS"
+
+# ── Check 18: MCP schema bypass enforcement ─────────────────────────────
+
+log "${BOLD}[18/18] MCP schema bypass enforcement${NC}"
+
+MCPBYPASS_FINDINGS="[]"
+MCPBYPASS_COUNT=0
+
+# Schema-enabled MCP classes: VectorMemoryMcp, VectorTaskMcp
+# These have local schemas and MUST use callValidatedJson() unless annotated with @mcp-schema-bypass
+while IFS=: read -r file line content; do
+    [[ -z "$file" ]] && continue
+    relative="${file#$PROJECT_ROOT/}"
+    # Skip vendor, compiled output, audit tooling, tests
+    [[ "$relative" == vendor/* ]] && continue
+    [[ "$relative" == */vendor/* ]] && continue
+    [[ "$relative" == .claude/* ]] && continue
+    [[ "$relative" == .opencode/* ]] && continue
+    [[ "$relative" == scripts/audit-enterprise.sh ]] && continue
+    [[ "$relative" == */tests/* ]] && continue
+    # Skip if it's callValidatedJson or callJson (already validated)
+    [[ "$content" == *"callValidatedJson"* ]] && continue
+    [[ "$content" == *"callJson"* ]] && continue
+    # Skip string literals (documentation references, not actual calls)
+    [[ "$content" == *"'"*"::call("* ]] && continue
+    [[ "$content" == *'"'*'::call('* ]] && continue
+    # Check if previous 3 lines contain @mcp-schema-bypass annotation
+    has_bypass=false
+    for offset in 1 2 3; do
+        prev_line=$((line - offset))
+        if [[ $prev_line -gt 0 ]]; then
+            prev_content=$(sed -n "${prev_line}p" "$file" 2>/dev/null || true)
+            if [[ "$prev_content" == *"@mcp-schema-bypass"* ]]; then
+                has_bypass=true
+                break
+            fi
+        fi
+    done
+    if [[ "$has_bypass" == false ]]; then
+        MCPBYPASS_COUNT=$((MCPBYPASS_COUNT + 1))
+        MCPBYPASS_FINDINGS=$(echo "$MCPBYPASS_FINDINGS" | jq \
+            --arg file "$relative" \
+            --arg line "$line" \
+            --arg content "$(echo "$content" | head -c 200)" \
+            '. + [{"file": $file, "line": ($line | tonumber), "content": $content}]')
+        log "  ${RED}FAIL${NC} $relative:$line — raw ::call() on schema-enabled MCP without @mcp-schema-bypass"
+    fi
+done < <(grep -rn 'VectorMemoryMcp::call\|VectorTaskMcp::call' "$PROJECT_ROOT/core/src" "$PROJECT_ROOT/node" --include='*.php' 2>/dev/null || true)
+
+if [[ $MCPBYPASS_COUNT -eq 0 ]]; then
+    log "  ${GREEN}PASS${NC} All schema-enabled MCP calls validated or annotated"
+fi
+add_category "mcp-schema-bypass" "$([ $MCPBYPASS_COUNT -eq 0 ] && echo pass || echo fail)" "$MCPBYPASS_COUNT" "$MCPBYPASS_FINDINGS"
 
 # ── Output JSON report ──────────────────────────────────────────────────
 

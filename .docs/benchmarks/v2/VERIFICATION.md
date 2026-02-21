@@ -3,7 +3,7 @@ name: "Benchmark v2 Verification"
 description: "Commands and procedures for verifying benchmark v2 functionality, live evidence, and profile documentation"
 type: "verification"
 date: "2026-02-21"
-version: "2.2"
+version: "2.3"
 ---
 
 # Verification Procedures
@@ -94,26 +94,30 @@ Baselines stored in `.docs/benchmarks/baselines/baselines.json`.
 
 ## CI Behavior
 
-### Pull Request Gate
+### Pull Request Gate (Zero API Cost)
 
 On every PR that touches Brain sources, scenarios, or scripts:
 
-1. **smoke-test** — S00 only, haiku (~20s)
-2. **pr-gate** (after smoke passes):
-   - `telemetry-ci` profile (12 scenarios, haiku, ~4 min)
-   - `ci` profile (25 scenarios, haiku, ~8 min)
-   - Regression check on both reports (WARN, not blocking)
-3. Artifacts: `pr-benchmark-reports` retained 14 days
+1. **pr-gate** — dry-run only (~30s, zero API calls):
+   - Dry-run: full, telemetry-ci, nightly-live, cmd-auto profiles
+   - Baselines JSON validation
+2. **brain-lint** (separate workflow, same PR trigger):
+   - Instruction budget --strict
+   - PHPStan, tests, compile discipline, secret scanning, enterprise audit
+
+No live API calls on PR. Structural gates handled by brain-lint.yml.
 
 ### Nightly / Manual Dispatch
 
-1. **smoke-test** — S00 only
-2. **benchmark-suite**:
-   - Default: `full` profile, `sonnet` model (38 scenarios)
-   - Manual: selectable profile + model
-   - `cmd-auto` profile: dry-run only by default
+1. **smoke-test** — S00 only, haiku (~20s)
+2. **nightly-live** (after smoke passes):
+   - `nightly-live` profile (8 scenarios, sonnet, ~10 min)
+   - Model gating: MT-LP-001 requires sonnet, rest compatible with haiku
    - Regression check (WARN mode)
-3. Artifact: `benchmark-report` retained 30 days
+   - Artifact: `nightly-live-report` retained 30 days
+3. **matrix-stress** — 4 scenarios x 4 mode configs (nightly)
+4. **adversarial-stress** — 7 ADV scenarios x 4 configs (nightly)
+5. **benchmark-suite** — manual dispatch only: selectable profile + model
 
 ### Regression Thresholds
 
@@ -253,6 +257,7 @@ Tier hierarchy: `haiku(1) < sonnet(2) < opus(3)`.
 
 ### Profile Impact
 
+- `nightly-live` (sonnet): 8 total, 8 executed (CMD-001, CMD-004, ST-004, MT-001, MT-002, MT-LP-001, MT-LP-002, ADV-004).
 - `telemetry-ci` (haiku): MT-LP-001 counted but skipped → 12 total, 11 executed, 1 skipped.
 - `full` (sonnet): MT-LP-001 executes normally → 38 total, 38 executed.
 - Baselines unchanged — skipped scenarios contribute 0 to token/duration/mcp totals.
@@ -273,7 +278,13 @@ Tier hierarchy: `haiku(1) < sonnet(2) < opus(3)`.
 - [x] ci profile: 25 scenarios
 - [x] full profile: 38 scenarios
 - [x] cmd-auto profile: 28 scenarios
+- [x] nightly-live profile: 8 scenarios
 - [x] Model gating: MT-LP-001 skipped on haiku, executed on sonnet
-- [ ] Regression check passes on full report
-- [ ] PR gate runs on PR to Brain sources
-- [ ] Nightly runs full profile with sonnet
+- [x] PR gate: dry-run only (zero API cost)
+- [x] Nightly: nightly-live profile with sonnet
+- [x] Instruction quality contract documented
+- [ ] Regression check passes on nightly-live report
+- [ ] Init DTO contains sessionId
+- [ ] Resume preserves context
+- [ ] ST-001 passes expected-tool check
+- [ ] Nightly-live full live proof captured

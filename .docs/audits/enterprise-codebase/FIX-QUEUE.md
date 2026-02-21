@@ -412,6 +412,25 @@ status: active
 | NodeIntegrityTest +3 tests | `testCommandsDoNotIncludeBrainOrUniversalIncludes`, `testAgentIdsAreUnique`, `testMcpIdsAreUnique` | 232/232 PASS, 517 assertions |
 | Shebang normalization | 7 scripts: `#!/bin/bash` → `#!/usr/bin/env bash` (POSIX-portable). Affected: audit-enterprise, benchmark-regression-check, benchmark-suite, benchmark-llm-suite, check-instruction-budget, verify-compile-metrics, lint-mcp-syntax | All 13 scripts now use `#!/usr/bin/env bash` consistently |
 
+### Input Validation Category B — CLOSED (2/2)
+
+| Site | File | Fix | Status |
+|------|------|-----|--------|
+| B1 | `core/src/Includes/Commands/Task/TaskListInclude.php:47` | `@mcp-schema-bypass` annotation + rationale (Store::get() returns runtime placeholder) | **FIXED** |
+| B2 | `core/src/Includes/Commands/Mem/MemSearchInclude.php:51` | `@mcp-schema-bypass` annotation + rationale (Store::get() returns runtime placeholder) | **FIXED** |
+
+Design contract: When/if `Store` supports structured array params, both sites should migrate to `callValidatedJson()`.
+
+Regression prevention: `audit-enterprise.sh` Check 18 (mcp-schema-bypass) + `NodeIntegrityTest::testMcpSchemaBypassAnnotations()`
+
+### Refactor Batch 9
+
+| Item | Change | Proof |
+|------|--------|-------|
+| Category B closure (2 sites) | Added `@mcp-schema-bypass` annotation to TaskListInclude.php:47 and MemSearchInclude.php:51 | `audit-enterprise.sh` Check 18 = PASS |
+| audit-enterprise.sh Check 18 | MCP schema bypass enforcement: raw `::call()` on schema-enabled MCPs without `@mcp-schema-bypass` = FAIL | PASS:16, WARN:2, FAIL:0 |
+| NodeIntegrityTest +1 test | `testMcpSchemaBypassAnnotations` — scans core/src + node for unvalidated MCP calls | 233/233 PASS |
+
 ## Summary
 
 | Priority | Total | Fixed | Reclassified | Open |
@@ -419,11 +438,12 @@ status: active
 | P0 | 15 | 13 | 2 (to P2) | 0 |
 | P1 | 8 | 7 | 1 (to P2) | 0 |
 | P2 | 3+2+1+1+3+1 | 7 | 0 | 3 |
-| **Total** | **31** | **27** | **3** | **3** |
+| Cat-B | 2 | 2 | 0 | 0 |
+| **Total** | **33** | **29** | **3** | **3** |
 
 Remaining P2 open: P2-003 (error_log in ConvertCommand — acceptable, env-gated), git history cleanup, DocChallenge.md paths.
 
-**Non-P0/P1 fixes (contract consistency):** commands-no-includes rule amended (false positive eliminated), AgentArchetype::id() and McpArchitecture::id() silent fallbacks replaced with RuntimeException (compile-time safety), 7 script shebangs normalized.
+**Non-P0/P1 fixes (contract consistency):** commands-no-includes rule amended (false positive eliminated), AgentArchetype::id() and McpArchitecture::id() silent fallbacks replaced with RuntimeException (compile-time safety), 7 script shebangs normalized, Category B MCP schema bypass annotated (2 sites).
 
 ### Audit Check Coverage
 
@@ -484,3 +504,6 @@ Remaining P2 open: P2-003 (error_log in ConvertCommand — acceptable, env-gated
 | Batch 8 (AgentArchetype::id() throw) | RuntimeException at compile time if Meta('id') missing + testAllAgentsHaveRequiredAttributes + testAgentIdsAreUnique |
 | Batch 8 (McpArchitecture::id() throw) | RuntimeException at compile time if Meta('id') missing + testAllMcpClassesHaveMetaId + testMcpIdsAreUnique |
 | Batch 8 (shebang consistency) | All scripts now use `#!/usr/bin/env bash` — visual inspection / audit enhancement possible |
+| Category B (schema bypass B1) | `audit-enterprise.sh` Check 18 (mcp-schema-bypass) + `testMcpSchemaBypassAnnotations` |
+| Category B (schema bypass B2) | `audit-enterprise.sh` Check 18 (mcp-schema-bypass) + `testMcpSchemaBypassAnnotations` |
+| NEW (Check 18) | `audit-enterprise.sh` Check 18 — raw ::call() on VectorMemoryMcp/VectorTaskMcp without @mcp-schema-bypass = FAIL |
