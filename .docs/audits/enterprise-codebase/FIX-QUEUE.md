@@ -165,14 +165,14 @@ status: active
 
 | Field | Value |
 |-------|-------|
-| Scope | Core: 17 test files / 167 source files, Node: covered via NodeIntegrityTest, CLI: phpstan level 0 |
+| Scope | Core: 19 test files / 167+ source files, Node: covered via NodeIntegrityTest, CLI: phpstan level 0 |
 | Issue | Critical paths untested |
 | Fix (batch 1) | **FIXED**: MergerTest (3 errors → 0, Reflection-based), TomlBuilderTest (2 errors → 0, removed stale `->build()` chain), Merger stale-index bug (1 failure → 0, rebuild index after splice). Suite: 19/19 PASS. |
 | Fix (batch 2 — Proof Pack v1) | **NEW**: `BuilderDeterminismTest` (5 tests: XmlBuilder/TomlBuilder idempotency, ordering, newline contract), `MergerInvariantsTest` (4 tests: no child loss, empty includes, 3-level nesting, determinism), `CompilationOutputTest` (13 tests: Store format, Operator format, BrainCLI constants/methods, chaining, determinism). Suite: 40/40 PASS, 95 assertions. |
 | Fix (batch 3 — Node + CLI) | **NEW**: `NodeIntegrityTest` (8 tests: strict_types, agent/command/MCP attributes, MCP contracts, no secrets, pins.json). CLI phpstan level 0 (7 ignoreErrors, 2 excludePaths). Suite: 48/48 PASS, 117 assertions. |
 | Remaining | CLI runtime tests (requires Laravel framework) |
 | Status | **FIXED** |
-| Validate | `composer test` = 233 tests, 518 assertions, 0 failures |
+| Validate | `composer test` = 244 tests, 578 assertions, 0 failures |
 
 ### P1-003a: MergerTest broken — protected handle()
 
@@ -474,6 +474,17 @@ Regression prevention: `audit-enterprise.sh` Check 18 (mcp-schema-bypass) + `Nod
 | ENTERPRISE-DOD.md checkboxes | CI Supply Chain 3× `[ ]` → `[x]`: SHA pinning, concurrency guards, no secrets in workflows | Verified: all 4 actions SHA-pinned in brain-benchmark.yml, concurrency blocks in all 3 workflows, only `${{ secrets.* }}` references |
 | VERIFICATION.md cleanup | 3 duplicate checklist entries removed (lines 332-334 = 313-315), full suite count "28 scenarios" → "38 scenarios" | Dry-run: 38/38 pass (full profile) |
 | Score unchanged | Doc-only batch — zero runtime impact, zero test impact | 233/233 PASS, PASS:18 WARN:0 FAIL:0 |
+
+### Refactor Batch 13A — SCORECARD Count Realignment (Doc Truth)
+
+| Item | Change | Proof |
+|------|--------|-------|
+| SCORECARD test count stale | Tests 233→244 (+11), assertions 518→578 (+60), test files 17→19 (+DiagnoseOutputTest, +SecretOutputPolicyIncludeTest) | `composer test` = 244/244 PASS (2026-02-21) |
+| SCORECARD Node assertions | 33→30 (stale estimate corrected to actual) | `phpunit tests/NodeIntegrityTest.php` = 13 tests, 30 assertions |
+| SCORECARD audit check count | 18→19 (+compile-clean worktree, quad-mode drift) | `audit-enterprise.sh` = PASS:19 |
+| FIX-QUEUE P1-003 counts | Scope 17→19 test files, validate 233→244 tests | Aligns with SCORECARD |
+| Risk Matrix P1 row | 17→19 test files, 233→244 tests | Aligns with SCORECARD |
+| Score unchanged | Count realignment only — no score changes | All gates GREEN |
 
 ## Summary
 

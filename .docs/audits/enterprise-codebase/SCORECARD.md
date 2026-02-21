@@ -27,7 +27,7 @@ status: active
 | 3 | Input Validation | 3 | 3 | -- | 3.0 | MCP schema validator (3 modes); 244 validated call sites; 2 compile-time bypass sites annotated with @mcp-schema-bypass; audit Check 18 enforces regression gate |
 | 4 | Security | 2 | 3 | 2 | 2.3 | ~~No static analysis~~ **FIXED** (phpstan level 0); ~~API keys in MCP files~~ **FIXED** (getenv()); ~~CI actions tag-pinned~~ **FIXED** (SHA-pinned); **NEW**: Secret scanning CI gate, release bundle .mcp.json exclusion, upload.sh/settings.json untracked, threat model doc, CI concurrency guards, pre-publication kill-switch |
 | 5 | Docs Parity | 3 | 3 | -- | 3.0 | ~~`composer test`/`analyse` missing at root~~ **FIXED**; ~~LegacyParityTest referenced but never existed~~ **FIXED** (removed from CLAUDE.md, actual test list updated); ~~docs validation 1 invalid~~ **FIXED** (YAML front matter added); `brain docs --validate` = 0 invalid |
-| 6 | Testability | 3 | 2 | 1 | 2.0 | 233/233 tests, 518 assertions; **Refactor Batch 8**: +3 tests (command include policy, agent ID uniqueness, MCP ID uniqueness); **Refactor Batch 7**: NodeIntegrityTest +1 test (testNoTestStubMcpFiles) + Meta('model') assertion; **Refactor Batch 5**: id() contract fix + 4 id-method tests, XmlBuilder edge cases (15 new tests), SnapshotTest golden-file regression (12 tests); **Refactor Batch 4**: BlueprintTest (44→48 tests); **Refactor Batch 3**: MDTest (30), CoreTest (28), VarChainTest (20); Node: 12 tests via NodeIntegrityTest; CLI: phpstan level 0 |
+| 6 | Testability | 3 | 2 | 1 | 2.0 | 244/244 tests, 578 assertions; **Refactor Batch 8**: +3 tests (command include policy, agent ID uniqueness, MCP ID uniqueness); **Refactor Batch 7**: NodeIntegrityTest +1 test (testNoTestStubMcpFiles) + Meta('model') assertion; **Refactor Batch 5**: id() contract fix + 4 id-method tests, XmlBuilder edge cases (15 new tests), SnapshotTest golden-file regression (12 tests); **Refactor Batch 4**: BlueprintTest (44→48 tests); **Refactor Batch 3**: MDTest (30), CoreTest (28), VarChainTest (20); Node: 12 tests via NodeIntegrityTest; CLI: phpstan level 0 |
 | 7 | Release Discipline | 3 | 3 | -- | 3.0 | Pinning, manifest, bundle, release CI -- all good |
 | 8 | Operability | 3 | 3 | -- | 3.0 | Benchmarks, runbooks, ops-evidence, demo -- comprehensive; **Refactor Batch 6**: 3 P0 script bugs fixed (jq key mismatch, md5 portability, version consistency check) |
 | 9 | Footguns | 3 | 3 | -- | 3.0 | ~~Debug artifacts~~ **FIXED**; ~~typo in class name~~ **FIXED**; ~~dead scaffold~~ **FIXED**; ~~hardcoded MCP paths~~ **FIXED** (generator emits getcwd()); **Refactor Batch 2**: awesome-mcp.json `--save-as` → `--as` CLI bug fix; **Refactor Batch 4**: ~~Guideline::workflow() dead method~~ **REMOVED**; **Refactor Batch 5**: ~~BlueprintArchitecture::id() broken~~ **FIXED** (→ set()); **Refactor Batch 6**: ~~Core::getVariable @return scalar lie~~ **FIXED**, ~~McpArchitecture::id() copy-paste docblock~~ **FIXED**; **Refactor Batch 7**: ~~Test2Mcp.php stub artifact~~ **REMOVED**; **Refactor Batch 8**: ~~AgentArchetype::id() silent 'explore' fallback~~ **FIXED** (→ throw), ~~McpArchitecture::id() silent 'unknown' fallback~~ **FIXED** (→ throw) |
@@ -83,8 +83,8 @@ No sources of non-determinism found. No `rand()`, `shuffle()`, `mt_rand()`, `arr
 
 | Package | Test Files | Source Files | Tests | Assertions | Status |
 |---------|-----------|--------------|-------|------------|--------|
-| Core | 17 | 167+ | 233 | 518 | 233/233 PASS |
-| Node | 0 (tested via Core) | 43 | 13 | 33 | via NodeIntegrityTest |
+| Core | 19 | 167+ | 244 | 578 | 244/244 PASS |
+| Node | 0 (tested via Core) | 43 | 13 | 30 | via NodeIntegrityTest |
 | CLI | 8 | ~30+ | ~20 | ~50 | Separate repo + PHPStan level 0 |
 
 **Fixes applied:**
@@ -216,7 +216,7 @@ Comprehensive: benchmark suite (standard + LLM), ops evidence collection, failur
 | Risk Level | Total | Fixed | Reclassified | Open | Action |
 |------------|-------|-------|--------------|------|--------|
 | P0 (Critical) | 15 | 13 | 2 (→P2) | 0 | **ALL CLOSED** — audit gate is blocking + secret scanning |
-| P1 (Important) | 8 | 7 | 1 (→P2) | 0 | P1-001 **FIXED**, P1-002 **FIXED**, P1-003 **FIXED** (17 test files, 233 tests), P1-005 done, P1-006 secrets **FIXED** |
+| P1 (Important) | 8 | 7 | 1 (→P2) | 0 | P1-001 **FIXED**, P1-002 **FIXED**, P1-003 **FIXED** (19 test files, 244 tests), P1-005 done, P1-006 secrets **FIXED** |
 | P2 (Nice to have) | 6+1+1+1 | 6 | 0 | 3 | P2-001 (SHA pinning) **FIXED**, P2-002 (concurrency) **FIXED**, P2-004 (hardcoded paths) **FIXED**, P2-005 (observability) **FIXED**, P2-006 (LegacyParityTest) **FIXED**, P2-007 (docs validation) **FIXED**; remaining: P2-003 (error_log), git history, DocChallenge.md paths |
 
 ## Audit Methodology
@@ -226,4 +226,27 @@ Comprehensive: benchmark suite (standard + LLM), ops evidence collection, failur
 - CI workflow analysis for timeout, concurrency, action pinning
 - Composer dependency review across all 3 packages
 - Cross-reference between compiled CLAUDE.md claims and actual tooling
-- Automated audit: 18 checks (syntax, tests, catches, debug, TODO, unsafe, shell, noop, LSB, typos, deps, phpstan, strict_types, secrets, paths, degradation, version-consistency, mcp-schema-bypass)
+- Automated audit: 19 checks (syntax, tests, catches, debug, TODO, unsafe, shell, noop, LSB, typos, deps, phpstan, strict_types, secrets, paths, degradation, version-consistency, mcp-schema-bypass, compile-clean)
+
+## Evidence — Count Realignment (Batch 13A, 2026-02-21)
+
+Stale counts corrected to match actual gate output. No score changes.
+
+| Metric | Was (stale) | Now (actual) | Source |
+|--------|-------------|-------------|--------|
+| Test files (core/tests/) | 17 | 19 | +DiagnoseOutputTest, +SecretOutputPolicyIncludeTest |
+| Total tests | 233 | 244 | `composer test` |
+| Total assertions | 578 → was documented as 518 | 578 | `composer test` |
+| Node assertions (NodeIntegrityTest) | 33 | 30 | `phpunit tests/NodeIntegrityTest.php` |
+| Audit checks | 18 | 19 | +compile-clean worktree (quad-mode drift) |
+
+**Gate snapshot:**
+
+| Command | Result |
+|---------|--------|
+| `composer test` | 244 tests, 578 assertions, OK |
+| `composer analyse` | 0 errors (core 168 + CLI 127 files) |
+| `bash scripts/audit-enterprise.sh` | PASS:19, WARN:0, FAIL:0 |
+| `brain docs --validate` | 71 valid, 0 invalid, 66 warnings |
+
+**Residual stale references (out of scope, tracked):** ENTERPRISE-DOD.md still says "18 Checks" — requires separate doc update. CLAUDE.md Testing section lists 17 test files — compiled artifact, updated on next `brain compile`.
