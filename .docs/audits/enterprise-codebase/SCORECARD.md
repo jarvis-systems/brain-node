@@ -218,7 +218,7 @@ Strong: dependency pinning (`pins.json`), release manifest, build bundle script 
 
 ### 8. Operability (3/3)
 
-Comprehensive: benchmark suite (standard + LLM), ops evidence collection, failure runbooks, demo/pilot pack, observability documentation, ADR/ADV decision records.
+Comprehensive: benchmark suite (standard + LLM), ops evidence collection, failure runbooks, demo/pilot pack, observability documentation, ADR/ADV decision records. Multi-agent drift mitigated via Worktree Isolation Contract (manual enforcement, plan-only); see `.docs/product/17-worktree-isolation-contract.md` and FIX-QUEUE P2-009.
 
 ### 9. Footguns (3.0/3)
 

@@ -93,6 +93,17 @@ brain docs --validate                 # Expected: 0 errors, 0 warnings
 bash scripts/build-release-bundle.sh  # Expected: dist/*.tar.gz created, no .mcp.json
 ```
 
+### Worktree Isolation Compliance (Manual, when quad-mode active)
+
+If multi-agent / quad-mode was used during the release cycle:
+
+- [ ] All agent tasks ran in dedicated worktrees (not root repo) per `.docs/product/17-worktree-isolation-contract.md`
+- [ ] Root repo worktree is clean: `git status --porcelain` in root = empty
+- [ ] No stale worktrees: `git worktree list` shows only root (or explicitly active tasks)
+- [ ] Agent branches merged or cleaned: `git branch --merged master | grep agent/`
+
+Failure: stop release until root repo is verified clean and all agent worktrees are pruned.
+
 ## 4. Release Bundle Inspection (BLOCKING)
 
 ```bash

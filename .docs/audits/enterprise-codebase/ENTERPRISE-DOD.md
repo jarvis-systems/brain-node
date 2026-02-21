@@ -92,6 +92,7 @@ All 19 checks in `audit-enterprise.sh` must PASS or WARN (no FAIL):
 - [ ] Failure runbooks cover new failure modes (if applicable)
 - [ ] Benchmark scenarios cover new features (if applicable)
 - [ ] Demo script updated if public API changed
+- [ ] **Worktree isolation (when quad-mode active):** agents run in dedicated worktrees, not root repo; no cross-agent writes; artifacts local to worktree; no force push. See `.docs/product/17-worktree-isolation-contract.md`. Evidence: `git worktree list` + clean root `git status`.
 
 ## Quad-Mode Drift Policy
 
