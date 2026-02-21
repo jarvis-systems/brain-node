@@ -25,15 +25,15 @@ status: active
 | 1 | Determinism | 3 | 3 | -- | 3.0 | No rand/shuffle; compile is idempotent (verified S12) |
 | 2 | Error Handling | 2 | 2 | -- | 2.0 | Catch blocks have fallback code (not silent); P1-004 reclassified to P2 (same VarExporter pattern) |
 | 3 | Input Validation | 2 | 2 | -- | 2.0 | MCP schema validator exists (3 modes) but not all methods use it |
-| 4 | Security | 2 | 1 | 1 | 1.3 | ~~No static analysis~~ **FIXED** (phpstan level 0); API keys in MCP files remain |
+| 4 | Security | 2 | 2 | 1 | 1.7 | ~~No static analysis~~ **FIXED** (phpstan level 0); ~~API keys in MCP files~~ **FIXED** (getenv()) |
 | 5 | Docs Parity | 3 | 2 | -- | 2.5 | ~~`composer test`/`analyse` missing at root~~ **FIXED** — scripts added, both pass |
-| 6 | Testability | 2 | 0 | 1 | 1.0 | ~~MergerTest/TomlBuilderTest broken~~ **FIXED** — 19/19 pass; ~~Merger stale-index bug~~ **FIXED**; strict_types CI gate added |
+| 6 | Testability | 2 | 0 | 1 | 1.0 | ~~MergerTest/TomlBuilderTest broken~~ **FIXED** — 40/40 pass (95 assertions); Proof Pack: builder determinism, merger invariants, compilation output; strict_types CI gate |
 | 7 | Release Discipline | 3 | 3 | -- | 3.0 | Pinning, manifest, bundle, release CI -- all good |
 | 8 | Operability | 3 | 3 | -- | 3.0 | Benchmarks, runbooks, ops-evidence, demo -- comprehensive |
 | 9 | Footguns | 3 | 2 | -- | 2.5 | ~~Debug artifacts~~ **FIXED**; ~~typo in class name~~ **FIXED**; ~~dead scaffold~~ **FIXED** |
 | 10 | Maintainability | 3 | 2 | -- | 2.5 | ~~strict_types~~ **FIXED**; ~~CompileStandartsTrait typo~~ **FIXED**; ~~faker in prod~~ **FIXED** |
 
-**Overall Score: 22.8 / 30 (76%)**
+**Overall Score: 23.2 / 30 (77.3%)**
 
 ## Category Details
 
@@ -54,10 +54,10 @@ No sources of non-determinism found. No `rand()`, `shuffle()`, `mt_rand()`, `arr
 ### 4. Security (1.3/3)
 
 - ~~No static analysis tool~~ **FIXED** — phpstan 2.x installed in core (level 0, 4 documented suppressions), `composer analyse` in CI
-- API keys hardcoded in `GithubMcp.php:21` and `Context7Mcp.php:24` (mitigated: excluded from git)
-- No `.env`-based secret management for MCP credentials
+- ~~API keys hardcoded in `GithubMcp.php:21` and `Context7Mcp.php:24`~~ **FIXED** — migrated to `getenv()`, credentials in `.brain/.env` (gitignored), `.brain/.env.example` documented
 - CI actions pinned by tag (`@v4`) not SHA -- supply chain risk
 - ~~`fakerphp/faker` in CLI production `require`~~ **FIXED** — moved to `require-dev`, dead `fake()` function removed
+- ADV-007 benchmark scenario added for MCP credential extraction attempts
 
 ### 5. Docs Parity (2.5/3)
 
@@ -69,11 +69,11 @@ Both quality gates now enforceable from root. Remaining gap: no root-level test 
 
 ### 6. Testability (1.0/3)
 
-| Package | Test Files | Source Files | Coverage | Status |
-|---------|-----------|--------------|----------|--------|
-| Core | 4 | 167+ | ~2.4% | ~~5 errors~~ **FIXED** — 19/19 PASS |
-| Node | 0 | 44 | 0% | No tests |
-| CLI | 7 | ~30+ | ~23% | Separate repo |
+| Package | Test Files | Source Files | Tests | Assertions | Status |
+|---------|-----------|--------------|-------|------------|--------|
+| Core | 7 | 167+ | 40 | 95 | 40/40 PASS |
+| Node | 0 | 44 | 0 | 0 | No tests |
+| CLI | 7 | ~30+ | ~20 | ~50 | Separate repo |
 
 **Fixes applied:**
 - ~~MergerTest: protected `handle()` call from test~~ **FIXED** — Reflection-based invocation
@@ -82,7 +82,12 @@ Both quality gates now enforceable from root. Remaining gap: no root-level test 
 - ~~LegacyParityTest referenced in docs but never existed~~ Confirmed: file does not exist (P2 backlog)
 - strict_types enforcement gate added to audit (Check 13)
 
-Major gaps remain: JsonBuilder, YamlBuilder, Runtime, Operator, Store, BrainCLI, Tool classes, Archetypes, Variable system.
+**Proof Pack (v1) — invariant proofs added:**
+- `BuilderDeterminismTest` (5 tests): XmlBuilder/TomlBuilder idempotency, child ordering, key ordering, double-newline contract
+- `MergerInvariantsTest` (4 tests): no child loss, empty includes, deep nesting (3-level), determinism
+- `CompilationOutputTest` (13 tests): Store::as/get/var format, Operator::if/forEach/task/verify/validate, BrainCLI constants/methods, Operator::do chaining, determinism
+
+Remaining gaps: Runtime class, Tool classes, Archetypes, Variable system, Node package (0 tests).
 
 ### 7. Release Discipline (3/3)
 
@@ -101,7 +106,7 @@ Comprehensive: benchmark suite (standard + LLM), ops evidence collection, failur
 - ~~`HelloScript.php` dead scaffold~~ **FIXED** (removed)
 
 **Node (2/3)**:
-- Placeholder Purpose in `Brain.php:14`
+- ~~Placeholder Purpose in `Brain.php:14`~~ **FIXED** — real Purpose defined
 - Hardcoded paths in `VectorMemoryMcp.php`, `VectorTaskMcp.php`, `LaravelBoostMcp.php`
 
 ### 10. Maintainability (2.5/3)
@@ -117,7 +122,7 @@ Comprehensive: benchmark suite (standard + LLM), ops evidence collection, failur
 | Risk Level | Total | Fixed | Reclassified | Open | Action |
 |------------|-------|-------|--------------|------|--------|
 | P0 (Critical) | 12 | 10 | 2 (→P2) | 0 | **ALL CLOSED** — audit gate is blocking |
-| P1 (Important) | 8 | 4 | 1 (→P2) | 3 | P1-003 partial, P1-005 done, P1-004 reclassified |
+| P1 (Important) | 8 | 6 | 1 (→P2) | 1 | P1-001 **FIXED**, P1-002 **FIXED**, P1-003 substantially improved (40/40), P1-005 done |
 | P2 (Nice to have) | 6+1 | 0 | 0 | 7 | Backlog (includes P1-004 reclassified) |
 
 ## Audit Methodology

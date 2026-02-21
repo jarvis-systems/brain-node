@@ -11,7 +11,7 @@ use BrainCore\Attributes\Purpose;
 use BrainCore\Variations\Brain\Scrutinizer;
 
 #[Meta('id', 'brain-core')]
-#[Purpose('<!-- Specify the primary project purpose of this Brain here -->')]
+#[Purpose('Two-package AI agent orchestration system — declarative PHP configuration compiled to multi-target output (XML/JSON/YAML/TOML) for Claude, Codex, Qwen, Gemini agents. Compile-time single-mode architecture with deterministic builds, schema validation, and enterprise CI gates.')]
 
 #[Includes(Scrutinizer::class)]         // Include the Scrutinizer brain variation
 class Brain extends BrainArchetype

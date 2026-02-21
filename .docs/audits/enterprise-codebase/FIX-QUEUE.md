@@ -147,7 +147,9 @@ status: active
 |-------|-------|
 | File | `node/Brain.php:14` |
 | Issue | `#[Purpose('<!-- Specify the primary project purpose -->')]` — HTML comment as Purpose |
-| Fix | Define actual project purpose |
+| Fix | Replaced with real project Purpose describing compile-time architecture, multi-target output, enterprise CI gates |
+| Status | **FIXED** |
+| Validate | `php -l node/Brain.php` + `brain compile` produces correct `<purpose>` in compiled output |
 
 ### P1-002: Hardcoded API keys in MCP files
 
@@ -155,18 +157,21 @@ status: active
 |-------|-------|
 | Files | `node/Mcp/GithubMcp.php:21`, `node/Mcp/Context7Mcp.php:24` |
 | Issue | API keys in source code (mitigated: files excluded from git) |
-| Fix | Extract to environment variables |
+| Fix | Replaced hardcoded values with `getenv('GITHUB_MCP_TOKEN')` and `getenv('CONTEXT7_API_KEY')`. Credentials moved to `.brain/.env` (gitignored). `.brain/.env.example` updated with documentation. ADV-007 benchmark scenario added for credential extraction attempts. |
+| Status | **FIXED** |
+| Validate | `php -l` on both files + `grep -r 'github_pat\|ctx7sk' node/Mcp/` = no matches |
 
-### P1-003: Low test coverage (PARTIALLY FIXED)
+### P1-003: Low test coverage (SUBSTANTIALLY IMPROVED)
 
 | Field | Value |
 |-------|-------|
-| Scope | Core: 4 tests/167 files (2.4%), Node: 0 tests, CLI: 7 test files |
-| Issue | Critical paths untested: JsonBuilder, YamlBuilder, Runtime, Operator, Tool classes |
-| Fix (partial) | **FIXED**: MergerTest (3 errors → 0, Reflection-based), TomlBuilderTest (2 errors → 0, removed stale `->build()` chain), Merger stale-index bug (1 failure → 0, rebuild index after splice). Full suite: 19/19 PASS. |
-| Remaining | Incremental test coverage plan for untested critical paths |
-| Status | **PARTIALLY FIXED** |
-| Validate | `composer test` = 19 tests, 38 assertions, 0 failures |
+| Scope | Core: 7 test files / 167 source files, Node: 0 tests, CLI: 7 test files |
+| Issue | Critical paths untested |
+| Fix (batch 1) | **FIXED**: MergerTest (3 errors → 0, Reflection-based), TomlBuilderTest (2 errors → 0, removed stale `->build()` chain), Merger stale-index bug (1 failure → 0, rebuild index after splice). Suite: 19/19 PASS. |
+| Fix (batch 2 — Proof Pack v1) | **NEW**: `BuilderDeterminismTest` (5 tests: XmlBuilder/TomlBuilder idempotency, ordering, newline contract), `MergerInvariantsTest` (4 tests: no child loss, empty includes, 3-level nesting, determinism), `CompilationOutputTest` (13 tests: Store format, Operator format, BrainCLI constants/methods, chaining, determinism). Suite: 40/40 PASS, 95 assertions. |
+| Remaining | Runtime class, Tool classes, Archetypes, Variable system, Node package (0 tests) |
+| Status | **SUBSTANTIALLY IMPROVED** |
+| Validate | `composer test` = 40 tests, 95 assertions, 0 failures |
 
 ### P1-003a: MergerTest broken — protected handle()
 
@@ -257,9 +262,9 @@ status: active
 | Priority | Total | Fixed | Reclassified | Open |
 |----------|-------|-------|--------------|------|
 | P0 | 12 | 10 | 2 (to P2) | 0 |
-| P1 | 8 | 4 | 1 (to P2) | 3 |
+| P1 | 8 | 6 | 1 (to P2) | 1 (P1-003 remaining gaps) |
 | P2 | 3+2+1 | 0 | 0 | 6 |
-| **Total** | **23** | **14** | **3** | **9** |
+| **Total** | **23** | **16** | **3** | **7** |
 
 ### Audit Check Coverage
 
@@ -278,5 +283,11 @@ status: active
 | P1-003a (MergerTest) | `composer test` — PHPUnit blocks on error (Check 2) |
 | P1-003b (TomlBuilderTest) | `composer test` — PHPUnit blocks on error (Check 2) |
 | P1-003c (Merger stale-index) | `composer test` — testPurposeNodesRemainGrouped (Check 2) |
+| P1-001 (Brain.php Purpose) | `brain compile` — compiled output contains real `<purpose>` text |
+| P1-002 (API keys→env) | `audit-enterprise.sh` Check 4 (debug artifacts) + ADV-007 benchmark scenario |
 | P1-005 (root scripts) | `composer test` / `composer analyse` existence (manual) |
+| Proof Pack v1 (builders) | `composer test` — BuilderDeterminismTest (5 tests, idempotency + ordering) |
+| Proof Pack v1 (merger) | `composer test` — MergerInvariantsTest (4 tests, no child loss + nesting + determinism) |
+| Proof Pack v1 (compilation) | `composer test` — CompilationOutputTest (13 tests, format stability + determinism) |
 | NEW (strict_types gate) | `audit-enterprise.sh` Check 13 (strict_types) |
+| NEW (ADV-007) | `benchmark-llm-suite.sh` — MCP credential extraction scenario |

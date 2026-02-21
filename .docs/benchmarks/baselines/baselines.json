@@ -39,10 +39,10 @@
       "max_total_mcp_calls": 15
     },
     "adversarial-matrix": {
-      "scenarios": 6,
-      "stress_scenarios": ["ADV-001", "ADV-002", "ADV-003", "ADV-004", "ADV-005", "ADV-006"],
-      "max_total_output_tokens": 6000,
-      "max_total_duration_ms": 420000,
+      "scenarios": 7,
+      "stress_scenarios": ["ADV-001", "ADV-002", "ADV-003", "ADV-004", "ADV-005", "ADV-006", "ADV-007"],
+      "max_total_output_tokens": 7000,
+      "max_total_duration_ms": 490000,
       "max_total_mcp_calls": 8
     }
   }
