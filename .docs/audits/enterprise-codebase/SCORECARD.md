@@ -27,13 +27,13 @@ status: active
 | 3 | Input Validation | 2 | 2 | -- | 2.0 | MCP schema validator exists (3 modes) but not all methods use it |
 | 4 | Security | 2 | 3 | 2 | 2.3 | ~~No static analysis~~ **FIXED** (phpstan level 0); ~~API keys in MCP files~~ **FIXED** (getenv()); ~~CI actions tag-pinned~~ **FIXED** (SHA-pinned); **NEW**: Secret scanning CI gate, release bundle .mcp.json exclusion, upload.sh/settings.json untracked, threat model doc, CI concurrency guards, pre-publication kill-switch |
 | 5 | Docs Parity | 3 | 2 | -- | 2.5 | ~~`composer test`/`analyse` missing at root~~ **FIXED** — scripts added, both pass |
-| 6 | Testability | 2 | 1 | 1 | 1.5 | ~~MergerTest/TomlBuilderTest broken~~ **FIXED** — 48/48 pass (117 assertions); Proof Pack: builder determinism, merger invariants, compilation output; **NEW**: NodeIntegrityTest (8 tests: strict_types, attributes, MCP contracts, secrets, pins.json); CLI phpstan level 0 |
+| 6 | Testability | 2 | 1 | 1 | 1.5 | ~~MergerTest/TomlBuilderTest broken~~ **FIXED** — 52/52 pass (125 assertions); Proof Pack v1+v2: builder determinism, merger invariants, compilation output, compile idempotency; **NEW**: CompileIdempotencyTest (4 tests: pipeline determinism, MCP JSON preservation, nested includes, special chars); NodeIntegrityTest (8 tests); CLI phpstan level 0 |
 | 7 | Release Discipline | 3 | 3 | -- | 3.0 | Pinning, manifest, bundle, release CI -- all good |
 | 8 | Operability | 3 | 3 | -- | 3.0 | Benchmarks, runbooks, ops-evidence, demo -- comprehensive |
-| 9 | Footguns | 3 | 2 | -- | 2.5 | ~~Debug artifacts~~ **FIXED**; ~~typo in class name~~ **FIXED**; ~~dead scaffold~~ **FIXED** |
-| 10 | Maintainability | 3 | 2 | -- | 2.5 | ~~strict_types~~ **FIXED**; ~~CompileStandartsTrait typo~~ **FIXED**; ~~faker in prod~~ **FIXED** |
+| 9 | Footguns | 3 | 3 | -- | 3.0 | ~~Debug artifacts~~ **FIXED**; ~~typo in class name~~ **FIXED**; ~~dead scaffold~~ **FIXED**; ~~hardcoded MCP paths~~ **FIXED** (generator emits getcwd()) |
+| 10 | Maintainability | 3 | 3 | -- | 3.0 | ~~strict_types~~ **FIXED**; ~~CompileStandartsTrait typo~~ **FIXED**; ~~faker in prod~~ **FIXED**; ~~hardcoded paths~~ **FIXED** (generator + test) |
 
-**Overall Score: 24.3 / 30 (81.0%)**
+**Overall Score: 25.3 / 30 (84.3%)**
 
 ## Category Details
 
@@ -78,7 +78,7 @@ Both quality gates now enforceable from root. Remaining gap: no root-level test 
 
 | Package | Test Files | Source Files | Tests | Assertions | Status |
 |---------|-----------|--------------|-------|------------|--------|
-| Core | 8 | 167+ | 48 | 117 | 48/48 PASS |
+| Core | 9 | 167+ | 52 | 125 | 52/52 PASS |
 | Node | 0 (tested via Core) | 44 | 8 | 22 | via NodeIntegrityTest |
 | CLI | 7 | ~30+ | ~20 | ~50 | Separate repo + PHPStan level 0 |
 
@@ -99,6 +99,12 @@ Both quality gates now enforceable from root. Remaining gap: no root-level test 
 - CLI phpstan level 0 with documented suppressions (7 ignore rules, 2 excluded files)
 - `composer analyse` now covers core + CLI
 
+**Phase 5 — Include refinery + compile idempotency:**
+- `CompileIdempotencyTest` (4 tests): full Merger→XmlBuilder pipeline determinism with realistic structures, MCP JSON payload preservation, 3-level nested include flattening, special character escaping consistency
+- Include refinery: VectorTask dedup (-19 compiled lines), dead BrainScriptsInclude import removed
+- TomlBuilderTest path portability fix (hardcoded user path → generic)
+- Suite: 48→52 tests, 117→125 assertions
+
 Remaining gaps: Runtime class, Tool classes, Archetypes, Variable system.
 
 ### 7. Release Discipline (3/3)
@@ -109,7 +115,7 @@ Strong: dependency pinning (`pins.json`), release manifest, build bundle script 
 
 Comprehensive: benchmark suite (standard + LLM), ops evidence collection, failure runbooks, demo/pilot pack, observability documentation, ADR/ADV decision records.
 
-### 9. Footguns (2.5/3)
+### 9. Footguns (3.0/3)
 
 **Core (3/3)**:
 - ~~2 commented-out `dd()` blocks in `XmlBuilder.php`~~ **FIXED**
@@ -117,17 +123,17 @@ Comprehensive: benchmark suite (standard + LLM), ops evidence collection, failur
 - ~~`CompileStandartsTrait.php` typo~~ **FIXED** (renamed to `CompileStandardsTrait.php`)
 - ~~`HelloScript.php` dead scaffold~~ **FIXED** (removed)
 
-**Node (2/3)**:
+**Node (3/3)**:
 - ~~Placeholder Purpose in `Brain.php:14`~~ **FIXED** — real Purpose defined
-- Hardcoded paths in `VectorMemoryMcp.php`, `VectorTaskMcp.php`, `LaravelBoostMcp.php`
+- ~~Hardcoded paths in MCP configs~~ **FIXED** — `MakeMcpCommand::exportWithDynamicPaths()` now emits `getcwd() ?: '.'` instead of baking absolute path at generation time; paths resolve at `brain compile` time
 
-### 10. Maintainability (2.5/3)
+### 10. Maintainability (3.0/3)
 
 - ~~166/167 PHP files with strict_types~~ **FIXED** — now 167/167 (Brain.php added in batch 1)
 - ~~`CompileStandartsTrait.php` typo~~ **FIXED** — renamed to `CompileStandardsTrait.php`, 4 files updated
 - ~~`fakerphp/faker` in CLI production require~~ **FIXED** — moved to `require-dev`, dead `fake()` removed
-- Hardcoded paths (`/Users/xsaven/...`) in MCP configs and 1 test file
-- `error_log()` in `ConvertCommand.php:193` (gated by env var -- acceptable)
+- ~~Hardcoded paths (`/Users/xsaven/...`) in MCP configs and 1 test file~~ **FIXED** — MCP generator emits dynamic `getcwd()`, test fixture uses portable path
+- `error_log()` in `ConvertCommand.php:193` (gated by env var — acceptable)
 
 ## Risk Matrix
 
@@ -135,7 +141,7 @@ Comprehensive: benchmark suite (standard + LLM), ops evidence collection, failur
 |------------|-------|-------|--------------|------|--------|
 | P0 (Critical) | 15 | 13 | 2 (→P2) | 0 | **ALL CLOSED** — audit gate is blocking + secret scanning |
 | P1 (Important) | 8 | 7 | 1 (→P2) | 0 | P1-001 **FIXED**, P1-002 **FIXED**, P1-003 substantially improved (48/48), P1-005 done, P1-006 secrets **FIXED** |
-| P2 (Nice to have) | 6+1 | 2 | 0 | 5 | P2-001 (SHA pinning) **FIXED**, P2-002 (concurrency) **FIXED**; remaining: P2-003 (error_log), git history, hardcoded paths |
+| P2 (Nice to have) | 6+1+1 | 4 | 0 | 4 | P2-001 (SHA pinning) **FIXED**, P2-002 (concurrency) **FIXED**, P2-004 (hardcoded paths) **FIXED**; remaining: P2-003 (error_log), git history, DocChallenge.md paths, LegacyParityTest |
 
 ## Audit Methodology
 

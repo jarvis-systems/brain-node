@@ -292,14 +292,26 @@ status: active
 | Status | **FIXED** |
 | Validate | `grep -c '.mcp.json' scripts/build-release-bundle.sh` = 0 copy commands |
 
+### P2-004: Hardcoded user paths in MCP generator and test fixtures
+
+| Field | Value |
+|-------|-------|
+| Files | `cli/src/Console/Commands/MakeMcpCommand.php`, `core/tests/TomlBuilderTest.php` |
+| Issue | `MakeMcpCommand` baked absolute project path (e.g. `/Users/xsaven/...`) at `brain make:mcp` time. Generated MCP files were non-portable. TomlBuilderTest had hardcoded path in fixture data. |
+| Fix (generator) | Added `exportWithDynamicPaths()` method: after `VarExporter::export()`, replaces exported `PROJECT_DIRECTORY` string literal with `getcwd() ?: '.'` PHP code. Generated files now resolve path at `brain compile` time, not generation time. |
+| Fix (test) | Replaced `/Users/xsaven/.../github-mcp-server` with portable `/usr/local/bin/github-mcp-server` |
+| Fix (audit) | Added `audit-enterprise.sh` Check 15: scans tracked source files for `/Users/` and `/home/` patterns (WARN severity) |
+| Status | **FIXED** |
+| Validate | `brain make:mcp vector-memory --force` → generated file contains `getcwd()` not hardcoded path; `audit-enterprise.sh` Check 15 = PASS |
+
 ## Summary
 
 | Priority | Total | Fixed | Reclassified | Open |
 |----------|-------|-------|--------------|------|
 | P0 | 15 | 13 | 2 (to P2) | 0 |
 | P1 | 8 | 7 | 1 (to P2) | 0 |
-| P2 | 3+2+1 | 2 | 0 | 5 |
-| **Total** | **26** | **22** | **3** | **5** |
+| P2 | 3+2+1+1 | 3 | 0 | 4 |
+| **Total** | **27** | **23** | **3** | **4** |
 
 ### Audit Check Coverage
 
@@ -336,3 +348,4 @@ status: active
 | P2-001 (SHA pinning) | `grep -c '@v[0-9]' .github/workflows/*.yml` = 0 (manual/PR review) |
 | P2-002 (concurrency) | `grep -c 'concurrency:' .github/workflows/*.yml` = 3 (manual/PR review) |
 | NEW (pre-pub checklist) | `.docs/product/10-pre-publication.md` — kill-switch before any public release |
+| P2-004 (hardcoded paths) | `audit-enterprise.sh` Check 15 (hardcoded user paths in tracked files) + `exportWithDynamicPaths()` in generator |
