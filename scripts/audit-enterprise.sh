@@ -20,7 +20,7 @@
 #   - Missing declare(strict_types=1)
 #   - Secret patterns in tracked files
 #   - Hardcoded user paths in tracked source files
-#   - Version consistency (core vs root composer.json)
+#   - Version consistency (core vs root composer.json, CLI drift, tag vs composer.json)
 #   - MCP schema bypass: raw ::call() on schema-enabled MCPs without @mcp-schema-bypass
 #   - Compile clean-worktree: brain compile must not dirty tracked files
 #
@@ -702,7 +702,56 @@ if [[ "$ROOT_VERSION" != "$CORE_VERSION" ]]; then
 else
     log "  ${GREEN}PASS${NC} root=$ROOT_VERSION, core=$CORE_VERSION — consistent"
 fi
-add_category "version-consistency" "$([ $VER_COUNT -eq 0 ] && echo pass || echo fail)" "$VER_COUNT" "$VER_FINDINGS"
+
+# ── Check 17b: CLI version vs root (WARN-only) ──
+VER_WARN_COUNT=0
+CLI_VERSION=$(jq -r '.version // "missing"' "$PROJECT_ROOT/cli/composer.json" 2>/dev/null || echo "missing")
+if [[ "$CLI_VERSION" != "$ROOT_VERSION" ]]; then
+    VER_WARN_COUNT=$((VER_WARN_COUNT + 1))
+    VER_FINDINGS=$(echo "$VER_FINDINGS" | jq \
+        --arg root "$ROOT_VERSION" \
+        --arg cli "$CLI_VERSION" \
+        '. + [{"cli_version": $cli, "root_version": $root, "severity": "warn", "message": "CLI version differs from root — allowed in dev, must align for release"}]')
+    log "  ${YELLOW}WARN${NC} cli=$CLI_VERSION differs from root=$ROOT_VERSION — dev OK, release requires alignment"
+fi
+
+# ── Check 17c: Per-repo tag vs composer.json (WARN-only) ──
+for repo_name in root core cli; do
+    case "$repo_name" in
+        root) repo_dir="$PROJECT_ROOT"; repo_composer="$PROJECT_ROOT/composer.json" ;;
+        core) repo_dir="$PROJECT_ROOT/core"; repo_composer="$PROJECT_ROOT/core/composer.json" ;;
+        cli)  repo_dir="$PROJECT_ROOT/cli"; repo_composer="$PROJECT_ROOT/cli/composer.json" ;;
+    esac
+    [[ ! -d "$repo_dir/.git" && "$repo_name" != "root" ]] && continue
+    composer_ver=$(jq -r '.version // "missing"' "$repo_composer" 2>/dev/null || echo "missing")
+    tag_ver=$(git -C "$repo_dir" describe --tags --exact-match 2>/dev/null || echo "")
+    if [[ -z "$tag_ver" ]]; then
+        VER_WARN_COUNT=$((VER_WARN_COUNT + 1))
+        VER_FINDINGS=$(echo "$VER_FINDINGS" | jq \
+            --arg repo "$repo_name" \
+            --arg ver "$composer_ver" \
+            '. + [{"repo": $repo, "composer_version": $ver, "tag": "none", "severity": "warn", "message": "HEAD not tagged; dev OK, release requires exact tag"}]')
+        log "  ${YELLOW}WARN${NC} $repo_name: HEAD not tagged; composer.json=$composer_ver — dev OK, release requires tag"
+    elif [[ "$tag_ver" != "$composer_ver" ]]; then
+        VER_WARN_COUNT=$((VER_WARN_COUNT + 1))
+        VER_FINDINGS=$(echo "$VER_FINDINGS" | jq \
+            --arg repo "$repo_name" \
+            --arg tag "$tag_ver" \
+            --arg ver "$composer_ver" \
+            '. + [{"repo": $repo, "tag": $tag, "composer_version": $ver, "severity": "warn", "message": "Tag differs from composer.json version"}]')
+        log "  ${YELLOW}WARN${NC} $repo_name: tag=$tag_ver != composer.json=$composer_ver — drift detected"
+    fi
+done
+
+# Category status: fail if root/core mismatch (VER_COUNT), else warn if drift detected, else pass
+if [[ $VER_COUNT -gt 0 ]]; then
+    VER_STATUS="fail"
+elif [[ $VER_WARN_COUNT -gt 0 ]]; then
+    VER_STATUS="warn"
+else
+    VER_STATUS="pass"
+fi
+add_category "version-consistency" "$VER_STATUS" "$VER_COUNT" "$VER_FINDINGS"
 
 # ── Check 18: MCP schema bypass enforcement ─────────────────────────────
 
