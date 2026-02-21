@@ -9,26 +9,62 @@ description: "Release changelog for jarvis-brain/node"
 
 ## [v0.2.0] — 2026-02-21
 
+Enterprise-hardened release. Scorecard: 27.3/30 (91%).
+
+### Added — Enterprise Audit & Automation
+- **Audit Script**: `scripts/audit-enterprise.sh` — 16-check automated enterprise audit (syntax, tests, catches, debug, TODO, unsafe, shell, noop, LSB, typos, deps, phpstan, strict_types, secrets, paths, degradation)
+- **Secret Scanner**: `scripts/scan-secrets.sh` — standalone CI gate, blocks on leaked credentials
+- **MCP Linter**: `scripts/lint-mcp-syntax.sh` — validates MCP pseudo-syntax in compiled output
+- **Benchmark Scenario**: `ADV-007` — MCP credential extraction adversarial test
+- **Secrets Threat Model**: `.docs/product/09-secrets.md` — attack surfaces, do/don't, key rotation
+- **Pre-Publication Kill-Switch**: `.docs/product/10-pre-publication.md` — credential rotation checklist
+
+### Added — Test Suite (Core)
+- **Proof Pack v1**: BuilderDeterminismTest (5), MergerInvariantsTest (4), CompilationOutputTest (13)
+- **Proof Pack v2**: CompileIdempotencyTest (4), NodeIntegrityTest (8)
+- **Proof Pack v3**: RuntimeTest (7), ToolFormatTest (8), VarExporterDegradationTest (8)
+- Core: 12 test files, 74 tests, 214 assertions — all pass
+- PHPStan level 0: Core (167 files) + CLI (119 files) — 0 errors
+
 ### Added — Enterprise Ops Maturity
-- **Observability**: `scripts/collect-ops-evidence.sh` — generates `dist/ops-evidence.json` with manifest, pins, mode, hashes, demo aggregates
-- **Failure Runbooks**: `.docs/product/07-runbooks-failures.md` — 6 failure scenarios with symptoms, commands, expected output, escalation
-- **Permissions Contract**: `.docs/product/08-permissions.md` — safe-by-default posture, `--yolo` scope, forbidden actions, enterprise recommendations
-- **Benchmark Scenario**: `ADV-006-permissions-enforcement` — adversarial test for destructive action refusal without explicit approval
-- **Release Bundle**: `dist/ops-evidence.json` included in bundle when present
+- **Observability**: `scripts/collect-ops-evidence.sh` — generates `dist/ops-evidence.json`
+- **Failure Runbooks**: `.docs/product/07-runbooks-failures.md` — 6 failure scenarios
+- **Permissions Contract**: `.docs/product/08-permissions.md` — safe-by-default posture
+- **Benchmark Scenario**: `ADV-006-permissions-enforcement` — destructive action refusal test
 
 ### Added — Sales Demo + Pilot Pack
-- **Enterprise Demo**: `scripts/demo-enterprise.sh` — one-command demo running MT-001, MT-002, ADV-003 with consolidated `dist/demo-report.json`
-- **Pilot Guide**: `.docs/product/06-pilot.md` — prerequisites, bundle usage, success criteria, support artifacts
-- **Composer Alias**: `demo:enterprise` for quick demo execution
-- **Release Bundle**: demo script, benchmark runner, and demo scenarios now included in enterprise bundle
-- **CI Dry-Run Gate**: benchmark dry-run validation step added to `brain-release.yml`
+- **Enterprise Demo**: `scripts/demo-enterprise.sh` — one-command demo
+- **Pilot Guide**: `.docs/product/06-pilot.md` — prerequisites, success criteria
+- **CI Dry-Run Gate**: benchmark dry-run validation in `brain-release.yml`
 
 ### Changed
-- **00-overview.md**: added pilot deployment reference
-- **06-pilot.md**: added permissions contract reference
-- **build-release-bundle.sh**: includes demo scripts, demo scenarios, and ops-evidence artifact
-- **baselines.json**: updated adversarial-matrix (5→6 scenarios, +ADV-006) with proportional budget increase
-- **Version Bump**: `v0.1.1` → `v0.2.0`
+- CI workflows: SHA-pinned actions (4 across 3 workflows), concurrency guards
+- `.mcp.json` excluded from release bundles (contains resolved secrets)
+- `upload.sh` / `settings.json` untracked (contained live API keys)
+- API keys migrated from hardcoded to `getenv()` in MCP classes
+- MCP path generator emits `getcwd()` instead of hardcoded paths
+- All 9 VarExporter catch blocks: observable `logDegradation()` (env-gated `BRAIN_COMPILE_DEBUG`)
+- Documentation: 60/60 files pass `brain docs --validate`
+- `build-release-bundle.sh`: demo scripts, scenarios, ops-evidence in bundle
+- `baselines.json`: 6→7 adversarial scenarios (+ADV-007)
+- `declare(strict_types=1)` enforced in 167/167 PHP files
+
+### Fixed
+- `CompileStandartsTrait.php` typo → `CompileStandardsTrait.php`
+- `HelloScript.php` dead scaffold removed
+- Debug artifacts (`dd()`, `dump()`) removed from production code
+- `self::callJson()` LSB → `static::callJson()` in McpSchemaTrait
+- `fakerphp/faker` moved from production to dev dependency (CLI)
+- LegacyParityTest false reference removed from CLAUDE.md
+- Merger stale-index bug: `array_splice` index rebuilt after splice
+- MergerTest: protected `handle()` via Reflection
+- TomlBuilderTest: stale `.build()` chain removed
+
+### Security
+- Secret scanning CI gate (blocking)
+- Secret patterns blocked in tracked files (audit Check 14)
+- Degradation observability in all catch blocks (audit Check 16)
+- CI concurrency guards prevent parallel-run race conditions
 
 ## [v0.1.1] — 2026-02-20
 

@@ -34,9 +34,9 @@ Leaked credentials exist in git history. Two options:
 ```bash
 # 1. Create secrets file
 cat > /tmp/secrets-to-remove.txt << 'EOF'
-jarvis:6c13d58df5771293f5825a50f10ee7005839735f
-***REMOVED***
-# Add any other leaked values here
+jarvis:YOUR_PACKAGIST_TOKEN_HERE
+YOUR_CTX7SK_KEY_HERE
+# Add any other leaked values here (get exact values from .brain/.env)
 EOF
 
 # 2. Run BFG

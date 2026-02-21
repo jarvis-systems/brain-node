@@ -1,8 +1,8 @@
 {
-  "generated": "2026-02-20T21:41:10Z",
+  "generated": "2026-02-21T03:24:46Z",
   "node": {
-    "commit": "ad1f6e0288a9b4758ae488f043681f6dfea02bbe",
-    "version": "v0.1.1"
+    "commit": "e9a68a00f248d5bf6138f380ac7851da4d850d3d",
+    "version": "v0.2.0"
   },
   "core": {
     "version": "v0.0.1"
@@ -14,7 +14,7 @@
   "vector-memory-mcp": "1.9.3",
   "vector-task-mcp": "1.7.3"
 },
-  "pin_strict": "1",
+  "pin_strict": "0",
   "compilation": {
     "strict_mode": "paranoid",
     "cognitive_level": "exhaustive"

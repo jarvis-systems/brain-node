@@ -89,9 +89,11 @@ for FILE in RELEASE.md CHANGELOG.md LICENSE SECURITY.md SUPPORT.md pins.json; do
     fi
 done
 
-# .mcp.json is EXCLUDED from bundles — it contains resolved secrets
-# (API keys, tokens) materialized at compile time via getenv().
-# Users must run 'brain compile' locally to generate their own .mcp.json.
+# SECRET EXCLUSION — MCP configs contain resolved secrets (API keys, tokens).
+# Users must run 'brain compile' locally to generate their own configs.
+# Covers: .mcp.json (all locations), .opencode/settings.json (MCP config with secrets)
+find "$STAGING" -name '.mcp.json' -type f -delete 2>/dev/null || true
+find "$STAGING" -path '*/.opencode/settings.json' -type f -delete 2>/dev/null || true
 
 # Demo: scripts + scenarios (for demo-enterprise.sh from bundle)
 mkdir -p "$STAGING/scripts"
