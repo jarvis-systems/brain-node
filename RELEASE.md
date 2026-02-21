@@ -30,6 +30,22 @@ composer benchmark:telemetry
 composer benchmark:ci
 ```
 
+### 2a. Free-Live Stress Test (REQUIRED)
+
+```
+composer benchmark:free
+```
+
+Runs 8 scenarios on opencode/glm-4.7-free at zero cost. Must pass before release. See `.docs/product/14-model-strategy-contract.md`.
+
+### 2b. Golden Verification (OPTIONAL)
+
+```
+composer benchmark:golden
+```
+
+Runs 8 scenarios on Claude Opus for high-confidence baseline. Recommended before major releases. Report retained 90 days.
+
 ### 3. Update CHANGELOG.md
 
 Move `[Unreleased]` section to `[vX.Y.Z] — YYYY-MM-DD`.

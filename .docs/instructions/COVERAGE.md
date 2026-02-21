@@ -17,23 +17,26 @@ Maps every benchmark scenario to the rules it tests, artifacts it protects, and 
 |--------|-------|
 | Total scenarios | 78 |
 | Scenario categories | 10 |
-| Profiles | 8 |
+| Profiles | 10 |
 | Multi-turn scenarios | 6 |
 | Tool-requiring scenarios | 6 |
 | Model-gated scenarios | 1 (MT-LP-001: sonnet+) |
+| Multi-agent profiles | 2 (free-live: opencode, golden-live: claude) |
 
 ## Profile Coverage
 
-| Profile | Count | Categories Included |
-|---------|-------|-------------------|
-| smoke | 1 | S0 |
-| ci | 26 | L1, L2, ST, CMD |
-| telemetry-ci | 12 | S0, L1 (partial), L2 (partial), ST (partial), MT (partial), MT-LP |
-| full | 40 | L1, L2, L3, ST, CMD, MT, MT-LP |
-| cmd-auto | 28 | CMD-AUTO |
-| nightly-live | 8 | CMD (partial), ST (partial), MT (partial), MT-LP (partial), ADV (partial) |
-| matrix | 4 | MT (partial), ST (partial) |
-| adversarial-matrix | 9 | ADV |
+| Profile | Count | Agent | Categories Included |
+|---------|-------|-------|-------------------|
+| smoke | 1 | claude | S0 |
+| ci | 26 | claude | L1, L2, ST, CMD |
+| telemetry-ci | 12 | claude | S0, L1 (partial), L2 (partial), ST (partial), MT (partial), MT-LP |
+| full | 40 | claude | L1, L2, L3, ST, CMD, MT, MT-LP |
+| cmd-auto | 28 | claude | CMD-AUTO |
+| nightly-live | 8 | claude | CMD (partial), ST (partial), MT (partial), MT-LP (partial), ADV (partial) |
+| free-live | 8 | opencode | Same as nightly-live (free model, $0 cost) |
+| golden-live | 8 | claude | Same as nightly-live (opus, high-confidence) |
+| matrix | 4 | claude | MT (partial), ST (partial) |
+| adversarial-matrix | 9 | claude | ADV |
 
 ## S0 Smoke (1 scenario)
 

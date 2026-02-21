@@ -19,6 +19,8 @@
 #   --profile <name>        smoke|ci|telemetry-ci|full|adversarial-matrix (default: full)
 #   --scenario <id>         Run single scenario by ID
 #   --model <name>          Override AI model (default: sonnet)
+#   --agent <name>          CLI agent to use (claude, opencode, codex, gemini, qwen)
+#   --model-tier <tier>     Override model tier for gating (haiku, sonnet, opus)
 #   --dry-run               Validate scenarios without AI calls
 #   --timeout <seconds>     Per-scenario timeout (default: 120)
 #   --yolo                  Pass --yolo to Brain CLI (bypass permissions)
@@ -42,10 +44,19 @@ NC='\033[0m'
 
 # Model tier hierarchy for min_model_tier gating
 model_tier() {
+    if [ -n "$MODEL_TIER_OVERRIDE" ]; then
+        case "$MODEL_TIER_OVERRIDE" in
+            haiku) echo 1 ;; sonnet) echo 2 ;; opus) echo 3 ;; *) echo 0 ;;
+        esac
+        return
+    fi
     case "$1" in
         haiku) echo 1 ;;
         sonnet) echo 2 ;;
         opus) echo 3 ;;
+        *haiku*|*free*|*flash*|*lite*|*mini*) echo 1 ;;
+        *sonnet*|*medium*|*pro*|*standard*) echo 2 ;;
+        *opus*|*max*|*codex-max*) echo 3 ;;
         *) echo 0 ;;
     esac
 }
@@ -98,6 +109,8 @@ COGNITIVE="standard"
 PROFILE="full"
 SINGLE_SCENARIO=""
 MODEL="sonnet"
+AGENT="claude"
+MODEL_TIER_OVERRIDE=""
 DRY_RUN=false
 TIMEOUT=120
 YOLO=false
@@ -119,6 +132,8 @@ while [[ $# -gt 0 ]]; do
         --profile) PROFILE="$2"; shift 2 ;;
         --scenario) SINGLE_SCENARIO="$2"; shift 2 ;;
         --model) MODEL="$2"; shift 2 ;;
+        --agent) AGENT="$2"; shift 2 ;;
+        --model-tier) MODEL_TIER_OVERRIDE="$2"; shift 2 ;;
         --dry-run) DRY_RUN=true; shift ;;
         --timeout) TIMEOUT="$2"; shift 2 ;;
         --yolo) YOLO=true; shift ;;
@@ -129,6 +144,29 @@ while [[ $# -gt 0 ]]; do
         *) echo "Unknown option: $1" >&2; exit 2 ;;
     esac
 done
+
+# Profile-agent binding enforcement
+# Ensures paid models cannot be used accidentally on free profiles and vice versa.
+# Skipped during --dry-run (no API calls, no cost risk, binding is a live execution guard).
+validate_profile_agent() {
+    if $DRY_RUN; then return 0; fi
+    local expected_agent=""
+    case "$PROFILE" in
+        free-live) expected_agent="opencode" ;;
+        golden-live) expected_agent="claude" ;;
+    esac
+    if [ -n "$expected_agent" ] && [ "$AGENT" != "$expected_agent" ]; then
+        echo "ERROR: Profile '$PROFILE' requires --agent $expected_agent but got '$AGENT'" >&2
+        echo "  free-live  → --agent opencode (zero cost, GLM-4.7-FREE)" >&2
+        echo "  golden-live → --agent claude (paid, Opus reference)" >&2
+        echo "  Use: --profile $PROFILE --agent $expected_agent" >&2
+        exit 2
+    fi
+}
+validate_profile_agent
+
+# Resolved model tier (numeric: 1=haiku, 2=sonnet, 3=opus, 0=unknown)
+RESOLVED_MODEL_TIER=$(model_tier "$MODEL")
 
 # Dependency checks
 check_deps() {
@@ -287,7 +325,7 @@ run_scenario() {
             [ "$attempt" -gt 1 ] && log "  ${YELLOW}[RETRY] attempt $attempt/$max_attempts${NC}"
 
             # Build CLI command
-            local cli_args=(claude --ask "$sprompt" --json --model "$MODEL")
+            local cli_args=("$AGENT" --ask "$sprompt" --json --model "$MODEL")
             $YOLO && cli_args+=(--yolo)
 
             # Export env vars for CLI subprocess
@@ -511,7 +549,7 @@ run_scenario() {
         checks_json=$(IFS=,; echo "${checks[*]}")
     fi
     local rchars=${#response_text}
-    RESULTS+=("{\"id\":\"$sid\",\"title\":\"$stitle\",\"difficulty\":\"$sdiff\",\"status\":\"$scenario_status\",\"executed_model\":\"$MODEL\",\"duration_ms\":$duration_ms,\"input_tokens\":$input_tokens,\"output_tokens\":$output_tokens,\"mcp_calls_count\":$mcp_calls,\"response_chars\":$rchars,\"attempts\":$attempt,\"checks\":[$checks_json]}")
+    RESULTS+=("{\"id\":\"$sid\",\"title\":\"$stitle\",\"difficulty\":\"$sdiff\",\"status\":\"$scenario_status\",\"executed_model\":\"$MODEL\",\"model_tier\":$RESOLVED_MODEL_TIER,\"duration_ms\":$duration_ms,\"input_tokens\":$input_tokens,\"output_tokens\":$output_tokens,\"mcp_calls_count\":$mcp_calls,\"response_chars\":$rchars,\"attempts\":$attempt,\"checks\":[$checks_json]}")
 }
 
 # ============================================================
@@ -599,9 +637,9 @@ run_multi_turn_scenario() {
                 log "  ${DIM}--- $turn_label ---${NC}"
 
                 # Build CLI command
-                local cli_args=(claude --ask "$ask" --json --model "$MODEL")
+                local cli_args=("$AGENT" --ask "$ask" --json --model "$MODEL")
                 if [ "$t" -gt 0 ] && [ -n "$session_id" ]; then
-                    cli_args=(claude --resume "$session_id" --ask "$ask" --json --model "$MODEL")
+                    cli_args=("$AGENT" --resume "$session_id" --ask "$ask" --json --model "$MODEL")
                 fi
                 $YOLO && cli_args+=(--yolo)
 
@@ -890,7 +928,7 @@ run_multi_turn_scenario() {
         checks_json=$(IFS=,; echo "${checks[*]}")
     fi
     local rchars=${#total_response}
-    RESULTS+=("{\"id\":\"$sid\",\"title\":\"$stitle\",\"difficulty\":\"$sdiff\",\"status\":\"$scenario_status\",\"executed_model\":\"$MODEL\",\"duration_ms\":${duration_ms:-0},\"input_tokens\":$total_input_tokens,\"output_tokens\":$total_output_tokens,\"mcp_calls_count\":$total_mcp_calls,\"response_chars\":$rchars,\"turns\":$num_turns,\"attempts\":$attempt,\"checks\":[$checks_json]}")
+    RESULTS+=("{\"id\":\"$sid\",\"title\":\"$stitle\",\"difficulty\":\"$sdiff\",\"status\":\"$scenario_status\",\"executed_model\":\"$MODEL\",\"model_tier\":$RESOLVED_MODEL_TIER,\"duration_ms\":${duration_ms:-0},\"input_tokens\":$total_input_tokens,\"output_tokens\":$total_output_tokens,\"mcp_calls_count\":$total_mcp_calls,\"response_chars\":$rchars,\"turns\":$num_turns,\"attempts\":$attempt,\"checks\":[$checks_json]}")
 }
 
 # ============================================================
@@ -986,7 +1024,7 @@ run_matrix() {
                     log "\n${YELLOW}[$skip_sid] $skip_title${NC} ${DIM}($skip_diff) — SKIP: model $MODEL < min_model_tier $min_tier_name${NC}"
                     ((TOTAL++))
                     ((SKIPPED++))
-                    RESULTS+=("{\"id\":\"$skip_sid\",\"title\":\"$skip_title\",\"difficulty\":\"$skip_diff\",\"status\":\"SKIP\",\"skip_reason\":\"model_not_supported: $MODEL < $min_tier_name\",\"executed_model\":\"$MODEL\",\"duration_ms\":0,\"input_tokens\":0,\"output_tokens\":0,\"mcp_calls_count\":0,\"response_chars\":0,\"checks\":[]}")
+                    RESULTS+=("{\"id\":\"$skip_sid\",\"title\":\"$skip_title\",\"difficulty\":\"$skip_diff\",\"status\":\"SKIP\",\"skip_reason\":\"model_not_supported: $MODEL < $min_tier_name\",\"executed_model\":\"$MODEL\",\"model_tier\":$RESOLVED_MODEL_TIER,\"duration_ms\":0,\"input_tokens\":0,\"output_tokens\":0,\"mcp_calls_count\":0,\"response_chars\":0,\"checks\":[]}")
                     continue
                 fi
             fi
@@ -1093,7 +1131,7 @@ main() {
     fi
 
     log "\n${YELLOW}Brain LLM Benchmark Suite${NC}"
-    log "${DIM}Mode: $MODE/$COGNITIVE | Profile: $PROFILE | Model: $MODEL${NC}"
+    log "${DIM}Agent: $AGENT | Mode: $MODE/$COGNITIVE | Profile: $PROFILE | Model: $MODEL${NC}"
     if $DRY_RUN; then
         log "${DIM}DRY-RUN: validating scenarios only${NC}"
     fi
@@ -1163,6 +1201,28 @@ main() {
                         *) continue ;;
                     esac
                     ;;
+                free-live)
+                    # Free-first strategy: same scenarios as nightly-live, run on free model
+                    case "$sid_check" in
+                        CMD-001|CMD-004) ;;
+                        ST-004) ;;
+                        MT-001|MT-002) ;;
+                        MT-LP-001|MT-LP-002) ;;
+                        ADV-004) ;;
+                        *) continue ;;
+                    esac
+                    ;;
+                golden-live)
+                    # Golden verification: same scenarios as nightly-live, run on opus
+                    case "$sid_check" in
+                        CMD-001|CMD-004) ;;
+                        ST-004) ;;
+                        MT-001|MT-002) ;;
+                        MT-LP-001|MT-LP-002) ;;
+                        ADV-004) ;;
+                        *) continue ;;
+                    esac
+                    ;;
             esac
             scenarios+=("$sf")
         done
@@ -1170,7 +1230,7 @@ main() {
 
     # Profile-level retry default (controls flakiness detection)
     case "$PROFILE" in
-        nightly-live) RETRY_DEFAULT=1 ;;
+        nightly-live|free-live|golden-live) RETRY_DEFAULT=1 ;;
         *) RETRY_DEFAULT=0 ;;
     esac
 
@@ -1200,7 +1260,7 @@ main() {
                 log "\n${YELLOW}[$skip_sid] $skip_title${NC} ${DIM}($skip_diff) — SKIP: model $MODEL < min_model_tier $min_tier_name${NC}"
                 ((TOTAL++))
                 ((SKIPPED++))
-                RESULTS+=("{\"id\":\"$skip_sid\",\"title\":\"$skip_title\",\"difficulty\":\"$skip_diff\",\"status\":\"SKIP\",\"skip_reason\":\"model_not_supported: $MODEL < $min_tier_name\",\"executed_model\":\"$MODEL\",\"duration_ms\":0,\"input_tokens\":0,\"output_tokens\":0,\"mcp_calls_count\":0,\"response_chars\":0,\"checks\":[]}")
+                RESULTS+=("{\"id\":\"$skip_sid\",\"title\":\"$skip_title\",\"difficulty\":\"$skip_diff\",\"status\":\"SKIP\",\"skip_reason\":\"model_not_supported: $MODEL < $min_tier_name\",\"executed_model\":\"$MODEL\",\"model_tier\":$RESOLVED_MODEL_TIER,\"duration_ms\":0,\"input_tokens\":0,\"output_tokens\":0,\"mcp_calls_count\":0,\"response_chars\":0,\"checks\":[]}")
                 continue
             fi
         fi
@@ -1222,7 +1282,7 @@ main() {
         local rate="0.0"
         [ "$TOTAL" -gt 0 ] && rate=$(echo "scale=1; $PASSED * 100 / $TOTAL" | bc)
         cat <<EOF
-{"total":$TOTAL,"passed":$PASSED,"failed":$FAILED,"skipped":$SKIPPED,"errors":$ERRORS,"flaky_passed":$FLAKY_PASSED,"flaky_failed":$FLAKY_FAILED,"pass_rate":"${rate}%","mode":"$MODE","cognitive":"$COGNITIVE","profile":"$PROFILE","model":"$MODEL","dry_run":$DRY_RUN,"total_input_tokens":$TOTAL_INPUT_TOKENS,"total_output_tokens":$TOTAL_OUTPUT_TOKENS,"total_mcp_calls":$TOTAL_MCP_CALLS,"total_duration_ms":$TOTAL_DURATION_MS,"scenarios":[$results_json]}
+{"total":$TOTAL,"passed":$PASSED,"failed":$FAILED,"skipped":$SKIPPED,"errors":$ERRORS,"flaky_passed":$FLAKY_PASSED,"flaky_failed":$FLAKY_FAILED,"pass_rate":"${rate}%","agent":"$AGENT","mode":"$MODE","cognitive":"$COGNITIVE","profile":"$PROFILE","model":"$MODEL","model_tier":$RESOLVED_MODEL_TIER,"model_tier_override":"$MODEL_TIER_OVERRIDE","dry_run":$DRY_RUN,"total_input_tokens":$TOTAL_INPUT_TOKENS,"total_output_tokens":$TOTAL_OUTPUT_TOKENS,"total_mcp_calls":$TOTAL_MCP_CALLS,"total_duration_ms":$TOTAL_DURATION_MS,"scenarios":[$results_json]}
 EOF
     else
         echo ""
@@ -1230,7 +1290,7 @@ EOF
         local rate="0.0"
         [ "$TOTAL" -gt 0 ] && rate=$(echo "scale=1; $PASSED * 100 / $TOTAL" | bc)
         echo "LLM Benchmark: $PASSED/$TOTAL passed ($rate%)"
-        echo "  Mode: $MODE/$COGNITIVE | Model: $MODEL | Profile: $PROFILE"
+        echo "  Agent: $AGENT | Mode: $MODE/$COGNITIVE | Model: $MODEL | Profile: $PROFILE"
         echo "  Tokens: in=$TOTAL_INPUT_TOKENS out=$TOTAL_OUTPUT_TOKENS"
         echo "  MCP calls: $TOTAL_MCP_CALLS"
         echo "  Duration: ${TOTAL_DURATION_MS}ms"

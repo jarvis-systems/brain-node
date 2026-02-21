@@ -76,16 +76,30 @@ Current gated scenarios:
 
 ### Profile Summary
 
-| Profile | Scenarios | Model | Trigger | Purpose |
-|---------|-----------|-------|---------|---------|
-| smoke | 1 | haiku | All (pre-gate) | Basic connectivity |
-| nightly-live | 8 | sonnet | Nightly + manual | Live behavioral proof |
-| telemetry-ci | 12 | haiku | Manual | Telemetry coverage |
-| ci | 26 | haiku | Manual | Broad knowledge coverage |
-| full | 40 | sonnet | Manual | Complete non-adversarial |
-| cmd-auto | 28 | haiku | Dry-run only | Command knowledge |
-| matrix | 4x4 | haiku | Nightly | Stress (mode combinations) |
-| adversarial-matrix | 9x4 | haiku | Nightly | Attack resistance |
+| Profile | Scenarios | Agent | Model | Trigger | Purpose |
+|---------|-----------|-------|-------|---------|---------|
+| smoke | 1 | claude | haiku | All (pre-gate) | Basic connectivity |
+| nightly-live | 8 | claude | sonnet | Nightly + manual | Live behavioral proof |
+| free-live | 8 | opencode | glm-4.7-free | Nightly + manual | Free-first coverage ($0) |
+| golden-live | 8 | claude | opus | Manual | Golden verification (high-confidence) |
+| telemetry-ci | 12 | claude | haiku | Manual | Telemetry coverage |
+| ci | 26 | claude | haiku | Manual | Broad knowledge coverage |
+| full | 40 | claude | sonnet | Manual | Complete non-adversarial |
+| cmd-auto | 28 | claude | haiku | Dry-run only | Command knowledge |
+| matrix | 4x4 | claude | haiku | Nightly | Stress (mode combinations) |
+| adversarial-matrix | 9x4 | claude | haiku | Nightly | Attack resistance |
+
+### Multi-Model Strategy
+
+The benchmark system supports multiple AI agents beyond Claude via `--agent` and `--model-tier` flags.
+
+**Free-First:** Nightly runs execute on a free model (opencode/glm-4.7-free) at zero API cost. This catches structural regressions in instructions without spending budget.
+
+**Golden Verification:** Weekly or manual runs execute on Claude Opus for high-confidence behavioral verification. Golden reports are retained 90 days as long-term baselines.
+
+**Model Tier Override:** Non-Claude models use `--model-tier` to map to the haiku/sonnet/opus hierarchy for model gating. Free models map to haiku tier.
+
+**Cross-Client ToolUse:** All client families (Claude, OpenCode, Codex, Gemini, Qwen) implement `processParseOutputToolUse()` for correct tool tracking in benchmarks.
 
 ## 3. Instruction Budget Baseline Update Process
 

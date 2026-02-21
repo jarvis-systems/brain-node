@@ -99,7 +99,7 @@ Baselines stored in `.docs/benchmarks/baselines/baselines.json`.
 On every PR that touches Brain sources, scenarios, or scripts:
 
 1. **pr-gate** — dry-run only (~30s, zero API calls):
-   - Dry-run: full, telemetry-ci, nightly-live, cmd-auto profiles
+   - Dry-run: full, telemetry-ci, nightly-live, cmd-auto, free-live, golden-live profiles
    - Baselines JSON validation
 2. **brain-lint** (separate workflow, same PR trigger):
    - Instruction budget --strict
@@ -115,9 +115,18 @@ No live API calls on PR. Structural gates handled by brain-lint.yml.
    - Model gating: MT-LP-001 requires sonnet, rest compatible with haiku
    - Regression check (WARN mode)
    - Artifact: `nightly-live-report` retained 30 days
-3. **matrix-stress** — 4 scenarios x 4 mode configs (nightly)
-4. **adversarial-stress** — 9 ADV scenarios x 4 configs (nightly)
-5. **benchmark-suite** — manual dispatch only: selectable profile + model
+3. **free-live** (after smoke passes):
+   - `free-live` profile (8 scenarios, opencode + free model, $0 cost)
+   - Model tier override: haiku (free model maps to haiku tier)
+   - Regression check (WARN mode)
+   - Artifact: `free-live-report` retained 30 days
+4. **matrix-stress** — 4 scenarios x 4 mode configs (nightly)
+5. **adversarial-stress** — 9 ADV scenarios x 4 configs (nightly)
+6. **golden-live** (manual dispatch only):
+   - `golden-live` profile (8 scenarios, claude opus, high-confidence baseline)
+   - Regression check (WARN mode)
+   - Artifact: `golden-live-report` retained 90 days
+7. **benchmark-suite** — manual dispatch only: selectable profile + model + agent
 
 ### Regression Thresholds
 
@@ -282,6 +291,8 @@ The runner supports automatic retry for scenarios that may fail due to non-deter
 | Profile | Retry Default | Max Attempts |
 |---------|---------------|--------------|
 | nightly-live | 1 | 2 |
+| free-live | 1 | 2 |
+| golden-live | 1 | 2 |
 | All others | 0 | 1 (no retry) |
 
 ### Per-Scenario Override
@@ -306,6 +317,49 @@ Scenarios can override the profile default with `"retry": N` in their JSON:
 - FLAKY_FAIL counts as FAILED — regression check sees it
 - regression-check.sh requires ZERO changes (reads `passed`/`failed`, ignores unknown fields)
 
+## 11. Free-First Strategy
+
+Multi-model benchmark support enables cost-effective nightly coverage with high-confidence golden verification.
+
+### Model Taxonomy
+
+| Tier | Agent | Model | Cost | Schedule |
+|------|-------|-------|------|----------|
+| Free | opencode | opencode/glm-4.7-free | $0 | Nightly |
+| Standard | claude | haiku/sonnet | Low-Medium | Nightly |
+| Golden | claude | claude-opus-4-6 | High | Manual/Weekly |
+
+### Agent Support
+
+The benchmark runner accepts `--agent` flag to specify which AI CLI to use. Combined with `--model-tier` override, non-Claude models map correctly to the tier hierarchy for model gating.
+
+```bash
+# Free-first: nightly, zero cost
+bash scripts/benchmark-llm-suite.sh --json --profile free-live --agent opencode --model opencode/glm-4.7-free --model-tier haiku --yolo
+
+# Golden verify: manual, high confidence
+bash scripts/benchmark-llm-suite.sh --json --profile golden-live --agent claude --model claude-opus-4-6 --model-tier opus --yolo
+```
+
+### ToolUse Cross-Client Support
+
+All 5 client families implement `processParseOutputToolUse()` for correct tool tracking:
+
+| Client | Format | Inheritors |
+|--------|--------|------------|
+| ClaudeClient | `assistant.message.content[].tool_use` | — |
+| OpenCodeClient | `tool_use.part.{tool, callID, state.input}` | — |
+| CodexClient | `item.completed.{command_execution, mcp_tool_call, ...}` | GroqClient, OpenRouterClient, LMStudioClient |
+| GeminiClient | `tool_use.{tool_name, tool_id, parameters}` | — |
+| QwenClient | `assistant.message.content[].tool_use` (Claude-compatible) | — |
+
+### Composer Scripts
+
+```bash
+composer benchmark:free    # free-live profile with opencode
+composer benchmark:golden  # golden-live profile with claude opus
+```
+
 ## Checklist
 
 - [x] `composer benchmark:dry` → 40/40 pass (full profile)
@@ -323,6 +377,8 @@ Scenarios can override the profile default with `"retry": N` in their JSON:
 - [x] full profile: 40 scenarios
 - [x] cmd-auto profile: 28 scenarios
 - [x] nightly-live profile: 8 scenarios
+- [x] free-live profile: 8 scenarios (opencode + free model)
+- [x] golden-live profile: 8 scenarios (claude opus)
 - [x] Model gating: MT-LP-001 skipped on haiku, executed on sonnet
 - [x] PR gate: dry-run only (zero API cost)
 - [x] Nightly: nightly-live profile with sonnet

@@ -22,6 +22,8 @@ on:
           - telemetry-ci
           - full
           - nightly-live
+          - free-live
+          - golden-live
           - matrix
           - adversarial-matrix
       model:
@@ -32,6 +34,16 @@ on:
           - haiku
           - sonnet
           - opus
+      agent:
+        description: 'AI agent CLI'
+        default: 'claude'
+        type: choice
+        options:
+          - claude
+          - opencode
+          - codex
+          - gemini
+          - qwen
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -59,6 +71,12 @@ jobs:
 
       - name: Dry-run cmd-auto profile
         run: bash scripts/benchmark-llm-suite.sh --dry-run --profile cmd-auto --json > /dev/null
+
+      - name: Dry-run free-live profile
+        run: bash scripts/benchmark-llm-suite.sh --dry-run --profile free-live --json > /dev/null
+
+      - name: Dry-run golden-live profile
+        run: bash scripts/benchmark-llm-suite.sh --dry-run --profile golden-live --json > /dev/null
 
       - name: Validate baselines JSON
         run: jq empty .docs/benchmarks/baselines/baselines.json
@@ -152,13 +170,15 @@ jobs:
           path: nightly-live-report.json
           retention-days: 30
 
-  # Manual: full/ci/telemetry-ci profile (skip if matrix or nightly-live selected)
+  # Manual: full/ci/telemetry-ci profile (skip if matrix, nightly-live, free-live, golden-live selected)
   benchmark-suite:
     if: >-
       github.event_name == 'workflow_dispatch' &&
       github.event.inputs.profile != 'matrix' &&
       github.event.inputs.profile != 'adversarial-matrix' &&
-      github.event.inputs.profile != 'nightly-live'
+      github.event.inputs.profile != 'nightly-live' &&
+      github.event.inputs.profile != 'free-live' &&
+      github.event.inputs.profile != 'golden-live'
     runs-on: ubuntu-latest
     needs: smoke-test
     timeout-minutes: 60
@@ -348,3 +368,107 @@ jobs:
           name: adversarial-matrix-report
           path: adversarial-matrix-report.json
           retention-days: 30
+
+  # Nightly/manual: free-first benchmark (opencode + free model, $0 cost)
+  free-live:
+    if: >-
+      github.event_name == 'schedule' ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.profile == 'free-live')
+    runs-on: ubuntu-latest
+    needs: smoke-test
+    timeout-minutes: 25
+
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@44454db4f0199b8b9685a5d763dc37cbf79108e1 # v2
+        with:
+          php-version: '8.2'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '20'
+
+      - name: Install Brain CLI
+        run: composer global require jarvis-brain/cli --no-interaction
+
+      - name: Install OpenCode CLI
+        run: npm install -g opencode-ai@latest
+
+      - name: Run free-live benchmark
+        env:
+          BRAIN_AI_CMD: ${{ runner.tool_cache }}/../.composer/vendor/bin/ai
+        run: |
+          bash scripts/benchmark-llm-suite.sh \
+            --json \
+            --profile free-live \
+            --agent opencode \
+            --model opencode/glm-4.7-free \
+            --model-tier haiku \
+            --yolo \
+            | tee free-live-report.json
+
+      - name: Regression check
+        run: bash scripts/benchmark-regression-check.sh free-live-report.json
+
+      - name: Upload free-live report
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: free-live-report
+          path: free-live-report.json
+          retention-days: 30
+
+  # Manual: golden verification benchmark (claude opus, high-confidence baseline)
+  golden-live:
+    if: >-
+      github.event_name == 'workflow_dispatch' && github.event.inputs.profile == 'golden-live'
+    runs-on: ubuntu-latest
+    needs: smoke-test
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@44454db4f0199b8b9685a5d763dc37cbf79108e1 # v2
+        with:
+          php-version: '8.2'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '20'
+
+      - name: Install Brain CLI
+        run: composer global require jarvis-brain/cli --no-interaction
+
+      - name: Install Claude Code
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Run golden-live benchmark
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          BRAIN_AI_CMD: ${{ runner.tool_cache }}/../.composer/vendor/bin/ai
+        run: |
+          bash scripts/benchmark-llm-suite.sh \
+            --json \
+            --profile golden-live \
+            --agent claude \
+            --model claude-opus-4-6 \
+            --model-tier opus \
+            --yolo \
+            | tee golden-live-report.json
+
+      - name: Regression check
+        run: bash scripts/benchmark-regression-check.sh golden-live-report.json
+
+      - name: Upload golden-live report
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: golden-live-report
+          path: golden-live-report.json
+          retention-days: 90
