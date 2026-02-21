@@ -83,10 +83,23 @@ bash scripts/audit-enterprise.sh      # Required: FAIL:0. Target: WARN:0.
                                       # Source of truth: script output, not this doc.
 
 # History secrets scan (redacted, low-noise)
-bash scripts/scan-secrets-history.sh  # Expected: exit 0 (no matches)
-                                      # Exit 2 = matches found → requires
-                                      # rotation/archive plan before publication
-                                      # See: .docs/product/16-security-3.0-playbook.md
+bash scripts/scan-secrets-history.sh  # Default: exit 0 required for publication
+                                      # Exit 2 = matches found (see exception below)
+```
+
+**History scan rule:**
+
+- **Publication mode** (going public, Packagist, npm, external distribution): exit 0 is **mandatory**. Exit 2 = BLOCKED. Requires rotation/archive plan per `.docs/product/16-security-3.0-playbook.md`.
+- **Private repo, mitigated-history variant** (non-publication): exit 2 is allowed ONLY when ALL conditions are met:
+  1. Repository is private (not public, not shared externally)
+  2. Provider-side credential revocation confirmed (incident CLOSED in `16-security-3.0-playbook.md`)
+  3. `scan-secrets-history.sh` baseline is tracked in FIX-QUEUE P2-008 (status: MITIGATED/OPEN)
+  4. Pre-pub gate still runs and result is recorded (TOTAL_MATCHES logged)
+  5. Clear upgrade path documented (Option C / BFG — plan-only, in `16-security-3.0-playbook.md`)
+- If **any** condition above is not met → treat exit 2 as blocking, same as publication mode.
+- If repo visibility changes to public, the private exception is **revoked**; exit 0 becomes mandatory immediately.
+
+```bash
 
 # Documentation gate
 brain docs --validate                 # Expected: 0 errors, 0 warnings
@@ -133,3 +146,4 @@ After publication, verify:
 | Date | Decision | Rationale |
 |------|----------|-----------|
 | 2026-02-21 | Created kill-switch checklist | Pre-publication safety net for credential rotation and history cleanup |
+| 2026-02-21 | Added mitigated-history private exception | Aligns history scan gate with SCORECARD "Mitigated History Variant" for private repos; publication rule unchanged |
