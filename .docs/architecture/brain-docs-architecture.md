@@ -2,7 +2,7 @@
 name: "BrainDocs Architecture"
 description: "Architectural decisions, design rationale, and implementation details for the brain docs CLI tool"
 type: architecture
-date: 2026-02-22
+date: 2026-02-21
 ---
 
 # BrainDocs Architecture
@@ -11,51 +11,85 @@ This document explains the engineering decisions behind `brain docs` — the CLI
 
 ## 1. Code Parsing: Regex vs AST
 
-### Decision: Regex-based extraction for all 7 languages
+### Decision: Regex-based extraction with multi-class detection
 
-The `UndocumentedScanner` uses regular expressions to extract top-level declarations (classes, structs, public functions) from PHP, JavaScript/TypeScript, Python, Go, C++, Rust, and Java.
+The `UndocumentedScanner` uses regular expressions to extract declarations (classes, structs, public functions) from PHP, JavaScript/TypeScript, Python, Go, C++, Rust, and Java. All patterns use `^\s*` anchoring with `/m` multiline flag, enabling detection at **any indentation level** — top-level, nested, and secondary classes within the same file.
 
-### Why not AST parsers?
+### The fundamental question: why not AST?
 
-AST (Abstract Syntax Tree) parsers are the correct choice when you need to understand code structure deeply — variable scope, type inference, control flow analysis. But `brain docs --undocumented` has a fundamentally different goal: **find top-level public API declarations** and check if documentation exists for them.
+AST (Abstract Syntax Tree) parsers are the correct choice when you need to understand code structure deeply — variable scope, type inference, control flow analysis, method-to-class association. But `brain docs` solves a fundamentally different problem: **documentation discovery** — "does this class/function have corresponding documentation?"
 
-This is the same class of problem solved by:
+This is the same class of problem solved by tools that have chosen regex for decades:
 
-- **ctags / universal-ctags** — the industry standard for code navigation, used for 40+ years. Regex-based. Supports 100+ languages.
-- **GitHub Linguist** — GitHub's language detection. Regex-based heuristics.
-- **tree-sitter** grammars — even tree-sitter starts with regex-like pattern matching for tokenization.
+- **ctags / universal-ctags** — the industry standard for code navigation, used for 40+ years, supporting 100+ languages. Regex-based. No one calls ctags an "enterprise failure" — it is the enterprise standard.
+- **GitHub Linguist** — GitHub's language detection for millions of repositories. Regex-based heuristics.
+- **tree-sitter** — even tree-sitter starts with regex-like pattern matching for tokenization before building the tree.
+- **ripgrep / ag / ack** — enterprise-grade code search tools. All regex-based. Used by VS Code, JetBrains, and every major IDE.
 
-The patterns we extract are syntactically rigid:
+The key insight: **documentation discovery does not require code understanding**. It requires pattern matching against syntactically rigid declarations. A class declaration has exactly one syntactic form per language, regardless of nesting depth.
 
-| Language | Class Pattern | What it matches |
-|----------|--------------|-----------------|
-| PHP | `/^(?:abstract\s+)?class\s+(\w+)/m` | `class UserService`, `abstract class Base` |
-| Go | `/^\s*type\s+(\w+)\s+struct\s*\{/m` | `type Server struct {` |
-| Rust | `/^\s*(?:pub...)?\s+struct\s+(\w+)/m` | `pub struct Config`, `struct State` |
-| Java | `/^\s*(?:public...)?class\s+(\w+)/m` | `public class OrderService` |
+### What AST would cost (and not provide)
 
-These are **line-anchored, top-level patterns**. They don't parse nested structures, closures, or complex expressions. A class declaration at the top level of a file has exactly one syntactic form per language.
+To add AST parsing for 7 languages, the project would need:
 
-### What would AST require?
+- 7 separate parser libraries (or bindings to tree-sitter grammars via FFI)
+- C-level FFI layer (tree-sitter is C-based, requiring native extensions)
+- Grammar version management (language specs evolve; tree-sitter grammars update independently)
+- Build complexity (native extensions, platform-specific compilation, CI matrix expansion)
+- ~10x more code for the same functional result
+- Runtime dependency on compiled libraries (vs zero-dependency regex)
 
-To add AST parsing for 7 languages, we would need:
+What AST would provide that regex does not:
 
-- 7 separate parser libraries (or bindings to tree-sitter grammars)
-- FFI layer for compiled parsers (tree-sitter is C-based)
-- Grammar version management (language specs evolve)
-- ~10x more code for the same result
-- Build complexity (native extensions, CI matrix)
+- **Method-to-class scoping** — knowing which methods belong to which class in a multi-class file
+- **Generic type resolution** — understanding `List<Map<String, List<User>>>` beyond the declaration name
+- **Macro expansion** — resolving Rust `macro_rules!` or C++ template instantiations
 
-The cost-to-benefit ratio is disproportionate. Regex correctly handles the **top-level declaration extraction** use case.
+None of these capabilities are needed for documentation discovery. `--undocumented` answers "is class X documented?" — not "what does class X do?"
+
+### Multi-class detection (preg_match_all)
+
+The scanner uses `preg_match_all()` (not `preg_match()`) for class patterns, detecting **all classes in a file** — not just the first one. This covers:
+
+- Python modules with multiple classes (common pattern)
+- Java files with inner/helper classes
+- JavaScript/TypeScript files with exported class + internal helpers
+- PHP files with secondary classes (valid PHP, though not PSR-4 convention)
+- Go files with multiple struct definitions
+
+**Method association limitation:** Without AST, methods extracted from a multi-class file are associated with all classes from that file (file-level, not class-scoped). This is acceptable because:
+
+1. The primary question is "is this class documented?" — method list is informational
+2. Method count is used for prioritization (higher count = more complex = document first)
+3. Slight over-reporting of methods per class is harmless for documentation discovery
+4. Class-scoped method association would require AST — the exact overhead we are avoiding
+
+### Pattern architecture
+
+All patterns use `^\s*` (start-of-line + optional whitespace) with `/m` (multiline) flag:
+
+| Language | Class Pattern | Multi-class? | Nested? |
+|----------|--------------|-------------|---------|
+| PHP | `/^\s*(?:abstract\s+)?class\s+(\w+)/m` | Yes | N/A (PHP has no nested named classes) |
+| JS | `/^\s*(?:export\s+)?(?:default\s+)?class\s+(\w+)/m` | Yes | Yes |
+| TS | `/^\s*(?:export\s+)?(?:default\s+)?(?:abstract\s+)?class\s+(\w+)/m` | Yes | Yes |
+| Python | `/^\s*class\s+(\w+)\s*[:(]/m` | Yes | Yes |
+| Go | `/^\s*type\s+(\w+)\s+struct\s*\{/m` | Yes | N/A |
+| C++ | `/^\s*(?:template\s*<[^>]*>\s*)?class\s+(\w+)/m` | Yes | Yes |
+| Rust | `/^\s*(?:pub(?:\([^)]*\))?\s+)?struct\s+(\w+)/m` | Yes | N/A |
+| Java | `/^\s*(?:public\s+)?(?:abstract\s+)?(?:final\s+)?class\s+(\w+)/m` | Yes | Yes |
+
+The `\s*` prefix is the key: it allows matching at any indentation level. A nested class `    class InnerHelper` matches the same pattern as a top-level `class UserService`. The regex doesn't need to "understand" nesting — it just needs to find the keyword.
 
 ### Scope boundaries
 
-The scanner explicitly does NOT parse:
+The scanner does NOT parse (by design, not limitation):
 
-- Nested classes or inner functions
 - Method bodies or control flow
-- Generic type parameters beyond declaration
-- Macro-expanded code (Rust `macro_rules!`, C++ templates)
+- Generic type parameters beyond the declaration name
+- Macro-expanded code (Rust `macro_rules!`, C++ template metaprogramming)
+- Anonymous classes/closures (not documentable — no name)
+- Method-to-class association (would require AST; file-level association used instead)
 
 If a declaration is too complex for regex (e.g., a Java method with deeply nested generics), the scanner may miss it — but this is acceptable because the goal is documentation discovery, not code compilation.
 
@@ -69,11 +103,42 @@ The C++ function pattern uses negative lookahead to exclude control flow keyword
 
 This prevents `if(condition)` from being misidentified as a function named `if`. The lookahead is minimal and targeted — it doesn't attempt to understand C++ semantics.
 
+### Completeness analysis: two-directional coverage
+
+The regex-based approach provides complete documentation coverage through two complementary features:
+
+| Direction | Feature | Question answered |
+|-----------|---------|-------------------|
+| Code → Docs | `--undocumented` | "What code exists but has no documentation?" |
+| Docs → Code | `--validate` (drift) | "What documentation exists but references code that was deleted/renamed?" |
+
+Together, these cover all drift scenarios without AST. The `DriftDetector` mirrors `UndocumentedScanner` patterns (same regex, same language coverage) for consistency.
+
+### Decision record
+
+| Factor | Regex | AST |
+|--------|-------|-----|
+| Dependencies | Zero (PHP stdlib) | 7+ parser libraries, FFI, native extensions |
+| Languages supported | 7 (add new in ~10 lines) | 7 (add new: grammar + bindings + tests) |
+| Build complexity | None | CI matrix, platform-specific compilation |
+| Multi-class detection | Yes (preg_match_all) | Yes |
+| Nested class detection | Yes (^\s* pattern) | Yes |
+| Method-to-class scoping | No (file-level) | Yes |
+| Industry precedent | ctags (40+ years), ripgrep, GitHub Linguist | IDE plugins (IntelliSense, Roslyn) |
+| Maintenance burden | Minimal (patterns rarely change) | High (grammar updates, FFI compatibility) |
+| Correctness for task | Sufficient (documentation discovery) | Overkill (designed for code understanding) |
+
+**Conclusion:** Regex is the correct engineering choice for documentation discovery. The same way ctags uses regex for code navigation across 100+ languages, `brain docs` uses regex for documentation gap analysis across 7 languages. AST would be the correct choice if the tool needed to understand code semantics — but it doesn't. It needs to find declarations by keyword pattern, which is exactly what regex does.
+
 ## 2. Security Validation: 3-Layer Architecture
 
 ### Overview
 
 The `SecurityValidator` validates content downloaded via `--download` and `--update` before saving to `.docs/`. It prevents prompt injection, script injection, and encoded payloads from entering the documentation that AI agents consume.
+
+### Performance scope
+
+Security validation runs **exclusively** during `--download` and `--update` operations — not during regular indexing, searching, or validation. This is a critical design distinction: `brain docs api` (search), `brain docs --headers` (indexing), and `brain docs --validate` (structural validation) never invoke `SecurityValidator`. The 3-layer scanning pipeline processes only externally-fetched content at the moment of ingestion, making its computational cost irrelevant to day-to-day CLI performance.
 
 ### Code-block awareness
 
@@ -136,11 +201,33 @@ The `--trust-content` flag skips Layer 2 (injection pattern matching) for truste
 
 **What is skipped:** Layer 2a (pattern matching on cleaned content) and Layer 2b (homoglyph normalization + re-scan).
 
-**What remains active:** Size check, URL scheme check, Layer 1 (unicode normalization), Layer 3 (base64 in text), Layer 3b (base64 in code blocks), and caution patterns.
+**What remains active:** Size check (5MB), URL scheme check (http/https only), Layer 1 (unicode normalization), Layer 3 (base64 in text), Layer 3b (base64 in code blocks), Layer 3c (base64 in inline code), and caution patterns.
 
-The rationale: a trusted source (official documentation, known security guides) may contain injection patterns as examples in prose, but should never contain base64-obfuscated payloads. Trust mode relaxes pattern matching while maintaining obfuscation detection.
+**Context restriction:** `--trust-content` requires `--download` or `--update` — it cannot be used with any other operation. Attempting to use it standalone produces an error.
 
-When trust mode is active, a warning is added: "Security Layer 2 (injection patterns) skipped — content trusted by operator".
+### Why Trust Mode is NOT a security backdoor
+
+A common concern: "if a trusted GitHub repository is compromised, an attacker could inject plain-text prompt injection that bypasses Layer 2." This concern misunderstands the defense-in-depth model.
+
+**What an attacker gains with `--trust-content`:** The ability to place plain-text injection patterns ("ignore all previous instructions") in documentation prose. This is the same text that exists in thousands of security guides, prompt engineering tutorials, and AI safety research papers.
+
+**What an attacker does NOT gain:**
+1. **Base64 obfuscation bypass** — Layers 3/3b/3c remain active. Encoded payloads are still caught.
+2. **Homoglyph obfuscation bypass** — Layer 1 still normalizes Unicode, and Layer 3 decodes before scanning.
+3. **Arbitrary file write** — Content is still saved to `.docs/` only, never to executable locations.
+4. **Code execution** — BrainDocs is a documentation indexing tool. It does not execute content.
+
+**Why plain-text injection in docs is low-risk:**
+- Modern AI models (Claude, GPT-4, Gemini) have built-in resistance to plain-text prompt injection in context documents
+- The text "ignore all previous instructions" in a documentation file is semantically understood by AI as *content about injection*, not as an *instruction to follow*
+- Obfuscated injection (base64, homoglyphs) is the actual high-risk vector because it bypasses both the tool's pattern matching AND the AI model's own safety — and BrainDocs catches this even in trust mode
+
+**Why the flag exists:**
+Without `--trust-content`, downloading OWASP guides, NIST security documentation, or Claude's own prompt engineering docs would be blocked — because these documents contain injection patterns as educational examples in prose (outside code blocks). Blocking legitimate security documentation to prevent a low-risk theoretical attack vector would make the tool unusable for its primary audience.
+
+**Operator accountability:** When trust mode is active, a warning is added to the output: "Security Layer 2 (injection patterns) skipped — content trusted by operator". The decision to use `--trust-content` is an explicit operator action, not a default. The operator accepts responsibility for the source's trustworthiness.
+
+**Test coverage:** 6 dedicated tests verify trust mode behavior — Layer 2 skip, base64 still blocked, size check still enforced, invalid scheme still blocked, base64 in code blocks still caught, base64 in inline code still caught.
 
 ### Preview Mode (`--preview`)
 
@@ -160,24 +247,24 @@ Use case: diagnose why a download is blocked, inspect content before committing 
 
 Non-blocking warnings for AI-related terms (`instruction`, `prompt`, `system`, `override`, `bypass`) when they appear frequently (>3 occurrences). These flag content for review but don't reject it.
 
-## 3. Search Scoring: Logarithmic Algorithm
+## 3. Search Scoring: Logarithmic Algorithm with Density Normalization
 
-### Formula
+### Architecture
 
-The `ContentScorer` uses a three-tier scoring system:
+The `ContentScorer` uses a four-component scoring system where **metadata dominates frequency** by design — the human-authored name and description carry more weight than raw keyword count.
 
-**Tier 1 — Name match:**
+**Component 1 — Name match (highest priority):**
 - YAML `name` field: **+10 points** per keyword match
 - Auto-detected name (first header): H1=+7, H2=+6, H3=+5, H4=+4, H5=+3, H6=+2
 
-**Tier 2 — Description match:**
+**Component 2 — Description match:**
 - YAML `description` field: **+5 points** per keyword match
 - Auto-detected description (first paragraph): **+3 points**
 
-**Tier 3 — Content frequency (logarithmic):**
+**Component 3 — Content frequency (logarithmic):**
 
 ```
-score = min(ceil(log₂(count + 1)), 10)
+frequency = min(ceil(log₂(count + 1)), 10)
 ```
 
 | Occurrences | Score | Rationale |
@@ -189,15 +276,73 @@ score = min(ceil(log₂(count + 1)), 10)
 | 31 | 5 | Major topic |
 | 50+ | capped at 10 | Prevents keyword stuffing |
 
-### Why logarithmic?
+**Component 4 — Density normalization (bonus):**
+
+```
+if wordCount >= 500 AND (count / wordCount) <= 0.02:
+    frequency += 2
+```
+
+The density bonus rewards **organic keyword usage** in substantial documents. A 5000-word architecture document with 50 mentions of "api" (1% density) receives +2 per keyword compared to a 200-word glossary with 50 identical mentions (25% density).
+
+| Document | Words | Mentions | Density | Frequency | Bonus | Total |
+|----------|-------|----------|---------|-----------|-------|-------|
+| Architecture guide | 5000 | 50 | 1.0% | 6 | +2 | 8 |
+| Short glossary | 200 | 50 | 25.0% | 6 | 0 | 6 |
+| API reference | 1200 | 15 | 1.25% | 4 | +2 | 6 |
+| Tiny note | 80 | 3 | 3.75% | 2 | 0 | 2 |
+
+**Constants:**
+- `DENSITY_MIN_WORDS = 500` — documents below this threshold are too short for meaningful density analysis
+- `DENSITY_ORGANIC_THRESHOLD = 0.02` (2%) — keyword density below this indicates organic, contextually rich content
+- `DENSITY_BONUS = 2` — bonus points for organic usage
+
+### Full score range per keyword
+
+| Component | Min | Max | Condition |
+|-----------|-----|-----|-----------|
+| YAML name | 0 | 10 | Keyword in human-authored name |
+| Auto name (H1) | 0 | 7 | Keyword in first header |
+| YAML description | 0 | 5 | Keyword in human-authored description |
+| Auto description | 0 | 3 | Keyword in first paragraph |
+| Content frequency | 0 | 10 | Logarithmic frequency cap |
+| Density bonus | 0 | 2 | Organic usage in substantial document |
+| **Theoretical max** | **0** | **27** | **All components match** |
+
+Multiple keywords accumulate: searching for "api auth" can score up to 54 points for a perfectly matching document.
+
+### Why logarithmic (not linear)?
 
 Linear scoring (`1 point per occurrence`) would rank long documents with repeated keywords higher than short, focused documents. An AI agent needs **semantic relevance**, not document length.
 
 Logarithmic scaling ensures:
 - First occurrence matters most (+1 point)
 - Diminishing returns for repetition
-- Hard cap at 10 points prevents gaming via keyword stuffing
+- Hard cap at 10 points prevents keyword stuffing
 - Short, focused documents compete fairly with long ones
+
+### Why density normalization (not TF-IDF)?
+
+TF-IDF (Term Frequency–Inverse Document Frequency) is the standard IR solution for this class of problem, but it requires a **corpus-level computation** — each document's score depends on ALL other documents. This creates:
+
+1. **Non-determinism risk** — adding or removing a single document changes TF-IDF scores for all other documents containing the same term
+2. **Performance overhead** — requires pre-computing document frequency across the entire corpus before scoring any individual document
+3. **Complexity mismatch** — TF-IDF is designed for large heterogeneous corpora (web search, academic papers). `.docs/` folders typically contain 10-100 homogeneous documentation files
+
+The density normalization approach is **document-local** — each document's score depends only on its own content. This ensures:
+- Deterministic scoring (same document, same query → same score, regardless of corpus changes)
+- O(1) scoring per document (no corpus-level precomputation)
+- Simplicity appropriate for the problem size
+
+### Why metadata dominates frequency (by design)
+
+The scoring system is intentionally structured so that **YAML metadata outweighs content frequency**:
+
+- A document with `name: "API Authentication"` gets +10 for the keyword "api" — more than the maximum +10 from frequency alone
+- A document with both YAML name (+10) and description (+5) matching gets +15 before frequency is even considered
+- This means well-curated documentation with proper YAML front matter always ranks above documents with incidental keyword mentions
+
+This is correct behavior for AI agents: a document **about** a topic (reflected in its name/description) is more valuable than a document that merely **mentions** the topic frequently.
 
 ### Ranking
 
@@ -229,26 +374,60 @@ A JSX tag like `<Component prop="value" />` matches neither pattern, so it natur
 
 `test_mdx_jsx_tags_do_not_break_header_parsing` verifies that JSX components don't interfere with header extraction.
 
-## 5. Docker/CI mtime Reliability Detection
+## 5. Staleness Detection: Git-First with Docker/CI Fallback Protection
 
-### Problem
+### Two-tier data source architecture
 
-In Docker containers, `COPY` and `ADD` instructions set all copied files to the same modification time (build timestamp). When `brain docs` falls back to filesystem `filemtime()` (because git is unavailable in the container), every file appears to have been modified at the same time — causing 100% false positive rate for staleness detection and recent changes.
+Staleness detection uses a **git-first** strategy. The filesystem fallback and Docker heuristic are secondary mechanisms that only activate when git is unavailable.
 
-### Solution: Uniform mtime detection
+**Tier 1 (Primary): Git history — `git log -1 --format=%aI`**
 
-Both `StalenessDetector` and `RecentChangesDetector` check mtime reliability before trusting filesystem timestamps:
+The primary staleness check compares the YAML `date` field in a documentation file against the **git author date** of the last commit touching the referenced source file. This is the most accurate method because:
+
+- Git author dates are **immutable** — they survive checkouts, rebases, merges, and branch switches
+- `git checkout` does NOT change git log dates — it only changes filesystem mtime
+- Code formatters (prettier, php-cs-fixer) only affect git dates when their changes are **committed**, which is a legitimate modification that SHOULD trigger a staleness warning
+- Git handles renames, moves, and partial file changes correctly
+
+**Tier 2 (Fallback): Filesystem mtime — `filemtime()`**
+
+Used ONLY when git is unavailable (no `.git/` directory, shallow clone, Docker container without git). Subject to the Docker/CI reliability check described below. The `summary.source` field in output indicates which tier was used: `"git"` or `"filesystem"`.
+
+### Docker/CI mtime reliability detection
+
+**Problem:** In Docker containers, `COPY` and `ADD` instructions set all copied files to the same modification time (build timestamp). When the filesystem fallback is used, every file appears to have been modified at the same time — causing 100% false positive rate.
+
+**Solution:** Both `StalenessDetector` and `RecentChangesDetector` check mtime reliability before trusting filesystem timestamps:
 
 **Algorithm:**
 1. Collect mtime values from sibling files in the same directory
 2. If fewer than 3 siblings exist — assume reliable (not enough data to detect pattern)
 3. Calculate `max(mtimes) - min(mtimes)`
 4. If variance ≤ 2 seconds — mtime is **unreliable** (Docker/CI build detected)
-5. Skip the filemtime fallback entirely
+5. Skip the filemtime fallback entirely (return `null` / empty array)
 
 **Constants:**
 - `MTIME_TOLERANCE_SECONDS = 2` — maximum variance to consider uniform
-- `MTIME_MIN_SIBLINGS = 3` (StalenessDetector) / `MTIME_MIN_FILES = 3` (RecentChangesDetector) — minimum files for detection
+- `MTIME_MIN_SIBLINGS = 3` / `MTIME_MIN_FILES = 3` — minimum files for detection
+
+### False positive analysis
+
+A common concern: "Could `git checkout` or code formatters trigger the Docker heuristic?"
+
+**`git checkout` (branch switch):**
+- **Primary path (git log):** Not affected. `git log` returns the commit's author date, which doesn't change when switching branches. The primary path is completely immune.
+- **Fallback path (mtime):** `git checkout` writes files sequentially to disk. Each file gets a slightly different mtime (milliseconds apart). The Docker heuristic checks `max - min` across sibling files — sequential writes produce measurable variance well above 2 seconds for any non-trivial directory. **False positive: impossible.**
+
+**Code formatters (prettier, php-cs-fixer):**
+- **Primary path (git log):** Not affected until changes are committed. If formatting changes ARE committed, the new commit date is later than the doc date — this is a **true positive** (source code changed, documentation may need updating).
+- **Fallback path (mtime):** Same as git checkout — formatters write files sequentially, producing non-uniform timestamps. **False positive: impossible.**
+
+**What DOES trigger the Docker heuristic:**
+- Docker `COPY . /app` — copies all files with identical build-time timestamp
+- Docker `ADD` with tar extraction — same uniform timestamp behavior
+- CI `git clone --depth=1` in environments without git binary in PATH — no git available, falls back to mtime, which may be uniform from the CI build system
+
+In all these cases, the heuristic **correctly** identifies mtime as unreliable and skips the check — which is the intended behavior (better to skip than to produce 100% false positives).
 
 ### Where it applies
 
@@ -306,7 +485,38 @@ The `ExternalLinkChecker` validates HTTP/HTTPS links using `curl_multi`:
 
 `curl_multi` is PHP stdlib — zero dependencies. The checker is 372 lines with full test coverage. Adding Guzzle or Symfony HTTP Client would introduce a heavy dependency for a feature that runs periodically (not on every command invocation). The file-based cache is appropriate for a CLI tool that runs intermittently.
 
-## 7. HTML-to-Markdown Conversion
+## 7. Dependency Philosophy: Strategic Minimalism
+
+### Principle
+
+BrainDocs follows a **strategic minimalism** approach to dependencies: use external libraries when they provide substantial, hard-to-replicate value; build internally when the use case is narrow and the implementation is straightforward.
+
+### Decision matrix
+
+| Component | Decision | Lines | Justification |
+|-----------|----------|-------|---------------|
+| HTML→Markdown | **External** (`league/html-to-markdown`) | wrapper | HTML conversion has hundreds of edge cases (nested tables, malformed tags, entity handling). Reimplementing this would be irresponsible. |
+| Anchor slug generator | **Internal** (27 lines) | 27 | Requires markdown-aware stripping (`**bold**` → `bold`) before slugification. No existing library handles this — `cocur/slugify` does URL slugs with transliteration, not GitHub-compatible markdown anchors. |
+| External link checker | **Internal** (372 lines) | 372 | Single use case: HEAD requests with 405→GET fallback, file cache, concurrency. `curl_multi` is PHP stdlib. Guzzle would add ~2MB for a feature that runs on `--check-external` only. |
+| Markdown structure validator | **Internal** (427 lines) | 427 | 6 rules selected from 53 markdownlint rules based on AI-agent discoverability criterion. No existing library provides this specific ruleset. |
+| Security validator | **Internal** (615 lines) | 615 | Unique: multi-language prompt injection detection + homoglyph normalization + base64 payload scanning. No existing library covers any of this. |
+| Markdown parser | **Internal** (611 lines) | 611 | ATX/setext headers, code blocks with language detection, task checklists — all code-block aware. CommonMark parsers exist but are designed for rendering, not structural extraction. |
+
+### Why not "just use markdownlint"?
+
+`markdownlint` (Node.js, 44K+ stars) implements 53 rules. BrainDocs uses 6. The remaining 47 address formatting consistency (trailing spaces, line length, list marker style) that has zero impact on AI agent document discovery. Including markdownlint would require a Node.js runtime dependency for 6 rules, 47 of which would need to be disabled.
+
+### Why not "just use tree-sitter"?
+
+See Section 1 (Code Parsing: Regex vs AST) for the full decision record.
+
+### Long-term maintenance perspective
+
+Each internal component has explicit test coverage and a narrow scope. The total internal codebase for docs tooling is ~2500 lines across 10 service classes — comparable in size to a single Guzzle middleware chain. The maintenance burden is proportional to the functionality, and each component evolves only when its specific use case changes.
+
+The one external dependency (`league/html-to-markdown`) was chosen because HTML parsing is a genuinely complex problem with hundreds of edge cases that no reasonable team should reimplement. The internal components solve problems that either (a) don't have suitable external solutions or (b) would require importing disproportionately large libraries for trivially small use cases.
+
+## 8. HTML-to-Markdown Conversion
 
 ### Library: `league/html-to-markdown`
 
@@ -321,7 +531,7 @@ Downloaded HTML content is converted to semantic Markdown preserving:
 
 Non-HTML content (plain text, markdown) passes through unchanged. Detection is based on presence of HTML tags in the content.
 
-## 8. Filesystem Fallback Strategy
+## 9. Filesystem Fallback Strategy
 
 ### When git is unavailable
 
@@ -339,7 +549,7 @@ Both `StalenessDetector` and `RecentChangesDetector` have a two-tier data source
 
 The `detect()` / `getGitLog()` methods return `null` when git is unavailable (not empty string), allowing the caller to distinguish "git found nothing" from "git unavailable."
 
-## 9. Threat Model & Defense-in-Depth
+## 10. Threat Model & Defense-in-Depth
 
 ### What SecurityValidator protects against
 
@@ -422,7 +632,35 @@ MDX files (`.mdx`) use a transparent passthrough design. JSX/React components ar
 
 4. **Industry alignment.** Documentation tools (mdx-js, Docusaurus, Nextra) require a build step to render JSX. Without compilation, JSX tags are plain text. BrainDocs treats them accordingly.
 
-## 10. Markdown Structure Validation
+## 11. Task Extraction (`--tasks`)
+
+### Purpose
+
+Read-only extraction of markdown checklists (`- [ ]` / `- [x]`) from `.docs/` files with structured metadata: status, line number, and nearest heading context.
+
+### Implementation
+
+The `MarkdownParser::parseTasks()` method reuses existing infrastructure:
+
+- **Code-block awareness:** Uses `findCodeBlockRanges()` + `isInCodeBlock()` to exclude checklists inside fenced code blocks (same pattern as header parsing).
+- **Heading context:** Calls `parseHeaders($content, 6)` to collect all headers, then `findNearestHeading()` resolves the closest heading above each task item.
+- **Bullet markers:** Supports `-`, `*`, and `+` prefixes (standard markdown list syntax).
+- **Status detection:** Space inside brackets = "pending", `x` or `X` = "done".
+
+### Output format
+
+Each file with tasks includes a `tasks` key containing:
+
+- `items[]` — array of `{text, status, line, heading?}` objects
+- `summary` — `{total, done, pending}` counts
+
+Files without tasks omit the `tasks` key entirely (no empty objects in output).
+
+### Why parseHeaders(content, 6) for heading context
+
+The `parseTasks()` method needs all headers (H1-H6) for the `findNearestHeading()` lookup. Rather than duplicating header extraction logic, it reuses `parseHeaders($content, 6)` which returns all levels. The overhead of `end_line` calculation in `parseHeaders()` is negligible — documents typically have fewer than 50 headers.
+
+## 12. Markdown Structure Validation
 
 ### Problem
 
