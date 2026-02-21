@@ -127,6 +127,8 @@ bash scripts/benchmark-llm-suite.sh --scenario MT-001 --model haiku --yolo
 bash scripts/benchmark-llm-suite.sh --scenario MT-002 --model haiku --yolo
 ```
 
+**Full gate demo (2-3 min, all gates):** see `.docs/product/18-enterprise-demo-script.md`.
+
 ## Cost Estimates (haiku)
 
 | Profile | Scenarios | Est. tokens | Est. time | Est. cost |
