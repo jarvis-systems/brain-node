@@ -12,6 +12,7 @@ use BrainCore\Compilation\Operator;
 use BrainCore\Compilation\Store;
 use BrainCore\Compilation\Tools\BashTool;
 use BrainCore\Compilation\Tools\TaskTool;
+use BrainCore\Variations\Traits\ModeResolverTrait;
 use BrainNode\Mcp\VectorMemoryMcp;
 
 #[Meta('id', 'do')]
@@ -19,6 +20,8 @@ use BrainNode\Mcp\VectorMemoryMcp;
 #[Purpose('Coordinates flexible agent execution (sequential by default, parallel when beneficial) with approval checkpoints and comprehensive vector memory integration. Agents communicate through vector memory for knowledge continuity. Accepts $ARGUMENTS task description. Zero distractions, atomic tasks only, strict plan adherence.')]
 class DoCommand extends CommandArchetype
 {
+    use ModeResolverTrait;
+
     /**
      * Handle the command logic.
      */
@@ -247,28 +250,30 @@ class DoCommand extends CommandArchetype
                 'Store partial state → List remaining → Suggest resumption',
             ]));
 
-        // Agent Vector Memory Instructions Template
-        $this->guideline('agent-memory-instructions')
-            ->text('MANDATORY vector memory pattern for ALL agents')
-            ->example()
-            ->phase('BEFORE TASK:')
-            ->do([
-                'Execute: ' . VectorMemoryMcp::callValidatedJson('search_memories', ['query' => '{relevant}', 'limit' => 5]),
-                'Review: Analyze results for patterns, solutions, learnings',
-                'Apply: Incorporate insights into approach',
-            ])
-            ->phase('DURING TASK:')
-            ->do([
-                'Focus: Execute ONLY assigned task within file scope',
-                'Atomic: Respect 1-2 file limit strictly',
-            ])
-            ->phase('AFTER TASK:')
-            ->do([
-                'Document: Summarize what was done, how it worked, key insights',
-                'Execute: ' . VectorMemoryMcp::callValidatedJson('store_memory', ['content' => '{what+how+insights}', 'category' => '{appropriate}', 'tags' => ['...']]),
-                'Verify: Confirm storage successful',
-            ])
-            ->phase('CRITICAL: Vector memory is the communication channel between agents. Your learnings enable the next agent!');
+        // Agent Vector Memory Instructions Template (deep cognitive only)
+        if ($this->isDeepCognitive()) {
+            $this->guideline('agent-memory-instructions')
+                ->text('MANDATORY vector memory pattern for ALL agents')
+                ->example()
+                ->phase('BEFORE TASK:')
+                ->do([
+                    'Execute: ' . VectorMemoryMcp::callValidatedJson('search_memories', ['query' => '{relevant}', 'limit' => 5]),
+                    'Review: Analyze results for patterns, solutions, learnings',
+                    'Apply: Incorporate insights into approach',
+                ])
+                ->phase('DURING TASK:')
+                ->do([
+                    'Focus: Execute ONLY assigned task within file scope',
+                    'Atomic: Respect 1-2 file limit strictly',
+                ])
+                ->phase('AFTER TASK:')
+                ->do([
+                    'Document: Summarize what was done, how it worked, key insights',
+                    'Execute: ' . VectorMemoryMcp::callValidatedJson('store_memory', ['content' => '{what+how+insights}', 'category' => '{appropriate}', 'tags' => ['...']]),
+                    'Verify: Confirm storage successful',
+                ])
+                ->phase('CRITICAL: Vector memory is the communication channel between agents. Your learnings enable the next agent!');
+        }
 
         // Error Handling
         $this->guideline('error-handling')
@@ -313,119 +318,118 @@ class DoCommand extends CommandArchetype
                 'Warn: "Limited context may affect quality"',
             ]);
 
-        // Constraints and Validation
-        $this->guideline('constraints-validation')
-            ->text('Enforcement of critical constraints throughout execution')
-            ->example()
-            ->phase('Before Requirements Analysis: Verify $ARGUMENTS is not empty')
-            ->phase('Before Phase 2 → Phase 3 transition: Verify user approval received')
-            ->phase('Before Phase 4 → Phase 5 transition: Verify user approval received')
-            ->phase('During Execution Planning: Verify each step has ≤ 2 files in scope')
-            ->phase('During Execution: Verify dependencies respected (sequential: step order, parallel: no conflicts)')
-            ->phase('Throughout: NO unapproved steps allowed')
-            ->phase(Operator::verify([
-                'approval_checkpoints_passed = 2',
-                'all_tasks_atomic = true (≤ 2 files each)',
-                'execution_mode = sequential OR parallel (validated)',
-                'improvisation_count = 0',
-            ]));
+        // Deep cognitive only: constraints validation, examples, response format, directive
+        if ($this->isDeepCognitive()) {
+            $this->guideline('constraints-validation')
+                ->text('Enforcement of critical constraints throughout execution')
+                ->example()
+                ->phase('Before Requirements Analysis: Verify $ARGUMENTS is not empty')
+                ->phase('Before Phase 2 → Phase 3 transition: Verify user approval received')
+                ->phase('Before Phase 4 → Phase 5 transition: Verify user approval received')
+                ->phase('During Execution Planning: Verify each step has ≤ 2 files in scope')
+                ->phase('During Execution: Verify dependencies respected (sequential: step order, parallel: no conflicts)')
+                ->phase('Throughout: NO unapproved steps allowed')
+                ->phase(Operator::verify([
+                    'approval_checkpoints_passed = 2',
+                    'all_tasks_atomic = true (≤ 2 files each)',
+                    'execution_mode = sequential OR parallel (validated)',
+                    'improvisation_count = 0',
+                ]));
 
-        // Examples
-        $this->guideline('example-0-conversation-context')
-            ->scenario('Task with conversation context')
-            ->example()
-            ->phase('conversation', 'User: "I want to use Redis for caching" → "Prefer atomic commits" → "Follow PSR-12"')
-            ->phase('input', '$ARGUMENTS = "Add caching to product catalog"')
-            ->phase('phase0', 'Context: Redis requirement, atomic commits preference, PSR-12 standard')
-            ->phase('phase1-6', 'Execute with conversation insights: Redis driver, atomic steps, PSR-12 formatting');
+            $this->guideline('example-0-conversation-context')
+                ->scenario('Task with conversation context')
+                ->example()
+                ->phase('conversation', 'User: "I want to use Redis for caching" → "Prefer atomic commits" → "Follow PSR-12"')
+                ->phase('input', '$ARGUMENTS = "Add caching to product catalog"')
+                ->phase('phase0', 'Context: Redis requirement, atomic commits preference, PSR-12 standard')
+                ->phase('phase1-6', 'Execute with conversation insights: Redis driver, atomic steps, PSR-12 formatting');
 
-        $this->guideline('example-1-simple-task')
-            ->scenario('Simple single-agent task')
-            ->example()
-            ->phase('input', '$ARGUMENTS = "Fix authentication bug in LoginController.php"')
-            ->phase('phases', 'Discovery → Requirements (approved) → Gather → Plan (approved) → Execute → Complete: 1/1 ✓');
+            $this->guideline('example-1-simple-task')
+                ->scenario('Simple single-agent task')
+                ->example()
+                ->phase('input', '$ARGUMENTS = "Fix authentication bug in LoginController.php"')
+                ->phase('phases', 'Discovery → Requirements (approved) → Gather → Plan (approved) → Execute → Complete: 1/1 ✓');
 
-        $this->guideline('example-2-multi-step-task')
-            ->scenario('Complex multi-agent task with web research')
-            ->example()
-            ->phase('input', '$ARGUMENTS = "Add Laravel rate limiting to API endpoints"')
-            ->phase('phase1', 'Agents: @agent-web-research-master, @agent-code-master, @agent-documentation-master')
-            ->phase('phase2', 'Requirements Plan: Research Laravel rate limiting, scan API routes, identify endpoints')
-            ->phase('approval1', 'User approves (including web research)')
-            ->phase('phase3', 'Gather: Web research findings, routes/api.php, middleware list')
-            ->phase('phase4', 'Execution Plan:')
-            ->do([
-                'Step 1: @agent-code-master - Create RateLimitMiddleware.php',
-                'Step 2: @agent-code-master - Update app/Http/Kernel.php',
-                'Step 3: @agent-code-master - Apply middleware to routes/api.php',
-                'Step 4: @agent-documentation-master - Update API docs',
-            ])
-            ->phase('approval2', 'User approves execution plan')
-            ->phase('phase5', 'Sequential execution: Steps 1→2→3→4')
-            ->phase('phase6', 'Report: 4/4 steps complete - rate limiting implemented ✓');
+            $this->guideline('example-2-multi-step-task')
+                ->scenario('Complex multi-agent task with web research')
+                ->example()
+                ->phase('input', '$ARGUMENTS = "Add Laravel rate limiting to API endpoints"')
+                ->phase('phase1', 'Agents: @agent-web-research-master, @agent-code-master, @agent-documentation-master')
+                ->phase('phase2', 'Requirements Plan: Research Laravel rate limiting, scan API routes, identify endpoints')
+                ->phase('approval1', 'User approves (including web research)')
+                ->phase('phase3', 'Gather: Web research findings, routes/api.php, middleware list')
+                ->phase('phase4', 'Execution Plan:')
+                ->do([
+                    'Step 1: @agent-code-master - Create RateLimitMiddleware.php',
+                    'Step 2: @agent-code-master - Update app/Http/Kernel.php',
+                    'Step 3: @agent-code-master - Apply middleware to routes/api.php',
+                    'Step 4: @agent-documentation-master - Update API docs',
+                ])
+                ->phase('approval2', 'User approves execution plan')
+                ->phase('phase5', 'Sequential execution: Steps 1→2→3→4')
+                ->phase('phase6', 'Report: 4/4 steps complete - rate limiting implemented ✓');
 
-        $this->guideline('example-3-approval-rejection')
-            ->scenario('User rejects execution plan, requests modifications')
-            ->example()
-            ->phase('input', '$ARGUMENTS = "Refactor UserService to use repository pattern"')
-            ->phase('phase1-4', 'Standard flow through execution planning')
-            ->phase('approval2', 'User responds: "No, split Step 3 into smaller pieces"')
-            ->phase('revision', 'Rebuild execution plan with Step 3 split into 3a, 3b, 3c')
-            ->phase('re-approval', 'Re-present plan → User approves')
-            ->phase('phase5', 'Execute revised plan')
-            ->phase('phase6', 'Report: Completed with revised plan ✓');
+            $this->guideline('example-3-approval-rejection')
+                ->scenario('User rejects execution plan, requests modifications')
+                ->example()
+                ->phase('input', '$ARGUMENTS = "Refactor UserService to use repository pattern"')
+                ->phase('phase1-4', 'Standard flow through execution planning')
+                ->phase('approval2', 'User responds: "No, split Step 3 into smaller pieces"')
+                ->phase('revision', 'Rebuild execution plan with Step 3 split into 3a, 3b, 3c')
+                ->phase('re-approval', 'Re-present plan → User approves')
+                ->phase('phase5', 'Execute revised plan')
+                ->phase('phase6', 'Report: Completed with revised plan ✓');
 
-        $this->guideline('example-4-documentation-scan')
-            ->scenario('Task requiring project documentation context')
-            ->example()
-            ->phase('input', '$ARGUMENTS = "Implement feature based on architecture described in documentation"')
-            ->phase('phase1', 'Agent Discovery: Selected @agent-documentation-master, @agent-code-master')
-            ->phase('phase2', 'Requirements Plan: Search documentation via brain docs, identify feature requirements')
-            ->phase('approval1', 'User approves (including documentation scan)')
-            ->phase('phase3', 'Gather: Documentation results from brain docs, related code files')
-            ->phase('phase4', 'Execution Plan:')
-            ->do([
-                'Step 1: @agent-code-master - Create FeatureService.php based on docs',
-                'Step 2: @agent-code-master - Integrate with existing architecture',
-            ])
-            ->phase('approval2', 'User approves execution plan')
-            ->phase('phase5', 'Sequential execution: Steps 1→2')
-            ->phase('phase6', 'Report: 2/2 steps complete - feature implemented per documentation ✓');
+            $this->guideline('example-4-documentation-scan')
+                ->scenario('Task requiring project documentation context')
+                ->example()
+                ->phase('input', '$ARGUMENTS = "Implement feature based on architecture described in documentation"')
+                ->phase('phase1', 'Agent Discovery: Selected @agent-documentation-master, @agent-code-master')
+                ->phase('phase2', 'Requirements Plan: Search documentation via brain docs, identify feature requirements')
+                ->phase('approval1', 'User approves (including documentation scan)')
+                ->phase('phase3', 'Gather: Documentation results from brain docs, related code files')
+                ->phase('phase4', 'Execution Plan:')
+                ->do([
+                    'Step 1: @agent-code-master - Create FeatureService.php based on docs',
+                    'Step 2: @agent-code-master - Integrate with existing architecture',
+                ])
+                ->phase('approval2', 'User approves execution plan')
+                ->phase('phase5', 'Sequential execution: Steps 1→2')
+                ->phase('phase6', 'Report: 2/2 steps complete - feature implemented per documentation ✓');
 
-        $this->guideline('example-5-parallel-execution')
-            ->scenario('Parallel execution for independent tasks')
-            ->example()
-            ->phase('input', '$ARGUMENTS = "Add validation to UserController, ProductController, and OrderController"')
-            ->phase('phase1', 'Agent Discovery: Selected @agent-code-master (for all 3 tasks)')
-            ->phase('phase2', 'Requirements Plan: Scan controllers, identify validation needs')
-            ->phase('approval1', 'User approves requirements plan')
-            ->phase('phase3', 'Gather: Controller files, validation rules patterns')
-            ->phase('phase4', 'Execution Plan:')
-            ->do([
-                'Mode: PARALLEL (tasks are independent, no file conflicts)',
-                'Batch 1 (parallel):',
-                '  Step 1: @agent-code-master - Add validation to UserController.php',
-                '  Step 2: @agent-code-master - Add validation to ProductController.php',
-                '  Step 3: @agent-code-master - Add validation to OrderController.php',
-            ])
-            ->phase('approval2', 'User approves parallel execution plan')
-            ->phase('phase5', 'Parallel execution: Batch 1 (3 steps concurrently)')
-            ->phase('phase6', 'Report: 3/3 steps complete (parallel) - validation implemented ✓');
+            $this->guideline('example-5-parallel-execution')
+                ->scenario('Parallel execution for independent tasks')
+                ->example()
+                ->phase('input', '$ARGUMENTS = "Add validation to UserController, ProductController, and OrderController"')
+                ->phase('phase1', 'Agent Discovery: Selected @agent-code-master (for all 3 tasks)')
+                ->phase('phase2', 'Requirements Plan: Scan controllers, identify validation needs')
+                ->phase('approval1', 'User approves requirements plan')
+                ->phase('phase3', 'Gather: Controller files, validation rules patterns')
+                ->phase('phase4', 'Execution Plan:')
+                ->do([
+                    'Mode: PARALLEL (tasks are independent, no file conflicts)',
+                    'Batch 1 (parallel):',
+                    '  Step 1: @agent-code-master - Add validation to UserController.php',
+                    '  Step 2: @agent-code-master - Add validation to ProductController.php',
+                    '  Step 3: @agent-code-master - Add validation to OrderController.php',
+                ])
+                ->phase('approval2', 'User approves parallel execution plan')
+                ->phase('phase5', 'Parallel execution: Batch 1 (3 steps concurrently)')
+                ->phase('phase6', 'Report: 3/3 steps complete (parallel) - validation implemented ✓');
 
-        // Response Format
-        $this->guideline('response-format')
-            ->text('Structured output format for each phase')
-            ->example()
-            ->phase('Phase headers with === markers')
-            ->phase('Bullet-point plans with clear structure')
-            ->phase('Approval checkpoints with ⚠️  and clear instructions')
-            ->phase('Progress indicators: ▶️ ✅ ❌ 📋 📁 ⏱️')
-            ->phase('File scope explicitly listed for each step')
-            ->phase('No extraneous commentary during execution')
-            ->phase('Clear status indicators for completion');
+            $this->guideline('response-format')
+                ->text('Structured output format for each phase')
+                ->example()
+                ->phase('Phase headers with === markers')
+                ->phase('Bullet-point plans with clear structure')
+                ->phase('Approval checkpoints with ⚠️  and clear instructions')
+                ->phase('Progress indicators: ▶️ ✅ ❌ 📋 📁 ⏱️')
+                ->phase('File scope explicitly listed for each step')
+                ->phase('No extraneous commentary during execution')
+                ->phase('Clear status indicators for completion');
 
-        // Directive
-        $this->guideline('directive')
-            ->text('Execute ONLY specified task! Get approvals at checkpoints! Atomic tasks ONLY! Flexible execution (sequential by default, parallel when beneficial)! Vector memory MANDATORY for ALL agents! NO improvisation! Zero distractions! Strict plan adherence!');
+            $this->guideline('directive')
+                ->text('Execute ONLY specified task! Get approvals at checkpoints! Atomic tasks ONLY! Flexible execution (sequential by default, parallel when beneficial)! Vector memory MANDATORY for ALL agents! NO improvisation! Zero distractions! Strict plan adherence!');
+        }
     }
 }
