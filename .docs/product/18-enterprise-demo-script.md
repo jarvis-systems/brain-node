@@ -28,7 +28,17 @@ git status --porcelain
 
 Expected: empty output. Proves: no uncommitted changes, clean state.
 
-### 2. Documentation
+### 2. Version Signals (DEV snapshot)
+
+```bash
+git describe --tags --always
+git -C core describe --tags --always
+git -C cli describe --tags --always
+```
+
+Expected: three version strings, e.g. `v0.2.0-51-gabcdef0`. The `-N-gXXXXXXX` suffix is normal in dev — it means N commits since the last tag. Proves: all three repos are accessible and have version history.
+
+### 3. Documentation
 
 ```bash
 brain docs --validate
@@ -36,7 +46,7 @@ brain docs --validate
 
 Expected: `valid:72, invalid:0, warnings:0`. Proves: all 72 docs have YAML front matter, no broken references.
 
-### 3. Tests
+### 4. Tests
 
 ```bash
 composer test
@@ -44,7 +54,7 @@ composer test
 
 Expected: `244 tests, 578 assertions, 0 failures`. Proves: full test coverage, deterministic compilation, merger invariants, node integrity, MCP schema validation.
 
-### 4. Static Analysis
+### 5. Static Analysis
 
 ```bash
 composer analyse
@@ -52,7 +62,7 @@ composer analyse
 
 Expected: `0 errors` for both core (169 files) and CLI (125 files). Proves: type safety across entire codebase at PHPStan level 0.
 
-### 5. Enterprise Audit (19 checks)
+### 6. Enterprise Audit (19 checks)
 
 ```bash
 bash scripts/audit-enterprise.sh
@@ -60,7 +70,7 @@ bash scripts/audit-enterprise.sh
 
 Expected: `PASS:19, WARN:0, FAIL:0`. Proves: strict_types, no debug artifacts, no secret patterns, no unsafe exec, version consistency, compile clean-worktree, MCP schema enforcement.
 
-### 6. Secret Scan (tracked files)
+### 7. Secret Scan (tracked files)
 
 ```bash
 bash scripts/scan-secrets.sh
@@ -68,7 +78,7 @@ bash scripts/scan-secrets.sh
 
 Expected: `No secrets found in tracked files`. Proves: zero credential leakage in current codebase.
 
-### 7. History Secret Scan
+### 8. History Secret Scan
 
 ```bash
 bash scripts/scan-secrets-history.sh --quiet
@@ -76,7 +86,7 @@ bash scripts/scan-secrets-history.sh --quiet
 
 Expected: `TOTAL_MATCHES=10, exit 2`. This is **not a failure** — it is a tracked, mitigated debt (P2-008). All matched credentials are provider-side revoked. Private repo exception applies per `10-pre-publication.md`. For publication, exit 0 is required (BFG/Option C cleanup).
 
-### 8. Benchmark Suite (dry-run)
+### 9. Benchmark Suite (dry-run)
 
 ```bash
 bash scripts/benchmark-llm-suite.sh --dry-run --profile full
@@ -91,6 +101,7 @@ Expected: `42/42`, `12/12`, `28/28` — all 82 unique scenarios pass schema vali
 | Gate | What it proves |
 |------|---------------|
 | Clean worktree | No drift, no forgotten changes |
+| Version signals | All three repos accessible, version history intact |
 | Docs validate | 72 documents with consistent metadata |
 | 244 tests green | Core logic, compilation determinism, node contracts |
 | PHPStan 0 errors | Type safety across 294 files (core + CLI) |
@@ -98,6 +109,8 @@ Expected: `42/42`, `12/12`, `28/28` — all 82 unique scenarios pass schema vali
 | Secret scan clean | Zero credentials in tracked files |
 | History scan mitigated | Known debt tracked, credentials revoked, upgrade path documented |
 | 82 benchmark scenarios | Full governance coverage: knowledge, commands, multi-turn, adversarial schemas |
+
+**Note:** This demo proves quality gates in **dev mode**. Release mode requires exact-match tags + `composer.json` alignment across all three repos (BLOCKING) — see `.docs/product/10-pre-publication.md` § "Version Alignment".
 
 ## Known Debts
 
