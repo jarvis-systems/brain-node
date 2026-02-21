@@ -237,7 +237,7 @@ while IFS=: read -r file line content; do
     [[ "$content" == *"::dump("* ]] && continue
     [[ "$content" == *"->dump("* ]] && continue
     # Skip commented-out debug lines
-    local trimmed="${content#"${content%%[![:space:]]*}"}"
+    trimmed="${content#"${content%%[![:space:]]*}"}"
     [[ "$trimmed" == //* ]] && continue
     # Skip dump method definitions
     [[ "$content" == *"function dump("* ]] && continue
