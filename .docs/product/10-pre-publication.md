@@ -78,7 +78,9 @@ composer analyse        # Expected: 0 errors (core + CLI)
 
 # Security gates
 bash scripts/scan-secrets.sh          # Expected: 0 secrets found
-bash scripts/audit-enterprise.sh      # Expected: PASS:18, WARN:0, FAIL:0
+bash scripts/audit-enterprise.sh      # Required: FAIL:0. Target: WARN:0.
+                                      # PASS count is informational (varies with check set).
+                                      # Source of truth: script output, not this doc.
 
 # History secrets scan (redacted, low-noise)
 bash scripts/scan-secrets-history.sh  # Expected: exit 0 (no matches)
