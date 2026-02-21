@@ -79,6 +79,28 @@ status: active
 - `.env.example` documents required variables with empty placeholders
 - `build-release-bundle.sh` explicitly skips `.mcp.json`
 
+### Expected Local Workspace Artifacts (Untracked & Symlinks)
+
+`git clean -nd` may show items that are normal development artifacts, not leaks.
+
+**Allowed (normal):**
+
+| Item | Type | Why untracked |
+|------|------|---------------|
+| `node/Includes/` | Empty directory | Scaffold created by `brain make:include`. Git does not track empty directories. |
+| `node/Skills/` | Empty directory | Scaffold created by `brain make:skill`. Git does not track empty directories. |
+| `.brain` | Symlink (this repo only) | Self-hosting dev mode: `.brain → .` so Brain tooling develops itself using its own Node structure. In other projects `.brain/` is a real directory, not a symlink. |
+
+**Verify:** `git clean -nd` should list ONLY items from the table above. Anything else — investigate immediately and run `bash scripts/scan-secrets.sh`.
+
+**Red flags** (investigate if seen in `git clean -nd`):
+
+- Stdout dumps (e.g. `pbcopy` from `> file` instead of `| pbcopy`) — delete after confirming content
+- Editor temp files (`*.swp`, `*.bak`, `*~`) — configure global gitignore (`~/.config/git/ignore`), not repo `.gitignore`
+- Files matching secret patterns (`github_pat_*`, `ctx7sk-*`, `*.key`) — run `scan-secrets.sh`, rotate if real
+
+**Why not .gitignore:** These items are NOT added to `.gitignore` intentionally. Keeping `git clean -nd` signal value high ensures unexpected files are immediately visible, not silently hidden.
+
 ## Troubleshooting
 
 ### `.mcp.json` missing after fresh clone
