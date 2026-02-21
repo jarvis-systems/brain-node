@@ -91,3 +91,13 @@ All 18 checks in `audit-enterprise.sh` must PASS or WARN (no FAIL):
 - [ ] Failure runbooks cover new failure modes (if applicable)
 - [ ] Benchmark scenarios cover new features (if applicable)
 - [ ] Demo script updated if public API changed
+
+## Quad-Mode Drift Policy
+
+When multiple agents/terminals work in parallel ("quad-mode"):
+
+- If all gates are GREEN but test counts (tests/assertions) changed between runs: classify as **External Drift** when Doc confirms parallel work is active.
+- Evidence Pack must record: `Drift observed: tests X→Y, assertions A→B, reason: parallel work (Doc confirmed)`.
+- **STOP** only if drift is accompanied by a RED gate or test failure/flake.
+- Do NOT escalate count changes as incidents during active parallel work.
+- Final test count validation happens in **stabilization phase** (endgame batch) after all parallel work converges.

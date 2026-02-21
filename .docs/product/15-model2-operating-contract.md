@@ -151,6 +151,8 @@ If the chat context was compacted / truncated:
 - ALL previous numbers are UNTRUSTED.
 - Re-run Phase 0 Truth Snapshot BEFORE resuming any work.
 
+In quad-mode (multiple agents/terminals active), test count drift (tests/assertions changing between runs) is NOT a failure if all gates are GREEN and Doc confirms parallel work. Record drift as evidence: `Drift: tests X→Y, assertions A→B — parallel work confirmed`. Final counts validated at stabilization phase.
+
 # 7) CANONICAL REFERENCES (starting set; BrainDocs may discover more)
 
 Use these as default canon; verify existence via BrainDocs each session:
