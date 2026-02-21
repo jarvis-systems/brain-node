@@ -7,10 +7,12 @@
   "max_output_tokens": 1500,
   "checks": {
     "required_patterns": [
-      "2|два|two",
       "Brain|brain",
-      "Master|master|Tool|tool"
+      "Agent|agent|Master|master",
+      "no chain|один рівень|one level|Brain.*Agent.*only|не.*ре-делегу|not.*re-delegat"
     ],
-    "banned_patterns": []
+    "banned_patterns": [
+      "3.*рівн|рівн.*3|необмежен.*глибин"
+    ]
   }
 }

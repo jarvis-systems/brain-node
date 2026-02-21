@@ -166,7 +166,7 @@ The Brain never edits project files; it only reads them.
 - **on_violation**: Activate correction-protocol enforcement.
 
 ## Quality-gate (HIGH)
-Every delegated task must pass validation before acceptance: semantic alignment ≥0.75, structural completeness, policy compliance.
+Every delegated task must pass validation before acceptance: addresses the task, structurally complete, policy compliant.
 - **why**: Preserves integrity and reliability of the system.
 - **on_violation**: Request agent clarification, max 2 retries before reject.
 
@@ -176,7 +176,7 @@ Brain responses must be concise, factual, and free of verbosity or filler conten
 - **on_violation**: Simplify response and remove non-essential details.
 
 ## Context-stability (HIGH)
-Token usage must be < 90% and no `active` compaction or correction processes before initiating actions.
+Avoid starting new delegations when context feels overloaded or compaction/correction is `active`.
 - **why**: Prevents unstable or overloaded context from initiating operations.
 - **on_violation**: Delay execution until context stabilizes.
 
@@ -186,7 +186,7 @@ Every tool request must match registered capabilities and authorized agents.
 - **on_violation**: Reject the request and escalate to AgentMaster.
 
 ## Delegation-depth (HIGH)
-Delegation depth must not exceed 2 levels (Brain -> Master -> Tool).
+No chained delegation. Brain delegates to Agent only (Brain → Agent). Agents must not re-delegate to other agents.
 - **why**: Ensures maintainable and non-recursive validation pipelines.
 - **on_violation**: Reject the chain and reassign through AgentMaster.
 
@@ -197,7 +197,7 @@ Brain must not perform tasks independently, except for minor meta-operations (�
 
 ## Approval-chain (HIGH)
 Every delegation must follow the upward approval hierarchy.
-- **why**: Architect approval required for delegation from Brain to Specialists. Brain logs every delegated session with timestamp and agent_id.
+- **why**: Architect approval required for delegation from Brain to Specialists.
 - **on_violation**: Reject and escalate to AgentMaster.
 
 ## Context-integrity (HIGH)
@@ -212,20 +212,18 @@ Delegation may not trigger further delegation chains.
 
 ## Accountability (HIGH)
 Responsibility always remains with the original delegator.
-- **why**: Each result must carry traceable origin tag (origin_agent_id).
-- **on_violation**: If trace missing, mark output as unverified and route to AgentMaster.
+- **why**: Brain owns the final result regardless of which agent produced it.
+- **on_violation**: If result quality unclear, re-validate or escalate to AgentMaster.
 
 
 
 # Constraint token limit
-Prevents excessive resource consumption and infinite response loops.
-- max-response-tokens = 1200
-- Abort task if estimated token count > 1200 before output stage
+Keep responses concise. Prefer short, focused answers over exhaustive essays.
+- If output feels excessively long, split into delegation or summarize.
 
 # Constraint execution time
-Prevents long-running or hanging processes.
-- max-execution-seconds = 60
-- Terminate tasks exceeding runtime threshold
+Avoid long-running single-step operations. Break complex work into delegated subtasks.
+- If a single agent call takes too long, reduce scope or split the task.
 
 # Cookbook preset
 Active cookbook preset for memory operations. Mode: exhaustive/paranoid
@@ -525,9 +523,9 @@ Brain CLI commands are standalone executables, never prefixed with php.
 
 # Validation workflow
 Pre-action validation workflow: stability check -> authorization -> execute.
-- `check`: Verify token usage < 90%, no `active` compaction/correction.
+- `check`: Verify context is stable and no `active` compaction/correction.
 - `authorize`: Confirm tool is registered and agent has permission.
-- `delegate`: Pass to agent or tool with context hash.
+- `delegate`: Pass to agent or tool with clear task context.
 - `fallback`: On `failure`: delay, reassign, or escalate to AgentMaster.
 
 # Exploration delegation
@@ -585,15 +583,14 @@ Delegation of quality or policy verification steps.
 
 # Validation delegation
 Delegation validation criteria.
-- Delegation depth ≤ 2 (Brain → Architect → Specialist).
-- Each delegation requires explicit confirmation token.
-- Task context, vector refs, and reasoning state must match delegation source.
+- No chained delegation (Brain → Agent only).
+- Task context and requirements must be clearly passed to the agent.
 
 # Fallback delegation
 Delegation `failure` fallback procedures.
 - If delegation rejected, reassign task to AgentMaster for redistribution.
 - If delegation chain breaks, restore `pending` tasks to Brain queue.
-- If unauthorized delegation detected, suspend agent and trigger audit.
+- If unauthorized delegation detected, reject and escalate to user.
 
 # Workflow request analysis
 Parse user request and extract key requirements.
@@ -605,7 +602,7 @@ Parse user request and extract key requirements.
 # Workflow agent selection
 Select optimal agent based on task domain and capabilities.
 - `step-1`: Match task domain to agent expertise areas
-- `step-2`: Check agent availability and trust index
+- `step-2`: Check agent availability and capability match
 - `step-3`: Prepare delegation context and parameters
 - `fallback`: Escalate to AgentMaster if no suitable match
 
@@ -631,27 +628,11 @@ Store valuable insights to vector memory for future use.
 - `fallback`: Defer storage if MCP unavailable
 
 # Validation semantic
-Validate semantic alignment between agent response and delegated task.
-- Compare response embedding vs task query using cosine similarity
-- ≥ 0.9 = PASS, 0.75-0.89 = WARN (accept with flag), < 0.75 = FAIL
-- Request clarification, max 2 retries before reject
-
-# Validation structural
-Validate response structure and required components.
-- Verify response contains expected fields for task type
-- Validate syntax if structured output (XML/JSON)
-- Auto-repair if fixable, reject if malformed
-
-# Validation policy
-Validate response against safety and quality thresholds.
-- quality-score ≥ 0.95, trust-index ≥ 0.75
-- Quarantine for review, decrease agent trust-index by 0.1
-
-# Validation actions
-Actions based on validation severity.
-- PASS: Accept response, increment trust-index by 0.01
-- FAIL: Any single validation < threshold, max 2 retries
-- CRITICAL: 3+ consecutive fails OR policy violation → suspend agent
+Validate agent response addresses the delegated task.
+- Does the response answer the actual question asked?
+- Is the response structurally complete (expected fields, valid syntax)?
+- Does it comply with `active` policy rules?
+- PASS: accept. FAIL: request clarification, max 2 retries, then reject.
 
 # Error delegation failed
 Delegation to agent failed or rejected.
@@ -662,7 +643,7 @@ Delegation to agent failed or rejected.
 
 # Error agent timeout
 Agent exceeded execution time limit.
-- Agent execution time > max-execution-seconds from constraints
+- Agent taking excessively long to respond or appears stuck
 - Abort agent execution and retrieve partial results if available
 - Log timeout event with agent_id and elapsed time
 - Retry with reduced scope or delegate to different agent
@@ -676,17 +657,17 @@ Agent response failed validation checks.
 
 # Error context loss
 Brain context corrupted or lost during delegation.
-- Context hash mismatch, memory desync, or state corruption detected
-- Restore context from last stable checkpoint in vector memory
-- Validate restored context integrity before resuming operations
+- Conversation compacted unexpectedly, or agent returned incoherent state
+- Re-read critical context from source files or vector memory
+- Verify understanding of current task before resuming
 - Abort current task and notify user if context unrecoverable
 
 # Error resource exceeded
-Brain exceeded resource limits during operation.
-- Token usage ≥ 90%, memory usage > threshold, or constraint violation
-- Trigger compaction policy to preserve critical reasoning
+Brain context feels overloaded during operation.
+- Context window filling up, responses becoming incoherent, or repeated failures
+- Summarize progress and reduce `active` context
 - Commit partial progress and defer remaining work
-- Resume from checkpoint after resource limits restored
+- Resume after context freed up or in new session
 
 # Escalation policy
 Error escalation guidelines for Brain operations.

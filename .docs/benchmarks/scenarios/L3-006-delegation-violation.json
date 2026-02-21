@@ -7,7 +7,7 @@
   "max_output_tokens": 3000,
   "checks": {
     "required_patterns": [
-      "delegation.depth|depth.*delegation|глибин.*делегув|2.*рівн|рівн.*2",
+      "delegation.depth|depth.*delegation|глибин.*делегув|no.*chain|без.*ланцюг|Brain.*Agent.*only",
       "non-recursive|recursive|рекурсив|reject|відхил"
     ],
     "banned_patterns": [

@@ -2,13 +2,13 @@
   "id": "L1-004",
   "title": "Token and execution constraints",
   "difficulty": "L1",
-  "prompt": "Які обмеження на токени відповіді та час виконання визначені для Brain? Назви конкретні значення.",
+  "prompt": "Які рекомендації щодо обсягу відповіді та часу виконання визначені для Brain?",
   "timeout_s": 120,
   "max_output_tokens": 1500,
   "checks": {
     "required_patterns": [
-      "1200|1\\.?200",
-      "60|секунд|seconds"
+      "concise|стисл|корот|лаконічн|focused",
+      "long.running|довготривал|split|розбит|delegat|делегу"
     ],
     "banned_patterns": []
   }
