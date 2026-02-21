@@ -373,16 +373,57 @@ status: active
 | False lead: McpArchitecture::ksortRecursive() | Audit claimed missing `: void` — **ALREADY HAD IT** at line 69. No change needed. | Source verified |
 | New finding: BlueprintArchitecture::id() broken | `id()` uses property assignment (`$this->id = $id`) which doesn't sync with Dto internal storage. `toArray()` returns null after `id()`. Production code uses `set('id', ...)` via findOrCreateChild — not affected. P2 backlog item. | Test documents production pathway via set() |
 
+### Refactor Batch 5
+
+| Item | Change | Proof |
+|------|--------|-------|
+| BlueprintArchitecture::id() fix | `$this->id = $id` → `$this->set('id', $id)` — root cause: IronRule/Guideline declare `protected $id` in constructor, bypassing `__set()` → `set()` chain | 4 new tests: all 4 Blueprint classes pass id() → toArray()['id'] |
+| XmlBuilder edge-case tests | 15 new tests: empty element, empty/null children, single self-close, deep nesting determinism, non-array children skipped, boolean attributes, multiple attributes, null attribute omitted, no structural tabs, double-newline contract, cache, inline vs block rendering | 228/228 PASS |
+| SnapshotTest golden-file regression | 12 tests: full output vs fixture, structural invariants (system/meta/purpose/provides/iron-rules MD/guideline MD/nested includes), line count stability, hash stability, rule deduplication | `core/tests/fixtures/golden-standard.txt` baseline |
+
+### Refactor Batch 6
+
+| Item | Change | Proof |
+|------|--------|-------|
+| demo-enterprise.sh jq key fix | `.results[0]` → `.scenarios[0]`, `.mcp_calls` → `.mcp_calls_count` | Scripts now read correct benchmark output fields |
+| collect-ops-evidence.sh jq fix | Same jq key fixes + PROJECT_ROOT resolution + status case (`"PASS"` → `"pass"`) | Portable from any directory |
+| benchmark-suite.sh md5 portability | `md5 -q` (macOS-only) → conditional `md5sum`/`md5` | Works on Linux CI runners |
+| core/composer.json version | `v0.0.1` → `v0.2.0` (matches root) | audit Check 17 = PASS |
+| core/composer.json normalize | `^v12.0` → `^12.0` for 14 illuminate packages | Consistent constraint syntax |
+| Core::getVariable docblock | Removed `@return scalar` lie (actual: `mixed`) | No misleading API docs |
+| McpArchitecture::id() docblock | "Get agent ID" → "Get MCP server ID" (copy-paste fix) | Accurate method documentation |
+| audit-enterprise.sh Check 17 | Version consistency: root vs core composer.json version must match | PASS:15, WARN:2, FAIL:0 |
+
+### Refactor Batch 7
+
+| Item | Change | Proof |
+|------|--------|-------|
+| Test2Mcp.php removed | Deleted stub artifact (0 callers, `defaultCommand()='test'`) | testNoTestStubMcpFiles prevents regression |
+| Agent Meta('model') | All 8 agents now have `#[Meta('model')]`: haiku (explore, documentation-master), sonnet (commit-master, web-research-master, vector-master, agent-master, prompt-master, script-master) | NodeIntegrityTest Meta('model') assertion |
+| NodeIntegrityTest +1 test | `testNoTestStubMcpFiles` + Meta('model') mandatory check | 229/229 PASS, 511 assertions |
+
+### Refactor Batch 8
+
+| Item | Change | Proof |
+|------|--------|-------|
+| commands-no-includes rule amended | `commands-no-includes` → `commands-no-brain-includes`: 27/28 commands use dedicated command-specific includes — this is the intended pattern, not a violation. Rule now correctly forbids Brain/Universal includes (duplication) while allowing command-specific includes (unique logic). `structure-command` guideline updated. | testCommandsDoNotIncludeBrainOrUniversalIncludes prevents regression |
+| AgentArchetype::id() throw | Silent fallback `$id = 'explore'` → `RuntimeException` if Meta('id') missing. Prevented: any new agent without Meta('id') silently collides with ExploreMaster's identity. | testAgentIdsAreUnique + testAllAgentsHaveRequiredAttributes |
+| McpArchitecture::id() throw | Silent fallback `$id = 'unknown'` → `RuntimeException` if Meta('id') missing. Prevented: invalid `mcp__unknown__` tool invocation strings in compiled output. | testMcpIdsAreUnique + testAllMcpClassesHaveMetaId |
+| NodeIntegrityTest +3 tests | `testCommandsDoNotIncludeBrainOrUniversalIncludes`, `testAgentIdsAreUnique`, `testMcpIdsAreUnique` | 232/232 PASS, 517 assertions |
+| Shebang normalization | 7 scripts: `#!/bin/bash` → `#!/usr/bin/env bash` (POSIX-portable). Affected: audit-enterprise, benchmark-regression-check, benchmark-suite, benchmark-llm-suite, check-instruction-budget, verify-compile-metrics, lint-mcp-syntax | All 13 scripts now use `#!/usr/bin/env bash` consistently |
+
 ## Summary
 
 | Priority | Total | Fixed | Reclassified | Open |
 |----------|-------|-------|--------------|------|
 | P0 | 15 | 13 | 2 (to P2) | 0 |
 | P1 | 8 | 7 | 1 (to P2) | 0 |
-| P2 | 3+2+1+1+3 | 6 | 0 | 3 |
-| **Total** | **30** | **26** | **3** | **3** |
+| P2 | 3+2+1+1+3+1 | 7 | 0 | 3 |
+| **Total** | **31** | **27** | **3** | **3** |
 
 Remaining P2 open: P2-003 (error_log in ConvertCommand — acceptable, env-gated), git history cleanup, DocChallenge.md paths.
+
+**Non-P0/P1 fixes (contract consistency):** commands-no-includes rule amended (false positive eliminated), AgentArchetype::id() and McpArchitecture::id() silent fallbacks replaced with RuntimeException (compile-time safety), 7 script shebangs normalized.
 
 ### Audit Check Coverage
 
@@ -429,3 +470,17 @@ Remaining P2 open: P2-003 (error_log in ConvertCommand — acceptable, env-gated
 | NEW (MDTest) | `composer test` — 30 tests: all 24 MD static methods, autoCode edge cases, fromArray recursion, determinism |
 | NEW (CoreTest) | `composer test` — 28 tests: variable store semantics, getEnv type casting, basePath contracts, version caching |
 | NEW (VarChainTest) | `composer test` — 20 tests: resolution chain ENV→Store→Meta→Hook→Default, varIs strict/loose, varIsPositive/Negative |
+| Batch 5 (id() fix) | `composer test` — 4 testIdMethodSyncsWithDtoStorage tests across IronRule/Guideline/Style/Response |
+| Batch 5 (XmlBuilder edges) | `composer test` — XmlBuilderTest 15 edge-case tests (empty/null/deep/attributes/spacing) |
+| Batch 5 (golden-file) | `composer test` — SnapshotTest 12 tests + `core/tests/fixtures/golden-standard.txt` baseline |
+| Batch 6 (jq key fix) | `demo-enterprise.sh` + `collect-ops-evidence.sh` read `.scenarios[0]` not `.results[0]` |
+| Batch 6 (md5 portability) | `benchmark-suite.sh` uses `md5sum` (Linux) or `md5` (macOS) conditionally |
+| Batch 6 (version sync) | `audit-enterprise.sh` Check 17 — root vs core composer.json version mismatch = FAIL |
+| Batch 6 (docblock lies) | `Core::getVariable() @return scalar` removed, `McpArchitecture::id()` docblock corrected |
+| Batch 6 (version normalize) | `core/composer.json` `^v12.0` → `^12.0` for 14 illuminate packages |
+| Batch 7 (Test2Mcp removed) | `composer test` — testNoTestStubMcpFiles prevents regression |
+| Batch 7 (agent model meta) | `composer test` — NodeIntegrityTest Meta('model') assertion prevents missing model attribute |
+| Batch 8 (commands-no-brain-includes) | `composer test` — testCommandsDoNotIncludeBrainOrUniversalIncludes prevents Brain/Universal import in commands |
+| Batch 8 (AgentArchetype::id() throw) | RuntimeException at compile time if Meta('id') missing + testAllAgentsHaveRequiredAttributes + testAgentIdsAreUnique |
+| Batch 8 (McpArchitecture::id() throw) | RuntimeException at compile time if Meta('id') missing + testAllMcpClassesHaveMetaId + testMcpIdsAreUnique |
+| Batch 8 (shebang consistency) | All scripts now use `#!/usr/bin/env bash` — visual inspection / audit enhancement possible |

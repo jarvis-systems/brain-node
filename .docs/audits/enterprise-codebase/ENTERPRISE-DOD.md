@@ -16,7 +16,7 @@ Every merge to `master` MUST satisfy ALL gates below. A single FAIL = merge bloc
 | # | Gate | Command | Blocking | Source of Truth |
 |---|------|---------|----------|-----------------|
 | 1 | PHP Syntax | `php -l` on all `.php` files | YES | `brain-lint.yml` → audit-enterprise.sh Check 1 |
-| 2 | Unit Tests | `composer test` (48+ tests, 0 failures) | YES | `brain-lint.yml` → audit-enterprise.sh Check 2 |
+| 2 | Unit Tests | `composer test` (232+ tests, 0 failures) | YES | `brain-lint.yml` → audit-enterprise.sh Check 2 |
 | 3 | Static Analysis (Core) | `composer analyse` in core/ (phpstan level 0) | YES | `brain-lint.yml` → `core/phpstan.neon` |
 | 4 | Static Analysis (CLI) | `composer analyse` in cli/ (phpstan level 0) | YES | `brain-lint.yml` → `cli/phpstan.neon` |
 | 5 | Secret Scanning | `bash scripts/scan-secrets.sh` (exit 0) | YES | `brain-lint.yml` → `scripts/scan-secrets.sh` |
@@ -25,9 +25,9 @@ Every merge to `master` MUST satisfy ALL gates below. A single FAIL = merge bloc
 | 8 | Benchmark Dry-Run | `composer benchmark:dry` (0 errors) | YES | `brain-benchmark.yml` → `scripts/benchmark-llm-suite.sh` |
 | 9 | Release Gate | Version/pin/manifest/bundle validation | YES | `brain-release.yml` → `scripts/build-release-bundle.sh` |
 
-## Enterprise Audit Sub-Gates (14 Checks)
+## Enterprise Audit Sub-Gates (17 Checks)
 
-All 14 checks in `audit-enterprise.sh` must PASS or WARN (no FAIL):
+All 17 checks in `audit-enterprise.sh` must PASS or WARN (no FAIL):
 
 | Check | What it catches | Severity |
 |-------|----------------|----------|
@@ -45,6 +45,9 @@ All 14 checks in `audit-enterprise.sh` must PASS or WARN (no FAIL):
 | 12. PHPStan | Static analysis errors | FAIL |
 | 13. strict_types | Missing `declare(strict_types=1)` in PHP files | FAIL |
 | 14. Secret patterns | `github_pat_`, `ctx7sk-`, `gsk_`, `sk-or-v1-` in tracked files | FAIL |
+| 15. Hardcoded paths | `/Users/`, `/home/` in tracked source files | WARN |
+| 16. Degradation observability | Catch blocks without logging/fallback signal | WARN |
+| 17. Version consistency | Root vs core `composer.json` version mismatch | FAIL |
 
 ## CI Supply Chain
 

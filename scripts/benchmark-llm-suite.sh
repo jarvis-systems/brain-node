@@ -39,6 +39,16 @@ CYAN='\033[0;36m'
 DIM='\033[2m'
 NC='\033[0m'
 
+# Model tier hierarchy for min_model_tier gating
+model_tier() {
+    case "$1" in
+        haiku) echo 1 ;;
+        sonnet) echo 2 ;;
+        opus) echo 3 ;;
+        *) echo 0 ;;
+    esac
+}
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 SCENARIOS_DIR="$PROJECT_ROOT/.docs/benchmarks/scenarios"
@@ -145,6 +155,7 @@ TOTAL=0
 PASSED=0
 FAILED=0
 ERRORS=0
+SKIPPED=0
 TOTAL_INPUT_TOKENS=0
 TOTAL_OUTPUT_TOKENS=0
 TOTAL_DURATION_MS=0
@@ -462,7 +473,7 @@ run_scenario() {
         checks_json=$(IFS=,; echo "${checks[*]}")
     fi
     local rchars=${#response_text}
-    RESULTS+=("{\"id\":\"$sid\",\"title\":\"$stitle\",\"difficulty\":\"$sdiff\",\"status\":\"$scenario_status\",\"duration_ms\":$duration_ms,\"input_tokens\":$input_tokens,\"output_tokens\":$output_tokens,\"mcp_calls_count\":$mcp_calls,\"response_chars\":$rchars,\"checks\":[$checks_json]}")
+    RESULTS+=("{\"id\":\"$sid\",\"title\":\"$stitle\",\"difficulty\":\"$sdiff\",\"status\":\"$scenario_status\",\"executed_model\":\"$MODEL\",\"duration_ms\":$duration_ms,\"input_tokens\":$input_tokens,\"output_tokens\":$output_tokens,\"mcp_calls_count\":$mcp_calls,\"response_chars\":$rchars,\"checks\":[$checks_json]}")
 }
 
 # ============================================================
@@ -805,7 +816,7 @@ run_multi_turn_scenario() {
         checks_json=$(IFS=,; echo "${checks[*]}")
     fi
     local rchars=${#total_response}
-    RESULTS+=("{\"id\":\"$sid\",\"title\":\"$stitle\",\"difficulty\":\"$sdiff\",\"status\":\"$scenario_status\",\"duration_ms\":${duration_ms:-0},\"input_tokens\":$total_input_tokens,\"output_tokens\":$total_output_tokens,\"mcp_calls_count\":$total_mcp_calls,\"response_chars\":$rchars,\"turns\":$num_turns,\"checks\":[$checks_json]}")
+    RESULTS+=("{\"id\":\"$sid\",\"title\":\"$stitle\",\"difficulty\":\"$sdiff\",\"status\":\"$scenario_status\",\"executed_model\":\"$MODEL\",\"duration_ms\":${duration_ms:-0},\"input_tokens\":$total_input_tokens,\"output_tokens\":$total_output_tokens,\"mcp_calls_count\":$total_mcp_calls,\"response_chars\":$rchars,\"turns\":$num_turns,\"checks\":[$checks_json]}")
 }
 
 # ============================================================
@@ -1059,6 +1070,26 @@ main() {
     IFS=$'\n' scenarios=($(sort <<< "${scenarios[*]}")); unset IFS
 
     for sf in "${scenarios[@]}"; do
+        # Model gating: skip scenario if current model below min_model_tier
+        local min_tier_name
+        min_tier_name=$(jq -r '.min_model_tier // empty' "$sf" 2>/dev/null)
+        if [ -n "$min_tier_name" ]; then
+            local current_t required_t
+            current_t=$(model_tier "$MODEL")
+            required_t=$(model_tier "$min_tier_name")
+            if [ "$current_t" -lt "$required_t" ]; then
+                local skip_sid skip_title skip_diff
+                skip_sid=$(jq -r '.id' "$sf")
+                skip_title=$(jq -r '.title' "$sf")
+                skip_diff=$(jq -r '.difficulty' "$sf")
+                log "\n${YELLOW}[$skip_sid] $skip_title${NC} ${DIM}($skip_diff) — SKIP: model $MODEL < min_model_tier $min_tier_name${NC}"
+                ((TOTAL++))
+                ((SKIPPED++))
+                RESULTS+=("{\"id\":\"$skip_sid\",\"title\":\"$skip_title\",\"difficulty\":\"$skip_diff\",\"status\":\"SKIP\",\"skip_reason\":\"model_not_supported: $MODEL < $min_tier_name\",\"executed_model\":\"$MODEL\",\"duration_ms\":0,\"input_tokens\":0,\"output_tokens\":0,\"mcp_calls_count\":0,\"response_chars\":0,\"checks\":[]}")
+                continue
+            fi
+        fi
+
         local stype
         stype=$(jq -r '.type // "single"' "$sf" 2>/dev/null)
         case "$stype" in
@@ -1076,7 +1107,7 @@ main() {
         local rate="0.0"
         [ "$TOTAL" -gt 0 ] && rate=$(echo "scale=1; $PASSED * 100 / $TOTAL" | bc)
         cat <<EOF
-{"total":$TOTAL,"passed":$PASSED,"failed":$FAILED,"errors":$ERRORS,"pass_rate":"${rate}%","mode":"$MODE","cognitive":"$COGNITIVE","profile":"$PROFILE","model":"$MODEL","dry_run":$DRY_RUN,"total_input_tokens":$TOTAL_INPUT_TOKENS,"total_output_tokens":$TOTAL_OUTPUT_TOKENS,"total_mcp_calls":$TOTAL_MCP_CALLS,"total_duration_ms":$TOTAL_DURATION_MS,"scenarios":[$results_json]}
+{"total":$TOTAL,"passed":$PASSED,"failed":$FAILED,"skipped":$SKIPPED,"errors":$ERRORS,"pass_rate":"${rate}%","mode":"$MODE","cognitive":"$COGNITIVE","profile":"$PROFILE","model":"$MODEL","dry_run":$DRY_RUN,"total_input_tokens":$TOTAL_INPUT_TOKENS,"total_output_tokens":$TOTAL_OUTPUT_TOKENS,"total_mcp_calls":$TOTAL_MCP_CALLS,"total_duration_ms":$TOTAL_DURATION_MS,"scenarios":[$results_json]}
 EOF
     else
         echo ""

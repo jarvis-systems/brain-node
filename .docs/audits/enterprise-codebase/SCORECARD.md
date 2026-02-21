@@ -27,11 +27,11 @@ status: active
 | 3 | Input Validation | 2 | 2 | -- | 2.0 | MCP schema validator exists (3 modes) but not all methods use it |
 | 4 | Security | 2 | 3 | 2 | 2.3 | ~~No static analysis~~ **FIXED** (phpstan level 0); ~~API keys in MCP files~~ **FIXED** (getenv()); ~~CI actions tag-pinned~~ **FIXED** (SHA-pinned); **NEW**: Secret scanning CI gate, release bundle .mcp.json exclusion, upload.sh/settings.json untracked, threat model doc, CI concurrency guards, pre-publication kill-switch |
 | 5 | Docs Parity | 3 | 3 | -- | 3.0 | ~~`composer test`/`analyse` missing at root~~ **FIXED**; ~~LegacyParityTest referenced but never existed~~ **FIXED** (removed from CLAUDE.md, actual test list updated); ~~docs validation 1 invalid~~ **FIXED** (YAML front matter added); `brain docs --validate` = 0 invalid |
-| 6 | Testability | 3 | 2 | 1 | 2.0 | 197/197 tests, 446 assertions; **Refactor Batch 4**: BlueprintTest (44 tests, 56 assertions — IronRule severity chain, builder fluency, mutateToString contract, defaultElement, Guideline/Style/Response builder APIs, id via set(), child accumulation, determinism); **Refactor Batch 3**: MDTest (30), CoreTest (28), VarChainTest (20); Node: 8 tests via NodeIntegrityTest; CLI: phpstan level 0 |
+| 6 | Testability | 3 | 2 | 1 | 2.0 | 232/232 tests, 517 assertions; **Refactor Batch 8**: +3 tests (command include policy, agent ID uniqueness, MCP ID uniqueness); **Refactor Batch 7**: NodeIntegrityTest +1 test (testNoTestStubMcpFiles) + Meta('model') assertion; **Refactor Batch 5**: id() contract fix + 4 id-method tests, XmlBuilder edge cases (15 new tests), SnapshotTest golden-file regression (12 tests); **Refactor Batch 4**: BlueprintTest (44→48 tests); **Refactor Batch 3**: MDTest (30), CoreTest (28), VarChainTest (20); Node: 12 tests via NodeIntegrityTest; CLI: phpstan level 0 |
 | 7 | Release Discipline | 3 | 3 | -- | 3.0 | Pinning, manifest, bundle, release CI -- all good |
-| 8 | Operability | 3 | 3 | -- | 3.0 | Benchmarks, runbooks, ops-evidence, demo -- comprehensive |
-| 9 | Footguns | 3 | 3 | -- | 3.0 | ~~Debug artifacts~~ **FIXED**; ~~typo in class name~~ **FIXED**; ~~dead scaffold~~ **FIXED**; ~~hardcoded MCP paths~~ **FIXED** (generator emits getcwd()); **Refactor Batch 2**: awesome-mcp.json `--save-as` → `--as` CLI bug fix; **Refactor Batch 4**: ~~Guideline::workflow() dead method~~ **REMOVED** |
-| 10 | Maintainability | 3 | 3 | -- | 3.0 | ~~strict_types~~ **FIXED**; ~~CompileStandartsTrait typo~~ **FIXED**; ~~faker in prod~~ **FIXED**; ~~hardcoded paths~~ **FIXED** (generator + test); **Refactor Batch 1**: var-dumper→require-dev (17 prod deps); **Refactor Batch 2**: workspace.json portable paths, both Compilation traits 100% return-typed (verified); **Refactor Batch 4**: BlueprintArchitecture::mutateToString() `: mixed` return type added |
+| 8 | Operability | 3 | 3 | -- | 3.0 | Benchmarks, runbooks, ops-evidence, demo -- comprehensive; **Refactor Batch 6**: 3 P0 script bugs fixed (jq key mismatch, md5 portability, version consistency check) |
+| 9 | Footguns | 3 | 3 | -- | 3.0 | ~~Debug artifacts~~ **FIXED**; ~~typo in class name~~ **FIXED**; ~~dead scaffold~~ **FIXED**; ~~hardcoded MCP paths~~ **FIXED** (generator emits getcwd()); **Refactor Batch 2**: awesome-mcp.json `--save-as` → `--as` CLI bug fix; **Refactor Batch 4**: ~~Guideline::workflow() dead method~~ **REMOVED**; **Refactor Batch 5**: ~~BlueprintArchitecture::id() broken~~ **FIXED** (→ set()); **Refactor Batch 6**: ~~Core::getVariable @return scalar lie~~ **FIXED**, ~~McpArchitecture::id() copy-paste docblock~~ **FIXED**; **Refactor Batch 7**: ~~Test2Mcp.php stub artifact~~ **REMOVED**; **Refactor Batch 8**: ~~AgentArchetype::id() silent 'explore' fallback~~ **FIXED** (→ throw), ~~McpArchitecture::id() silent 'unknown' fallback~~ **FIXED** (→ throw) |
+| 10 | Maintainability | 3 | 3 | -- | 3.0 | ~~strict_types~~ **FIXED**; ~~CompileStandartsTrait typo~~ **FIXED**; ~~faker in prod~~ **FIXED**; ~~hardcoded paths~~ **FIXED** (generator + test); **Refactor Batch 1**: var-dumper→require-dev (17 prod deps); **Refactor Batch 2**: workspace.json portable paths, both Compilation traits 100% return-typed (verified); **Refactor Batch 4**: BlueprintArchitecture::mutateToString() `: mixed` return type added; **Refactor Batch 6**: core/composer.json version v0.0.1→v0.2.0, `^v12.0`→`^12.0` normalize; **Refactor Batch 7**: all 8 agents now have `#[Meta('model')]`; **Refactor Batch 8**: ~~commands-no-includes false rule~~ **AMENDED** (→ commands-no-brain-includes), shebang consistency (7 scripts normalized to `#!/usr/bin/env bash`) |
 
 **Overall Score: 27.3 / 30 (91.0%)**
 
@@ -83,8 +83,8 @@ No sources of non-determinism found. No `rand()`, `shuffle()`, `mt_rand()`, `arr
 
 | Package | Test Files | Source Files | Tests | Assertions | Status |
 |---------|-----------|--------------|-------|------------|--------|
-| Core | 16 | 167+ | 197 | 446 | 197/197 PASS |
-| Node | 0 (tested via Core) | 44 | 8 | 22 | via NodeIntegrityTest |
+| Core | 18 | 167+ | 232 | 517 | 232/232 PASS |
+| Node | 0 (tested via Core) | 43 | 12 | 29 | via NodeIntegrityTest |
 | CLI | 7 | ~30+ | ~20 | ~50 | Separate repo + PHPStan level 0 |
 
 **Fixes applied:**
@@ -100,7 +100,7 @@ No sources of non-determinism found. No `rand()`, `shuffle()`, `mt_rand()`, `arr
 - `CompilationOutputTest` (13 tests): Store::as/get/var format, Operator::if/forEach/task/verify/validate, BrainCLI constants/methods, Operator::do chaining, determinism
 
 **Phase 4 — Node integrity + CLI phpstan:**
-- `NodeIntegrityTest` (8 tests): strict_types across all node/, agent attribute contracts, command attribute contracts, MCP Meta('id'), MCP defaultCommand/defaultArgs contracts, no secrets in source, pins.json structure
+- `NodeIntegrityTest` (12 tests): strict_types across all node/, agent attribute contracts, command attribute contracts, MCP Meta('id'), MCP defaultCommand/defaultArgs contracts, no secrets in source, no test stub MCPs, command include policy (no Brain/Universal), agent ID uniqueness, MCP ID uniqueness, pins.json structure
 - CLI phpstan level 0 with documented suppressions (7 ignore rules, 2 excluded files)
 - `composer analyse` now covers core + CLI
 
@@ -127,7 +127,34 @@ No sources of non-determinism found. No `rand()`, `shuffle()`, `mt_rand()`, `arr
 - False lead closed: McpArchitecture::ksortRecursive() already has `: void` (audit was wrong)
 - Suite: 153→197 tests, 390→446 assertions
 
-Remaining gaps: XmlBuilder edge cases. CLI runtime tests require Laravel framework.
+**Refactor Batch 5 — Correctness + Regression Armor:**
+- **BlueprintArchitecture::id() fix**: `$this->id = $id` → `$this->set('id', $id)` — syncs fluent API with Dto internal storage. Root cause: IronRule/Guideline declare `protected $id` in constructor, bypassing `__set()` → `set()` chain. 4 new id-method tests across all Blueprint classes.
+- `XmlBuilderTest` edge cases (15 new tests, 25 assertions): empty element → '', empty children → open/close, null text, single with empty text self-closes, deep 4-level nesting determinism, non-array children skipped, boolean attribute formatting (true/false), multiple attributes, null attribute omitted, no structural tabs, double-newline top-level contract, cache returns same result, inline text vs block rendering
+- `SnapshotTest` golden-file regression (12 tests, 28 assertions): full output vs golden file, structural invariants (system tag, meta, purpose, provides, iron rules MD, guideline MD, nested includes merged), line count stability, hash stability, rule deduplication
+- Suite: 197→228 tests, 446→510 assertions
+
+**Refactor Batch 6 — Infrastructure Correctness + Contract Honesty:**
+- 3 P0 script bugs: `demo-enterprise.sh` jq `.results[0]`→`.scenarios[0]` + `.mcp_calls`→`.mcp_calls_count`; `collect-ops-evidence.sh` same jq fixes + PROJECT_ROOT + status case; `benchmark-suite.sh` md5 portability
+- `core/composer.json` version `v0.0.1`→`v0.2.0`, `^v12.0`→`^12.0` normalize (14 packages)
+- 2 docblock lies fixed: `Core::getVariable() @return scalar` (actual: mixed), `McpArchitecture::id()` copy-paste
+- `audit-enterprise.sh` +Check 17: version consistency
+- Suite: 228 tests, 510 assertions
+
+**Refactor Batch 7 — Metadata Consistency + Artifact Cleanup:**
+- `Test2Mcp.php` stub removed (0 callers, artifact from `brain make:mcp Test2`)
+- `#[Meta('model')]` added to all 8 agents: haiku (explore, documentation-master), sonnet (commit-master, web-research-master, vector-master, agent-master, prompt-master, script-master)
+- `NodeIntegrityTest` +1 test (`testNoTestStubMcpFiles`) + `Meta('model')` mandatory assertion
+- Suite: 228→229 tests, 510→511 assertions
+
+**Refactor Batch 8 — Contract Consistency (Commands + IDs + Shebangs):**
+- `commands-no-includes` iron rule **AMENDED** → `commands-no-brain-includes`: false rule contradicted architecture where 27/28 commands use dedicated command-specific includes for workflow logic. New rule distinguishes Brain/Universal includes (forbidden, already in context) from command-specific includes (allowed, unique logic). `structure-command` guideline updated to match.
+- `AgentArchetype::id()` silent fallback `'explore'` → `RuntimeException`: eliminated silent ID collision hazard where any agent without Meta('id') would silently get the `explore` agent's identity
+- `McpArchitecture::id()` silent fallback `'unknown'` → `RuntimeException`: eliminated invalid `mcp__unknown__` tool invocation strings
+- `NodeIntegrityTest` +3 tests: `testCommandsDoNotIncludeBrainOrUniversalIncludes` (enforces amended rule), `testAgentIdsAreUnique` (prevents ID collisions), `testMcpIdsAreUnique` (prevents MCP ID collisions)
+- Shebang consistency: 7 scripts normalized from `#!/bin/bash` to `#!/usr/bin/env bash` (POSIX-portable)
+- Suite: 229→232 tests, 511→517 assertions
+
+Remaining gaps: CLI runtime tests require Laravel framework.
 
 ### 7. Release Discipline (3/3)
 
@@ -172,4 +199,4 @@ Comprehensive: benchmark suite (standard + LLM), ops evidence collection, failur
 - CI workflow analysis for timeout, concurrency, action pinning
 - Composer dependency review across all 3 packages
 - Cross-reference between compiled CLAUDE.md claims and actual tooling
-- Automated audit: 16 checks (syntax, tests, catches, debug, TODO, unsafe, shell, noop, LSB, typos, deps, phpstan, strict_types, secrets, paths, degradation)
+- Automated audit: 17 checks (syntax, tests, catches, debug, TODO, unsafe, shell, noop, LSB, typos, deps, phpstan, strict_types, secrets, paths, degradation, version-consistency)
