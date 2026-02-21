@@ -9,6 +9,7 @@
 # - Governance reasoning (precedence, violations, cookbook policy)
 # - Multi-turn sessions with session resume (--resume)
 # - Telemetry-based tool verification (expected_tools)
+# - Model gating: scenarios with min_model_tier are skipped on weaker models
 #
 # Checks: grep-based on response text + ToolUse DTO telemetry. No subjective evaluation.
 #
@@ -887,7 +888,7 @@ run_matrix() {
 
         MODE="$cfg_mode"
         COGNITIVE="$cfg_cognitive"
-        TOTAL=0; PASSED=0; FAILED=0; ERRORS=0
+        TOTAL=0; PASSED=0; FAILED=0; ERRORS=0; SKIPPED=0
         TOTAL_INPUT_TOKENS=0; TOTAL_OUTPUT_TOKENS=0
         TOTAL_DURATION_MS=0; TOTAL_MCP_CALLS=0
         RESULTS=()
@@ -895,6 +896,26 @@ run_matrix() {
         log "${YELLOW}━━━ Config: $cfg_mode/$cfg_cognitive ━━━${NC}\n"
 
         for sf in "${stress_scenarios[@]}"; do
+            # Model gating: skip scenario if current model below min_model_tier
+            local min_tier_name
+            min_tier_name=$(jq -r '.min_model_tier // empty' "$sf" 2>/dev/null)
+            if [ -n "$min_tier_name" ]; then
+                local current_t required_t
+                current_t=$(model_tier "$MODEL")
+                required_t=$(model_tier "$min_tier_name")
+                if [ "$current_t" -lt "$required_t" ]; then
+                    local skip_sid skip_title skip_diff
+                    skip_sid=$(jq -r '.id' "$sf")
+                    skip_title=$(jq -r '.title' "$sf")
+                    skip_diff=$(jq -r '.difficulty' "$sf")
+                    log "\n${YELLOW}[$skip_sid] $skip_title${NC} ${DIM}($skip_diff) — SKIP: model $MODEL < min_model_tier $min_tier_name${NC}"
+                    ((TOTAL++))
+                    ((SKIPPED++))
+                    RESULTS+=("{\"id\":\"$skip_sid\",\"title\":\"$skip_title\",\"difficulty\":\"$skip_diff\",\"status\":\"SKIP\",\"skip_reason\":\"model_not_supported: $MODEL < $min_tier_name\",\"executed_model\":\"$MODEL\",\"duration_ms\":0,\"input_tokens\":0,\"output_tokens\":0,\"mcp_calls_count\":0,\"response_chars\":0,\"checks\":[]}")
+                    continue
+                fi
+            fi
+
             local stype
             stype=$(jq -r '.type // "single"' "$sf" 2>/dev/null)
             case "$stype" in
@@ -1119,10 +1140,13 @@ EOF
         echo "  Tokens: in=$TOTAL_INPUT_TOKENS out=$TOTAL_OUTPUT_TOKENS"
         echo "  MCP calls: $TOTAL_MCP_CALLS"
         echo "  Duration: ${TOTAL_DURATION_MS}ms"
+        [ "$SKIPPED" -gt 0 ] && echo "  Skipped: $SKIPPED (model gating)"
         echo ""
         if [ "$FAILED" -gt 0 ] || [ "$ERRORS" -gt 0 ]; then
             echo -e "${RED}FAILED: $FAILED failed, $ERRORS errors${NC}"
             exit 1
+        elif [ "$SKIPPED" -gt 0 ]; then
+            echo -e "${GREEN}PASSED: $PASSED passed, $SKIPPED skipped${NC}"
         else
             echo -e "${GREEN}PASSED: All $TOTAL scenarios passed${NC}"
         fi

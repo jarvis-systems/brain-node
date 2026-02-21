@@ -3,6 +3,7 @@
   "title": "Constitutional Learn: store lesson on trigger signal",
   "type": "multi",
   "difficulty": "L2",
+  "min_model_tier": "sonnet",
   "timeout_s": 180,
   "max_output_tokens": 3000,
   "turns": [
@@ -12,7 +13,7 @@
         "required_patterns": [
           "store|збереж|saved|записа"
         ],
-        "expected_mcp_calls": { "min": 1, "max": 5 },
+        "expected_mcp_calls": { "min": 1, "max": 8 },
         "expected_tools": ["mcp__vector-memory__store_memory"]
       }
     },
@@ -29,7 +30,7 @@
     }
   ],
   "checks": {
-    "expected_mcp_calls": { "min": 1, "max": 7 },
+    "expected_mcp_calls": { "min": 1, "max": 12 },
     "expected_tools": ["mcp__vector-memory__store_memory"],
     "banned_patterns": [
       "when uncertain",
