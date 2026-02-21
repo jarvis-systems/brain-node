@@ -21,6 +21,36 @@ Product roadmap targets X-Brain rebrand on Go with a new repository. This create
 
 Inventory: 8 credentials (5 must rotate, 2 must remove/disable, 1 CI-only = no action). Pattern governance via canonical `scan-secrets.sh`. 2-tier evidence model.
 
+## Redaction Rule
+
+**IRON RULE:** Actual secret values MUST NEVER appear in agent responses, chat logs, documentation, or any output visible to users or stored in conversation history.
+
+### Reporting Findings
+
+| Allowed | Forbidden |
+|---------|-----------|
+| Counts: "3 matches found in history" | Printing actual token/key values |
+| Status: "FOUND / NOT FOUND" | Pasting credential strings into responses |
+| Last-4 chars: `...b007` (only if Doc explicitly requests) | Showing grep output containing plaintext secrets |
+| File + line: "`.env:5` contains C3 pattern match" | Embedding values in code blocks or tables |
+
+### Handling `/tmp/secrets-to-remove.txt`
+
+This file (used for Tier-2 exact-match verification) contains actual old credential values.
+
+- NEVER commit to any repository
+- NEVER print contents in agent responses or logs
+- Create only during GO PRE-PUB execution, delete immediately after verification
+- Access only via redacted commands: report match counts, not matched content
+
+### Scanning Commands in Redacted Mode
+
+When running commands that may output secret values (e.g., `git log -p | grep`), agents must:
+
+1. Suppress or redirect raw output
+2. Report only: match count, file paths, commit SHAs
+3. If raw output accidentally appears in response — flag as security incident immediately
+
 ## Credential Discovery Gate
 
 ### Verified Inventory
@@ -29,7 +59,7 @@ Inventory: 8 credentials (5 must rotate, 2 must remove/disable, 1 CI-only = no a
 
 | # | Provider | Env Variable | Leaked In | Scan Pattern |
 |---|----------|-------------|-----------|--------------|
-| C1 | GitHub | `GITHUB_MCP_TOKEN` | `GithubMcp.php:21` | `github_pat_[A-Za-z0-9_]{10,}` |
+| C1 | GitHub | `GITHUB_MCP_TOKEN` | Not confirmed leaked (precautionary — repo was public) | `github_pat_[A-Za-z0-9_]{10,}` |
 | C2 | Context7 | `CONTEXT7_API_KEY` | `settings.json:10` | `ctx7sk-[a-f0-9-]{8,}` |
 | C3 | GROQ | `GROQ_API_KEY` | `.brain/.env` (risk: early history) | `gsk_[A-Za-z0-9]{10,}` |
 | C4 | OpenRouter | `OPENROUTER_API_KEY` | `.brain/.env` (risk: early history) | `sk-or-v1-[A-Za-z0-9]{10,}` |

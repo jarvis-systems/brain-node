@@ -34,6 +34,7 @@ status: active
 - No secrets in git-tracked files (enforced by `scan-secrets.sh` + audit Check 14)
 - No secrets in dist bundles (enforced by `build-release-bundle.sh` exclusion)
 - No secrets in CI logs or reports
+- No secret values in agent responses, chat logs, or documentation output (report as counts/FOUND/NOT FOUND only)
 
 ## Do / Don't
 
@@ -45,6 +46,7 @@ status: active
 | Run `scan-secrets.sh` before committing | Include `.mcp.json` in release bundles |
 | Rotate keys immediately after accidental exposure | Assume git history is clean after `.gitignore` |
 | Document credential names in `.env.example` | Store actual values in `.env.example` |
+| Report scan findings as counts only (FOUND/NOT FOUND) | Print actual secret values in agent responses or logs |
 
 ## Credential Inventory
 
