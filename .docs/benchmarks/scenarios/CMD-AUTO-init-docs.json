@@ -1,0 +1,18 @@
+{
+  "id": "CMD-AUTO-init-docs",
+  "title": "Auto: /init-docs — Batch documentation generation from project analysis",
+  "difficulty": "L1",
+  "prompt": "Опиши команду /init-docs: що вона робить, які iron rules має, які safety gates застосовуються. Коротко, по суті.",
+  "timeout_s": 60,
+  "max_output_tokens": 800,
+  "checks": {
+    "required_patterns": [
+      "scan|analyz|аналіз|дослідж|initialization|ініціалі",
+      "safety|безпек|No-hallucin|No-secret|iron.rule|правил"
+    ],
+    "banned_patterns": [
+      "when uncertain",
+      "I don.t know|не знаю"
+    ]
+  }
+}

@@ -1327,10 +1327,6 @@
                     "type": "string",
                     "description": "Disable SequentialThinkingMcp from compilation (true/false)"
                 },
-                "MCP_TEST2_MCP_DISABLE": {
-                    "type": "string",
-                    "description": "Disable Test2Mcp from compilation (true/false)"
-                },
                 "MCP_VECTOR_MEMORY_MCP_DISABLE": {
                     "type": "string",
                     "description": "Disable VectorMemoryMcp from compilation (true/false)"
@@ -1518,34 +1514,6 @@
                 "SYNC_COMMAND_RULE_2": {
                     "type": "string",
                     "description": "Custom CRITICAL rule #2 for SyncCommand"
-                },
-                "TEST2_MCP_GUIDELINE_0": {
-                    "type": "string",
-                    "description": "Custom guideline #0 for Test2Mcp"
-                },
-                "TEST2_MCP_GUIDELINE_1": {
-                    "type": "string",
-                    "description": "Custom guideline #1 for Test2Mcp"
-                },
-                "TEST2_MCP_GUIDELINE_2": {
-                    "type": "string",
-                    "description": "Custom guideline #2 for Test2Mcp"
-                },
-                "TEST2_MCP_MODEL": {
-                    "type": "string",
-                    "description": "Model override for Test2Mcp"
-                },
-                "TEST2_MCP_RULE_0": {
-                    "type": "string",
-                    "description": "Custom CRITICAL rule #0 for Test2Mcp"
-                },
-                "TEST2_MCP_RULE_1": {
-                    "type": "string",
-                    "description": "Custom CRITICAL rule #1 for Test2Mcp"
-                },
-                "TEST2_MCP_RULE_2": {
-                    "type": "string",
-                    "description": "Custom CRITICAL rule #2 for Test2Mcp"
                 },
                 "TEST_VALIDATE_COMMAND_GUIDELINE_0": {
                     "type": "string",

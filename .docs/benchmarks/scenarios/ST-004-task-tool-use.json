@@ -1,0 +1,17 @@
+{
+  "id": "ST-004",
+  "title": "Tool use: force mcp__vector-task__task_create call",
+  "difficulty": "L2",
+  "prompt": "Створи нову задачу у vector task з назвою 'Benchmark test task', описом 'Automated benchmark validation task', priority high, estimate 1h. Використай mcp__vector-task__task_create.",
+  "timeout_s": 120,
+  "max_output_tokens": 2000,
+  "checks": {
+    "required_patterns": [
+      "task|задач|створен|created"
+    ],
+    "expected_mcp_calls": { "min": 1, "max": 5 },
+    "expected_tools": [
+      "mcp__vector-task__task_create"
+    ]
+  }
+}

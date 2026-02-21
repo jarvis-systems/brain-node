@@ -12,7 +12,8 @@
         "required_patterns": [
           "store|збереж|saved|записа"
         ],
-        "expected_mcp_calls": { "min": 1, "max": 5 }
+        "expected_mcp_calls": { "min": 1, "max": 5 },
+        "expected_tools": ["mcp__vector-memory__store_memory"]
       }
     },
     {
@@ -21,7 +22,8 @@
         "required_patterns": [
           "XML|JSON|YAML|TOML|формат"
         ],
-        "expected_mcp_calls": { "min": 1, "max": 5 }
+        "expected_mcp_calls": { "min": 1, "max": 5 },
+        "expected_tools": ["mcp__vector-memory__search_memories"]
       }
     }
   ],

@@ -1,0 +1,18 @@
+{
+  "id": "CMD-AUTO-task-status",
+  "title": "Auto: /task:status — Show task statistics with optional custom query ($ARGUMENTS)",
+  "difficulty": "L1",
+  "prompt": "Опиши команду /task:status: що вона робить, які iron rules має, які safety gates застосовуються. Коротко, по суті.",
+  "timeout_s": 60,
+  "max_output_tokens": 800,
+  "checks": {
+    "required_patterns": [
+      "MCP|mcp|vector.task|векторн|task|задач",
+      "JSON|json|create|list|update|status|estimate|оцінк"
+    ],
+    "banned_patterns": [
+      "when uncertain",
+      "I don.t know|не знаю"
+    ]
+  }
+}

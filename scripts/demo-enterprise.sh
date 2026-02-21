@@ -95,7 +95,7 @@ for SID in "${DEMO_IDS[@]}"; do
     fi
 
     # Extract the single scenario result
-    RESULT=$(echo "$RAW" | jq '.results[0] // empty')
+    RESULT=$(echo "$RAW" | jq '.scenarios[0] // empty')
 
     if [[ -z "$RESULT" || "$RESULT" == "null" ]]; then
         printf "ERROR  (empty result)\n"
@@ -111,7 +111,7 @@ for SID in "${DEMO_IDS[@]}"; do
     OUT_TOK=$(echo "$RESULT" | jq -r '.output_tokens // 0')
     IN_TOK=$(echo "$RESULT" | jq -r '.input_tokens // 0')
     DUR=$(echo "$RESULT" | jq -r '.duration_ms // 0')
-    MCP=$(echo "$RESULT" | jq -r '.mcp_calls // 0')
+    MCP=$(echo "$RESULT" | jq -r '.mcp_calls_count // 0')
     DUR_S=$(awk "BEGIN {printf \"%.1f\", $DUR / 1000}")
 
     if [[ "$STATUS" == "pass" ]]; then

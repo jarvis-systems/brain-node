@@ -3,7 +3,7 @@
     "description": "Instruction budget baselines — compiled artifact line counts. Budget = baseline + threshold_pct headroom.",
     "date": "2026-02-21T04:48:30Z",
     "threshold_pct": 10,
-    "action": "warn"
+    "action": "strict"
   },
   "budgets": {
     "commands_total": {

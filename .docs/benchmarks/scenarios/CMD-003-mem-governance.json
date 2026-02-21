@@ -2,12 +2,12 @@
   "id": "CMD-003",
   "title": "Commands: memory governance and budget",
   "difficulty": "L2",
-  "prompt": "Ти виконуєш /init-vector для ініціалізації вектор-пам'яті проєкту. Скільки максимум пошуків пам'яті дозволено Brain за одну операцію? Яке правило вимагає шукати перед збереженням?",
+  "prompt": "Ти виконуєш /init-vector для ініціалізації вектор-пам'яті проєкту. Яка політика Brain щодо кількості vector memory пошуків за операцію? Яке правило вимагає шукати перед збереженням?",
   "timeout_s": 60,
   "max_output_tokens": 800,
   "checks": {
     "required_patterns": [
-      "3|три|three",
+      "minimi|мінім|fewer|менше|targeted|цільов",
       "search.*before.*store|шукати.*перед.*збереж|search-before-store"
     ],
     "banned_patterns": [

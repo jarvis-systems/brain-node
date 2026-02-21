@@ -1,0 +1,39 @@
+{
+  "id": "MT-LP-001",
+  "title": "Constitutional Learn: store lesson on trigger signal",
+  "type": "multi",
+  "difficulty": "L2",
+  "timeout_s": 180,
+  "max_output_tokens": 3000,
+  "turns": [
+    {
+      "ask": "Ти виконував задачу Task #42 'Fix auth bug'. Під час виконання сталася помилка і було 2 retry (retries=2). Це trigger signal згідно Constitutional Learn Protocol. Збережи урок до vector memory з правильним форматом (FAILURE/ROOT CAUSE/FIX/PREVENTION). Категорія: bug-fix, теги: type:lesson, signal:retry.",
+      "checks": {
+        "required_patterns": [
+          "store|збереж|saved|записа"
+        ],
+        "expected_mcp_calls": { "min": 1, "max": 5 },
+        "expected_tools": ["mcp__vector-memory__store_memory"]
+      }
+    },
+    {
+      "ask": "Які обов'язкові секції має містити урок згідно Constitutional Learn Protocol? Перерахуй всі.",
+      "checks": {
+        "required_patterns": [
+          "FAILURE|failure|помилк",
+          "ROOT.CAUSE|root.cause|причин",
+          "FIX|fix|виправлен",
+          "PREVENTION|prevention|запобіг"
+        ]
+      }
+    }
+  ],
+  "checks": {
+    "expected_mcp_calls": { "min": 1, "max": 7 },
+    "expected_tools": ["mcp__vector-memory__store_memory"],
+    "banned_patterns": [
+      "when uncertain",
+      "Trigger.*Uncertainty"
+    ]
+  }
+}

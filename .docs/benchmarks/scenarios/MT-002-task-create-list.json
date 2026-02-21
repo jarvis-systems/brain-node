@@ -12,7 +12,8 @@
         "required_patterns": [
           "creat|створ|task_id|task"
         ],
-        "expected_mcp_calls": { "min": 1, "max": 5 }
+        "expected_mcp_calls": { "min": 1, "max": 5 },
+        "expected_tools": ["mcp__vector-task__task_create"]
       }
     },
     {
@@ -21,7 +22,8 @@
         "required_patterns": [
           "Benchmark MT-002|title|status"
         ],
-        "expected_mcp_calls": { "min": 1, "max": 5 }
+        "expected_mcp_calls": { "min": 1, "max": 5 },
+        "expected_tools": ["mcp__vector-task__task_list"]
       }
     }
   ],

@@ -1,0 +1,36 @@
+{
+  "id": "MT-LP-002",
+  "title": "Constitutional Learn: no store on clean task completion",
+  "type": "multi",
+  "difficulty": "L2",
+  "timeout_s": 120,
+  "max_output_tokens": 2000,
+  "turns": [
+    {
+      "ask": "Ти щойно завершив задачу Task #43 'Update README' успішно. Жодних помилок, retry, stuck або blocked ситуацій не було. Чи потрібно зберігати урок до vector memory згідно Constitutional Learn Protocol?",
+      "checks": {
+        "required_patterns": [
+          "ні|не потрібно|не треба|не слід|no|not.needed|unnecessary|не зберіга"
+        ],
+        "banned_tools": ["mcp__vector-memory__store_memory"]
+      }
+    },
+    {
+      "ask": "Перерахуй trigger сигнали Constitutional Learn Protocol, які б активували збереження уроку.",
+      "checks": {
+        "required_patterns": [
+          "retr|повтор",
+          "stuck|застряг|блок"
+        ]
+      }
+    }
+  ],
+  "checks": {
+    "expected_mcp_calls": { "min": 0, "max": 6 },
+    "banned_tools": ["mcp__vector-memory__store_memory"],
+    "banned_patterns": [
+      "when uncertain",
+      "Trigger.*Uncertainty"
+    ]
+  }
+}

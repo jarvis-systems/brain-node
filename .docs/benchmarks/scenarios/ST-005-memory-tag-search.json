@@ -1,0 +1,17 @@
+{
+  "id": "ST-005",
+  "title": "Tool use: search_memories with category filter",
+  "difficulty": "L2",
+  "prompt": "Пошукай в vector memory всі записи з категорією 'bug-fix'. Потрібні уроки з помилок для аналізу. Використай mcp__vector-memory__search_memories з відповідним запитом.",
+  "timeout_s": 120,
+  "max_output_tokens": 2000,
+  "checks": {
+    "required_patterns": [
+      "bug|помилк|fix|виправлен|lesson|урок|search|пошук"
+    ],
+    "expected_mcp_calls": { "min": 1, "max": 3 },
+    "expected_tools": [
+      "mcp__vector-memory__search_memories"
+    ]
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "id": "CMD-AUTO-do-test-validate",
+  "title": "Auto: /do:test-validate — Comprehensive test validation with parallel agent orchestration",
+  "difficulty": "L1",
+  "prompt": "Опиши команду /do:test-validate: що вона робить, які iron rules має, які safety gates застосовуються. Коротко, по суті.",
+  "timeout_s": 60,
+  "max_output_tokens": 800,
+  "checks": {
+    "required_patterns": [
+      "agent|делегу|orchestrat|оркестр|execution|виконан",
+      "approval|gate|підтвердж|дозвіл|permission|safety"
+    ],
+    "banned_patterns": [
+      "when uncertain",
+      "I don.t know|не знаю"
+    ]
+  }
+}

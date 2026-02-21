@@ -1,0 +1,20 @@
+{
+  "id": "CMD-005",
+  "title": "Commands: doc validation path and brain docs tool",
+  "difficulty": "L1",
+  "prompt": "Який інструмент Brain використовує для валідації документації у .docs/ папці? Як перевірити що всі файли мають правильний YAML front matter? Покажи конкретну команду.",
+  "timeout_s": 60,
+  "max_output_tokens": 800,
+  "checks": {
+    "required_patterns": [
+      "brain docs|brain-docs",
+      "validate|валідац",
+      "front.matter|yaml|YAML"
+    ],
+    "banned_patterns": [
+      "README|index.md|manual.*index",
+      "when uncertain",
+      "I don't know|не знаю"
+    ]
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "id": "MT-LP-003",
+  "title": "Constitutional Learn: no store in relaxed mode without signals",
+  "type": "multi",
+  "difficulty": "L2",
+  "timeout_s": 120,
+  "max_output_tokens": 2000,
+  "turns": [
+    {
+      "ask": "Ти працюєш у режимі strict:relaxed, cognitive:minimal. Задача Task #44 'Add logging' завершена успішно без жодних trigger сигналів (retries=0, no stuck, no blocked). Чи потрібно зберігати урок до vector memory?",
+      "checks": {
+        "required_patterns": [
+          "ні|не потрібно|не треба|не слід|no|not.needed|не зберіга"
+        ],
+        "banned_tools": ["mcp__vector-memory__store_memory"]
+      }
+    },
+    {
+      "ask": "В якому режимі strict/cognitive ти б зберіг урок навіть без trigger сигналів? Чи є такий режим?",
+      "checks": {
+        "required_patterns": [
+          "ні|не|no|trigger|сигнал|signal"
+        ],
+        "banned_patterns": [
+          "paranoid.*зберіга|exhaustive.*зберіга|завжди.*зберіга"
+        ]
+      }
+    }
+  ],
+  "checks": {
+    "expected_mcp_calls": { "min": 0, "max": 6 },
+    "banned_tools": ["mcp__vector-memory__store_memory"],
+    "banned_patterns": [
+      "when uncertain",
+      "Trigger.*Uncertainty"
+    ]
+  }
+}

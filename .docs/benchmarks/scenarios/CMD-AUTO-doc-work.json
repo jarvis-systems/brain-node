@@ -1,0 +1,18 @@
+{
+  "id": "CMD-AUTO-doc-work",
+  "title": "Auto: /doc:work — Interactive documentation command with maximum quality and user engagement",
+  "difficulty": "L1",
+  "prompt": "Опиши команду /doc:work: що вона робить, які iron rules має, які safety gates застосовуються. Коротко, по суті.",
+  "timeout_s": 60,
+  "max_output_tokens": 800,
+  "checks": {
+    "required_patterns": [
+      "brain docs|документац|documentation",
+      "markdown|md|front.matter|validate|валідац"
+    ],
+    "banned_patterns": [
+      "when uncertain",
+      "I don.t know|не знаю"
+    ]
+  }
+}

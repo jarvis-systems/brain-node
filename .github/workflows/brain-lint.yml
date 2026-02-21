@@ -64,8 +64,8 @@ jobs:
           jq empty .docs/benchmarks/baselines/baselines.json
           jq empty .docs/benchmarks/baselines/instruction-budgets.json
 
-      - name: Instruction budget check
-        run: bash scripts/check-instruction-budget.sh
+      - name: Instruction budget check (strict)
+        run: bash scripts/check-instruction-budget.sh --strict
 
       - name: Verify pin policy
         run: bash scripts/verify-pins.sh

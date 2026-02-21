@@ -1,0 +1,18 @@
+{
+  "id": "CMD-AUTO-mem-store",
+  "title": "Auto: /mem:store — Store memory with analysis, category, and tags",
+  "difficulty": "L1",
+  "prompt": "Опиши команду /mem:store: що вона робить, які iron rules має, які safety gates застосовуються. Коротко, по суті.",
+  "timeout_s": 60,
+  "max_output_tokens": 800,
+  "checks": {
+    "required_patterns": [
+      "MCP|mcp|vector.memory|векторн|memory|пам",
+      "JSON|json|store|search|категорі|category"
+    ],
+    "banned_patterns": [
+      "when uncertain",
+      "I don.t know|не знаю"
+    ]
+  }
+}

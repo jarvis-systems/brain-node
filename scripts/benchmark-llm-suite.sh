@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Brain LLM Benchmark Suite — Behavioral benchmarks via Brain CLI
 # Usage: scripts/benchmark-llm-suite.sh [options]
@@ -402,6 +402,19 @@ run_scenario() {
             fi
         done < <(jq -r '.checks.expected_tools // [] | .[]' "$scenario_file" 2>/dev/null)
 
+        # Check: banned specific tools — MUST NOT appear in tool_use events
+        while IFS= read -r tool_name; do
+            [ -z "$tool_name" ] && continue
+            if grep -qF "$tool_name" "$tools_file" 2>/dev/null; then
+                checks+=("{\"check\":\"banned-tool:$tool_name\",\"status\":\"FAIL\",\"detail\":\"found in tool_use events\"}")
+                scenario_status="FAIL"
+                log "  ${RED}[FAIL] banned-tool: '$tool_name' found in tool_use${NC}"
+            else
+                checks+=("{\"check\":\"banned-tool:$tool_name\",\"status\":\"PASS\"}")
+                log "  ${GREEN}[PASS] banned-tool: '$tool_name' absent${NC}"
+            fi
+        done < <(jq -r '.checks.banned_tools // [] | .[]' "$scenario_file" 2>/dev/null)
+
         # Check: output token budget
         if [ "$output_tokens" -gt 0 ] && [ "$output_tokens" -gt "$smax_out" ] 2>/dev/null; then
             checks+=("{\"check\":\"token-budget\",\"status\":\"FAIL\",\"detail\":\"$output_tokens > $smax_out\"}")
@@ -640,6 +653,19 @@ run_multi_turn_scenario() {
                 fi
             done < <(jq -r ".turns[$t].checks.expected_tools // [] | .[]" "$scenario_file" 2>/dev/null)
 
+            # Check: per-turn banned_tools — MUST NOT appear in tool_use events
+            while IFS= read -r tool_name; do
+                [ -z "$tool_name" ] && continue
+                if grep -qF "$tool_name" "$tools_file" 2>/dev/null; then
+                    checks+=("{\"check\":\"${turn_label}:banned-tool:$tool_name\",\"status\":\"FAIL\",\"detail\":\"found in tool_use events\"}")
+                    scenario_status="FAIL"
+                    log "  ${RED}[FAIL] $turn_label banned-tool: '$tool_name' found in tool_use${NC}"
+                else
+                    checks+=("{\"check\":\"${turn_label}:banned-tool:$tool_name\",\"status\":\"PASS\"}")
+                    log "  ${GREEN}[PASS] $turn_label banned-tool: '$tool_name' absent${NC}"
+                fi
+            done < <(jq -r ".turns[$t].checks.banned_tools // [] | .[]" "$scenario_file" 2>/dev/null)
+
             log "  ${DIM}$turn_label: tokens in=$turn_in out=$turn_out | mcp=$turn_mcp | ${#turn_text} chars${NC}"
 
             ((t++))
@@ -687,6 +713,39 @@ run_multi_turn_scenario() {
                 checks+=("{\"check\":\"banned:$pname\",\"status\":\"PASS\"}")
             fi
         done < <(jq -r '.checks.banned_patterns // [] | .[]' "$scenario_file" 2>/dev/null)
+
+        # Scenario-level banned_tools — aggregate across all turns
+        local all_tools_file="$TMP_DIR/tools_${sid}_all.txt"
+        > "$all_tools_file"
+        local ti=0
+        while [ "$ti" -lt "$num_turns" ]; do
+            cat "$TMP_DIR/tools_${sid}_t${ti}.txt" >> "$all_tools_file" 2>/dev/null
+            ((ti++))
+        done
+        while IFS= read -r tool_name; do
+            [ -z "$tool_name" ] && continue
+            if grep -qF "$tool_name" "$all_tools_file" 2>/dev/null; then
+                checks+=("{\"check\":\"banned-tool:$tool_name\",\"status\":\"FAIL\",\"detail\":\"found in tool_use events\"}")
+                scenario_status="FAIL"
+                log "  ${RED}[FAIL] banned-tool: '$tool_name' found in tool_use${NC}"
+            else
+                checks+=("{\"check\":\"banned-tool:$tool_name\",\"status\":\"PASS\"}")
+                log "  ${GREEN}[PASS] banned-tool: '$tool_name' absent${NC}"
+            fi
+        done < <(jq -r '.checks.banned_tools // [] | .[]' "$scenario_file" 2>/dev/null)
+
+        # Scenario-level expected_tools — aggregate across all turns
+        while IFS= read -r tool_name; do
+            [ -z "$tool_name" ] && continue
+            if grep -qF "$tool_name" "$all_tools_file" 2>/dev/null; then
+                checks+=("{\"check\":\"expected-tool:$tool_name\",\"status\":\"PASS\"}")
+                log "  ${GREEN}[PASS] expected-tool: '$tool_name'${NC}"
+            else
+                checks+=("{\"check\":\"expected-tool:$tool_name\",\"status\":\"FAIL\",\"detail\":\"not in tool_use events\"}")
+                scenario_status="FAIL"
+                log "  ${RED}[FAIL] expected-tool: '$tool_name' not in tool_use${NC}"
+            fi
+        done < <(jq -r '.checks.expected_tools // [] | .[]' "$scenario_file" 2>/dev/null)
 
         # Scenario-level expected MCP calls range
         local mcp_min mcp_max
@@ -955,26 +1014,34 @@ main() {
                     [ "$diff" != "S0" ] && continue
                     ;;
                 ci)
-                    # CI: L1+L2+ST, skip L3/MT/S0/ADV
+                    # CI: L1+L2+ST+CMD, skip L3/MT/S0/ADV/CMD-AUTO
                     [ "$diff" = "L3" ] && continue
                     [ "$diff" = "S0" ] && continue
-                    case "$sid_check" in MT-*|ADV-*) continue ;; esac
+                    case "$sid_check" in MT-*|ADV-*|CMD-AUTO-*) continue ;; esac
                     ;;
                 telemetry-ci)
-                    # Smoke + cheap L1 + MCP L2 + telemetry ST + multi-turn MT
+                    # Smoke + cheap L1 + MCP L2 + telemetry ST + multi-turn MT + learn protocol
                     case "$sid_check" in
                         S00-*) ;; # include smoke
                         L1-001|L1-002|L1-003) ;; # 3 cheapest L1
                         L2-001|L2-002) ;; # MCP format checks
                         ST-001) ;; # telemetry tool check
                         MT-001|MT-002) ;; # multi-turn
+                        MT-LP-001|MT-LP-002|MT-LP-003) ;; # constitutional learn protocol
                         *) continue ;;
                     esac
                     ;;
                 full)
-                    # Everything except S0 and ADV (adversarial = matrix-only)
+                    # Everything except S0, ADV, and CMD-AUTO (separate profile)
                     [ "$diff" = "S0" ] && continue
-                    case "$sid_check" in ADV-*) continue ;; esac
+                    case "$sid_check" in ADV-*|CMD-AUTO-*) continue ;; esac
+                    ;;
+                cmd-auto)
+                    # Auto-generated command knowledge scenarios only
+                    case "$sid_check" in
+                        CMD-AUTO-*) ;; # include
+                        *) continue ;;
+                    esac
                     ;;
             esac
             scenarios+=("$sf")

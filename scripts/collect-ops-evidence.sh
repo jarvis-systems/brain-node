@@ -4,6 +4,10 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+cd "$PROJECT_ROOT"
+
 DIST_DIR="dist"
 OUTPUT="${DIST_DIR}/ops-evidence.json"
 MANIFEST_FILE=".docs/releases/manifest.json"
@@ -73,12 +77,12 @@ fi
 DEMO_AGGREGATES='null'
 if [[ -f "$DEMO_REPORT" ]]; then
     DEMO_AGGREGATES=$(jq '{
-        total_scenarios: (.results | length),
-        passed: [.results[] | select(.status == "PASS")] | length,
-        failed: [.results[] | select(.status == "FAIL")] | length,
-        total_mcp_calls: [.results[].mcp_calls // 0] | add,
-        total_input_tokens: [.results[].input_tokens // 0] | add,
-        total_output_tokens: [.results[].output_tokens // 0] | add
+        total_scenarios: (.scenarios | length),
+        passed: [.scenarios[] | select(.status == "pass")] | length,
+        failed: [.scenarios[] | select(.status == "fail")] | length,
+        total_mcp_calls: [.scenarios[].mcp_calls_count // 0] | add,
+        total_input_tokens: [.scenarios[].input_tokens // 0] | add,
+        total_output_tokens: [.scenarios[].output_tokens // 0] | add
     }' "$DEMO_REPORT" 2>/dev/null || echo 'null')
 fi
 
