@@ -348,6 +348,19 @@ status: active
 | Validate | `bash scripts/scan-secrets-history.sh --quiet` → TOTAL_MATCHES=10 (stable baseline) |
 | Reference | `.docs/product/16-security-3.0-playbook.md` § "Current State: History Dirty (Mitigated)"; SCORECARD.md § "Security (2.3/3)" posture + upgrade path |
 
+### P2-009: Worktree isolation for parallel agents (infra)
+
+| Field | Value |
+|-------|-------|
+| Scope | Implement git worktree-based filesystem isolation for parallel agent sessions |
+| Evidence | Quad-mode drift incidents: files appearing/disappearing outside agent scope during parallel work |
+| Contract | `.docs/product/17-worktree-isolation-contract.md` (plan-only, approved) |
+| Status | **PLANNED** — contract written, implementation deferred |
+| Acceptance criteria | (1) `.worktrees/` in `.gitignore`; (2) operator cookbook tested; (3) Brain `Task()` propagates `--workdir`; (4) zero drift incidents in 2-week trial |
+| Rollback | Remove `.worktrees/` directory; revert to v0 (single repo, drift policy as safety net) |
+| Phase | v1 = operator-managed; v2 = Brain-managed; v3 = container (optional) |
+| Reference | ENTERPRISE-DOD.md § "Quad-Mode Drift Policy"; `04-security-model.md` § "Compile Safety Contract" |
+
 ## Refactor Batches
 
 ### Refactor Batch 1 (commit 08124c3)
@@ -501,11 +514,11 @@ Regression prevention: `audit-enterprise.sh` Check 18 (mcp-schema-bypass) + `Nod
 |----------|-------|-------|--------------|------|
 | P0 | 15 | 13 | 2 (to P2) | 0 |
 | P1 | 8 | 7 | 1 (to P2) | 0 |
-| P2 | 3+2+1+1+3+1 | 7 | 0 | 3 |
+| P2 | 3+2+1+1+3+1+1 | 7 | 0 | 4 |
 | Cat-B | 2 | 2 | 0 | 0 |
-| **Total** | **33** | **29** | **3** | **3** |
+| **Total** | **34** | **29** | **3** | **4** |
 
-Remaining P2 open: P2-003 (error_log in ConvertCommand — acceptable, env-gated), P2-008 (history contamination — mitigated, cleanup deferred to Option C), DocChallenge.md paths.
+Remaining P2 open: P2-003 (error_log in ConvertCommand — acceptable, env-gated), P2-008 (history contamination — mitigated, cleanup deferred to Option C), P2-009 (worktree isolation — planned, contract written), DocChallenge.md paths.
 
 **Non-P0/P1 fixes (contract consistency):** commands-no-includes rule amended (false positive eliminated), AgentArchetype::id() and McpArchitecture::id() silent fallbacks replaced with RuntimeException (compile-time safety), 7 script shebangs normalized, Category B MCP schema bypass annotated (2 sites).
 
