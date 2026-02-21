@@ -11,3 +11,7 @@ brain.lock
 dist
 upload.sh
 settings.json
+
+# Build outputs (compiled artifacts from brain compile)
+AGENTS.md
+GEMINI.md
