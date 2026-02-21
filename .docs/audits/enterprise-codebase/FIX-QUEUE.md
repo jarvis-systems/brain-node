@@ -334,6 +334,27 @@ status: active
 | Status | **FIXED** |
 | Validate | `brain docs --validate` → 0 invalid |
 
+## Refactor Batches
+
+### Refactor Batch 1 (commit 08124c3)
+
+| Item | Change | Proof |
+|------|--------|-------|
+| Dead code: Merger::findMatchingChildIndex() + canMergeChildren() | Removed 2 dead methods (-70 lines), replaced by findMatchingChildIndexFast() | Grep: 0 callers; 75/75 tests PASS |
+| Runtime::__callStatic dead branch | `isset(self::${$name})` → `defined()/constant()` + `: string` return type | 2 new tests for resolution paths |
+| var-dumper → require-dev | Moved symfony/var-dumper from require to require-dev | 0 direct imports in core/src/; 17 prod deps |
+
+### Refactor Batch 2
+
+| Item | Change | Proof |
+|------|--------|-------|
+| awesome-mcp.json `--save-as` bug | Changed `--save-as` → `--as` on lines 31,45 (user cleared setup arrays) | DocsCommand.php:41 defines `{--as=}`, not `--save-as` |
+| LaravelBoostMcp.php hardcoded path | `/Users/xsaven/.../artisan` → portable `artisan` (user regenerated MCP classes) | `brain compile` produces correct .mcp.json |
+| workspace.json hardcoded paths | `/Users/xsaven/...` → `.` (relative) | Check 15 PASS (though .laboratories/ excluded) |
+| CompileStandardsTrait return types | **Already complete** — all 9 methods typed (`: string`/`: void`) | Verified: false finding from audit agent |
+| CompilationHelpersTrait return types | **Already complete** — all 16 methods typed (`: static`) | Verified: false finding from audit agent |
+| TestMcp.php cleanup | Deleted untracked stub from `brain make:mcp Test` (empty defaultCommand()) | 75/75 tests PASS after removal |
+
 ## Summary
 
 | Priority | Total | Fixed | Reclassified | Open |

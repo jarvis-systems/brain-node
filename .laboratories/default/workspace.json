@@ -1,7 +1,7 @@
 {
     "variables": {
-        "test": "/Users/xsaven/PhpstormProjects/jarvis-brain-node",
-        "z": "/Users/xsaven/PhpstormProjects/jarvis-brain-node",
+        "test": ".",
+        "z": ".",
         "a": [
             1,
             2,

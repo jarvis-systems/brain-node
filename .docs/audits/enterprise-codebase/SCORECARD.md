@@ -27,11 +27,11 @@ status: active
 | 3 | Input Validation | 2 | 2 | -- | 2.0 | MCP schema validator exists (3 modes) but not all methods use it |
 | 4 | Security | 2 | 3 | 2 | 2.3 | ~~No static analysis~~ **FIXED** (phpstan level 0); ~~API keys in MCP files~~ **FIXED** (getenv()); ~~CI actions tag-pinned~~ **FIXED** (SHA-pinned); **NEW**: Secret scanning CI gate, release bundle .mcp.json exclusion, upload.sh/settings.json untracked, threat model doc, CI concurrency guards, pre-publication kill-switch |
 | 5 | Docs Parity | 3 | 3 | -- | 3.0 | ~~`composer test`/`analyse` missing at root~~ **FIXED**; ~~LegacyParityTest referenced but never existed~~ **FIXED** (removed from CLAUDE.md, actual test list updated); ~~docs validation 1 invalid~~ **FIXED** (YAML front matter added); `brain docs --validate` = 0 invalid |
-| 6 | Testability | 3 | 2 | 1 | 2.0 | 74/74 tests, 214 assertions; **NEW Phase 7**: RuntimeTest (7 tests), ToolFormatTest (8 tests), VarExporterDegradationTest (8 tests); Node: 8 tests via NodeIntegrityTest covering all contracts; CLI: phpstan level 0 |
+| 6 | Testability | 3 | 2 | 1 | 2.0 | 75/75 tests, 218 assertions; **NEW Phase 7**: RuntimeTest (9 tests incl. __callStatic resolution), ToolFormatTest (8 tests), VarExporterDegradationTest (8 tests); Node: 8 tests via NodeIntegrityTest covering all contracts; CLI: phpstan level 0; **Refactor Batch 1**: dead code removal (-70 lines), Runtime::__callStatic fix |
 | 7 | Release Discipline | 3 | 3 | -- | 3.0 | Pinning, manifest, bundle, release CI -- all good |
 | 8 | Operability | 3 | 3 | -- | 3.0 | Benchmarks, runbooks, ops-evidence, demo -- comprehensive |
-| 9 | Footguns | 3 | 3 | -- | 3.0 | ~~Debug artifacts~~ **FIXED**; ~~typo in class name~~ **FIXED**; ~~dead scaffold~~ **FIXED**; ~~hardcoded MCP paths~~ **FIXED** (generator emits getcwd()) |
-| 10 | Maintainability | 3 | 3 | -- | 3.0 | ~~strict_types~~ **FIXED**; ~~CompileStandartsTrait typo~~ **FIXED**; ~~faker in prod~~ **FIXED**; ~~hardcoded paths~~ **FIXED** (generator + test) |
+| 9 | Footguns | 3 | 3 | -- | 3.0 | ~~Debug artifacts~~ **FIXED**; ~~typo in class name~~ **FIXED**; ~~dead scaffold~~ **FIXED**; ~~hardcoded MCP paths~~ **FIXED** (generator emits getcwd()); **Refactor Batch 2**: awesome-mcp.json `--save-as` → `--as` CLI bug fix |
+| 10 | Maintainability | 3 | 3 | -- | 3.0 | ~~strict_types~~ **FIXED**; ~~CompileStandartsTrait typo~~ **FIXED**; ~~faker in prod~~ **FIXED**; ~~hardcoded paths~~ **FIXED** (generator + test); **Refactor Batch 1**: var-dumper→require-dev (17 prod deps); **Refactor Batch 2**: workspace.json portable paths, both Compilation traits 100% return-typed (verified) |
 
 **Overall Score: 27.3 / 30 (91.0%)**
 
@@ -83,7 +83,7 @@ No sources of non-determinism found. No `rand()`, `shuffle()`, `mt_rand()`, `arr
 
 | Package | Test Files | Source Files | Tests | Assertions | Status |
 |---------|-----------|--------------|-------|------------|--------|
-| Core | 12 | 167+ | 74 | 214 | 74/74 PASS |
+| Core | 12 | 167+ | 75 | 218 | 75/75 PASS |
 | Node | 0 (tested via Core) | 44 | 8 | 22 | via NodeIntegrityTest |
 | CLI | 7 | ~30+ | ~20 | ~50 | Separate repo + PHPStan level 0 |
 
@@ -110,10 +110,10 @@ No sources of non-determinism found. No `rand()`, `shuffle()`, `mt_rand()`, `arr
 - TomlBuilderTest path portability fix (hardcoded user path → generic)
 
 **Phase 7 — Enterprise closure:**
-- `RuntimeTest` (7 tests): all 17 constants are `{{ NAME }}` template placeholders, path methods append/join correctly, `print()` generates templates, determinism proof
+- `RuntimeTest` (9 tests): all 17 constants are `{{ NAME }}` template placeholders, path methods append/join correctly, `print()` generates templates, `__callStatic` resolves defined constants via `defined()/constant()`, fallthrough to `print()` for unknown, determinism proof
 - `ToolFormatTest` (8 tests): all 9 tools have PascalCase names, unique names, `call()` produces `ToolName(args)` format, `describe()` produces block format, determinism proof
 - `VarExporterDegradationTest` (8 tests): closure graceful handling, mixed valid+invalid args, determinism, `logDegradation()` callable, debug logging emission, multiple operator catch paths
-- Suite: 52→74 tests, 125→214 assertions
+- Suite: 52→75 tests, 125→218 assertions
 
 Remaining gaps: Archetypes, Variable system. CLI runtime tests require Laravel framework.
 
