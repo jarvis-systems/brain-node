@@ -81,11 +81,11 @@ Current gated scenarios:
 | smoke | 1 | haiku | All (pre-gate) | Basic connectivity |
 | nightly-live | 8 | sonnet | Nightly + manual | Live behavioral proof |
 | telemetry-ci | 12 | haiku | Manual | Telemetry coverage |
-| ci | 25 | haiku | Manual | Broad knowledge coverage |
-| full | 38 | sonnet | Manual | Complete non-adversarial |
+| ci | 26 | haiku | Manual | Broad knowledge coverage |
+| full | 40 | sonnet | Manual | Complete non-adversarial |
 | cmd-auto | 28 | haiku | Dry-run only | Command knowledge |
 | matrix | 4x4 | haiku | Nightly | Stress (mode combinations) |
-| adversarial-matrix | 7x4 | haiku | Nightly | Attack resistance |
+| adversarial-matrix | 9x4 | haiku | Nightly | Attack resistance |
 
 ## 3. Instruction Budget Baseline Update Process
 

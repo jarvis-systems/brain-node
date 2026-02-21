@@ -63,7 +63,7 @@ version: "2.0"
 
 | Field | Required | Type | Description |
 |-------|----------|------|-------------|
-| `id` | yes | string | Unique ID: S00-NNN, L{N}-NNN, ST-NNN, MT-NNN |
+| `id` | yes | string | Unique ID: S00-NNN, L{N}-NNN, ST-NNN, MT-NNN, MT-LP-NNN, CMD-NNN, CMD-AUTO-*, ADV-NNN |
 | `title` | yes | string | Short description |
 | `difficulty` | yes | string | S0, L1, L2, L3 |
 | `type` | no | string | "single" (default) or "multi" |
@@ -92,11 +92,16 @@ version: "2.0"
 
 ## ID Convention
 
-| Prefix | Type | Examples |
-|--------|------|---------|
-| S00 | Smoke | S00-000 |
-| L1 | Tiny knowledge | L1-001..L1-007 |
-| L2 | Applied knowledge | L2-001..L2-007 |
-| L3 | Governance reasoning | L3-001..L3-007 |
-| ST | Single-turn telemetry | ST-001..ST-003 |
-| MT | Multi-turn | MT-001..MT-003 |
+| Prefix | Type | Range | Count |
+|--------|------|-------|-------|
+| S00 | Smoke | S00-000 | 1 |
+| L1 | Tiny knowledge | L1-001..L1-007 | 7 |
+| L2 | Applied knowledge | L2-001..L2-007 | 7 |
+| L3 | Governance reasoning | L3-001..L3-008 | 8 |
+| ST | Single-turn telemetry | ST-001..ST-006 | 6 |
+| MT | Multi-turn | MT-001..MT-003 | 3 |
+| MT-LP | Multi-turn learn protocol | MT-LP-001..MT-LP-003 | 3 |
+| CMD | Command knowledge | CMD-001..CMD-006 | 6 |
+| CMD-AUTO | Auto-generated command | CMD-AUTO-* | 28 |
+| ADV | Adversarial | ADV-001..ADV-009 | 9 |
+| **Total** | | | **78** |

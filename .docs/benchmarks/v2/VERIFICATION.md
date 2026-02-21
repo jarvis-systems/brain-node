@@ -58,10 +58,10 @@ scripts/benchmark-llm-suite.sh --scenario MT-002 --model haiku
 ## 5. Profile runs
 
 ```bash
-# Telemetry-CI (9 scenarios, ~2.5 min)
+# Telemetry-CI (12 scenarios, ~3 min)
 composer benchmark:telemetry
 
-# CI profile (17 scenarios, ~5 min)
+# CI profile (26 scenarios, ~7 min)
 composer benchmark:ci
 
 # Multi-turn only
@@ -71,7 +71,7 @@ composer benchmark:mt
 ## 6. Full suite
 
 ```bash
-# All 38 scenarios (full profile)
+# All 40 scenarios (full profile)
 scripts/benchmark-llm-suite.sh --profile full --model sonnet
 ```
 
@@ -116,7 +116,7 @@ No live API calls on PR. Structural gates handled by brain-lint.yml.
    - Regression check (WARN mode)
    - Artifact: `nightly-live-report` retained 30 days
 3. **matrix-stress** — 4 scenarios x 4 mode configs (nightly)
-4. **adversarial-stress** — 7 ADV scenarios x 4 configs (nightly)
+4. **adversarial-stress** — 9 ADV scenarios x 4 configs (nightly)
 5. **benchmark-suite** — manual dispatch only: selectable profile + model
 
 ### Regression Thresholds
@@ -259,7 +259,7 @@ Tier hierarchy: `haiku(1) < sonnet(2) < opus(3)`.
 
 - `nightly-live` (sonnet): 8 total, 8 executed (CMD-001, CMD-004, ST-004, MT-001, MT-002, MT-LP-001, MT-LP-002, ADV-004).
 - `telemetry-ci` (haiku): MT-LP-001 counted but skipped → 12 total, 11 executed, 1 skipped.
-- `full` (sonnet): MT-LP-001 executes normally → 38 total, 38 executed.
+- `full` (sonnet): MT-LP-001 executes normally → 40 total, 40 executed.
 - Baselines unchanged — skipped scenarios contribute 0 to token/duration/mcp totals.
 
 ## 10. Flakiness Protocol
@@ -308,7 +308,7 @@ Scenarios can override the profile default with `"retry": N` in their JSON:
 
 ## Checklist
 
-- [x] `composer benchmark:dry` → 38/38 pass (full profile)
+- [x] `composer benchmark:dry` → 40/40 pass (full profile)
 - [x] cmd-auto dry-run → 28/28 pass
 - [ ] Init DTO contains sessionId
 - [ ] Resume preserves context
@@ -319,8 +319,8 @@ Scenarios can override the profile default with `"retry": N` in their JSON:
 - [x] MT-LP-001 live evidence captured (haiku FAIL + sonnet PASS)
 - [x] MT-LP-002 live evidence captured (core behavior PASS)
 - [x] telemetry-ci profile: 12 scenarios
-- [x] ci profile: 25 scenarios
-- [x] full profile: 38 scenarios
+- [x] ci profile: 26 scenarios
+- [x] full profile: 40 scenarios
 - [x] cmd-auto profile: 28 scenarios
 - [x] nightly-live profile: 8 scenarios
 - [x] Model gating: MT-LP-001 skipped on haiku, executed on sonnet

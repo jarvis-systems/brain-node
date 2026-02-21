@@ -38,7 +38,7 @@ Maps benchmark scenarios to cookbook case_categories and identifies gaps requiri
 | `store` | Standard store workflows | MT-001 turn 1 | Medium — no verify step |
 | `plan` | Task planning workflows | MT-002 | Medium — no create→validate flow |
 | `create` | Task creation workflows | L2-001, MT-002 turn 1 | Medium — no format validation |
-| `governance` | Policy compliance | MT-003, L3-001..L3-007 | High — no cookbook cases exist |
+| `governance` | Policy compliance | MT-003, L3-001..L3-008 | High — no cookbook cases exist |
 | `workflow` | Multi-step sequences | MT-001, MT-002 | High — no multi-step cases |
 
 ## Identified Gaps (Priority Order)

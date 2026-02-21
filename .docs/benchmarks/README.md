@@ -2,8 +2,8 @@
 name: "Brain LLM Benchmark Suite"
 description: "Behavioral benchmarks for compiled Brain/agents via Brain CLI with telemetry and multi-turn sessions"
 type: "benchmark"
-date: "2026-02-20"
-version: "2.0"
+date: "2026-02-21"
+version: "2.1"
 ---
 
 # Brain LLM Benchmark Suite
@@ -20,14 +20,26 @@ Each scenario sends a prompt through the full Brain pipeline (compile → claude
 
 **Multi-turn** (`type: "multi"`): Sequential turns using `--resume <sessionId>` from Init DTO. Validates per-turn checks and scenario-level aggregates. Tests workflow correctness: store → search, create → list, governance continuity.
 
-**Levels:**
+**Difficulty levels:**
 
 | Level | Complexity | Description | Scenarios |
 |-------|-----------|-------------|-----------|
 | S0 | Smoke | Pipeline health check: compile → run → parse | 1 |
-| L1 | Tiny | Knowledge retrieval: rules, constraints, ecosystem | 9 |
-| L2 | Normal | Applied knowledge: MCP formats, policies, protocols | 9 |
+| L1 | Tiny | Knowledge retrieval: rules, constraints, ecosystem | 7 |
+| L2 | Normal | Applied knowledge: MCP formats, policies, protocols | 7 |
 | L3 | Hard | Governance reasoning: violations, conflicts, mode matrix | 8 |
+
+**Scenario categories:**
+
+| Category | Prefix | Count | Description |
+|----------|--------|-------|-------------|
+| Command core | CMD | 6 | Command safety, MCP format, permissions |
+| Command auto | CMD-AUTO | 28 | Auto-generated per-command knowledge checks |
+| Single-turn telemetry | ST | 6 | MCP tool execution, budget, mode invariant |
+| Multi-turn | MT | 3 | Cross-turn memory, task, governance workflows |
+| Multi-turn learn protocol | MT-LP | 3 | Constitutional learn: store/no-store triggers |
+| Adversarial | ADV | 9 | Hallucination, injection, noise, safety |
+| **Total unique** | | **78** | |
 
 **Check types:**
 
@@ -73,7 +85,7 @@ scripts/benchmark-llm-suite.sh --dry-run --json
 |------|---------|-------------|
 | `--json` | off | Output JSON report only |
 | `--mode` | standard | Compilation mode: standard, exhaustive, paranoid |
-| `--profile` | full | smoke, ci, telemetry-ci, full |
+| `--profile` | full | smoke, ci, telemetry-ci, full, cmd-auto, nightly-live, matrix, adversarial-matrix |
 | `--scenario` | all | Run single scenario by ID substring |
 | `--model` | sonnet | AI model: sonnet, opus, haiku |
 | `--dry-run` | off | Validate scenario files without AI calls |
@@ -85,23 +97,30 @@ scripts/benchmark-llm-suite.sh --dry-run --json
 | Profile | Count | Scenarios | Approx. time |
 |---------|-------|-----------|-------------|
 | smoke | 1 | S00-000 | ~20s |
-| ci | 17 | 7×L1 + 7×L2 + 3×ST | ~5-6 min |
-| telemetry-ci | 9 | S00 + 3×L1 + 2×L2 + ST-001 + MT-001 + MT-002 | ~2.5 min |
-| full | 28 | 7×L1 + 7×L2 + 7×L3 + 3×ST + 3×MT + S00 excluded | ~12 min |
+| telemetry-ci | 12 | S00 + L1 (partial) + L2 (partial) + ST (partial) + MT (partial) + MT-LP | ~3 min |
+| ci | 26 | L1 + L2 + ST + CMD | ~7 min |
+| full | 40 | CMD + L1 + L2 + L3 + ST + MT + MT-LP | ~15 min |
+| cmd-auto | 28 | CMD-AUTO-* (auto-generated) | ~10 min |
+| nightly-live | 8 | CMD (partial) + ST (partial) + MT (partial) + MT-LP (partial) + ADV (partial) | ~10 min |
+| matrix | 4×4 | 4 scenarios × 4 mode configs (stress) | ~6 min |
+| adversarial-matrix | 9×4 | 9 ADV scenarios × 4 mode configs | ~7 min |
 
 ## Cost Control
 
-Each scenario invocation costs ~$0.05-0.25 depending on model and cache state. Multi-turn scenarios cost ~2x (2-3 API calls per scenario).
+Each scenario invocation costs ~$0.02-0.25 depending on model and cache state. Multi-turn scenarios cost ~2x (2-3 API calls per scenario).
 
-| Model | Approx. cost/scenario | 28 scenarios | 17 (ci) |
-|-------|----------------------|-------------|---------|
-| haiku | ~$0.02-0.05 | ~$0.56-1.40 | ~$0.34-0.85 |
-| sonnet | ~$0.05-0.15 | ~$1.40-4.20 | ~$0.85-2.55 |
-| opus | ~$0.15-0.30 | ~$4.20-8.40 | ~$2.55-5.10 |
+| Profile | Scenarios | Est. cost (haiku) | Est. cost (sonnet) |
+|---------|-----------|-------------------|-------------------|
+| smoke | 1 | ~$0.001 | ~$0.01 |
+| telemetry-ci | 12 | ~$0.01 | ~$0.05 |
+| ci | 26 | ~$0.03 | ~$0.10 |
+| full | 40 | ~$0.06 | ~$0.20 |
+| cmd-auto | 28 | ~$0.04 | ~$0.12 |
+| nightly-live | 8 | ~$0.02 | ~$0.06 |
 
 **Cost reduction strategies:**
 
-1. Use `--profile ci` in CI (17 scenarios, excludes MT and L3)
+1. Use `--profile ci` in CI (26 scenarios, excludes MT, L3, MT-LP)
 2. Use `--model haiku` for routine checks
 3. Use `--model sonnet` for standard validation (recommended)
 4. Reserve `--model opus` for release validation only
@@ -164,7 +183,7 @@ Create a JSON file in `.docs/benchmarks/scenarios/`:
 
 **Rules:**
 
-- `id` format: `S00-{NNN}` for smoke, `L{N}-{NNN}` for L1/L2/L3, `ST-{NNN}` for single-turn telemetry, `MT-{NNN}` for multi-turn
+- `id` format: `S00-{NNN}` for smoke, `L{N}-{NNN}` for L1/L2/L3, `ST-{NNN}` for single-turn telemetry, `MT-{NNN}` for multi-turn, `MT-LP-{NNN}` for learn protocol, `CMD-{NNN}` for commands, `CMD-AUTO-{name}` for auto-generated, `ADV-{NNN}` for adversarial
 - `prompt` (single) or `turns[].ask` (multi) should be in Ukrainian
 - Patterns are POSIX extended regex (case-insensitive via grep -iE)
 - Use `|` for alternatives in patterns (resilience against non-determinism)
@@ -198,12 +217,22 @@ Create a JSON file in `.docs/benchmarks/scenarios/`:
 | L3-005 | Mode | single | No-mode-self-switch enforcement |
 | L3-006 | Delegation | single | Chain depth violation detection |
 | L3-007 | Compile | single | Compile-time vs runtime constraints |
+| L3-008 | Delegation | single | Delegation chain refusal (adversarial chaining) |
 | ST-001 | Telemetry | single | Force MCP call, verify via expected_tools |
 | ST-002 | Budget | single | Tight token/duration limits |
 | ST-003 | Mode | single | Compile-time mode invariant |
+| ST-004 | Task | single | Force task_create MCP call |
+| ST-005 | Memory | single | search_memories with category filter |
+| ST-006 | Agent | single | Explore agent tool rules (Glob/Grep required) |
 | MT-001 | Memory | multi | Store → search → verify retrieval (2 turns) |
 | MT-002 | Task | multi | Create → list → validate fields (2 turns) |
 | MT-003 | Governance | multi | Cookbook limits across 3 turns |
+| MT-LP-001 | Learn | multi | Store lesson on trigger signal |
+| MT-LP-002 | Learn | multi | No store on clean completion |
+| MT-LP-003 | Learn | multi | No store in relaxed mode |
+| CMD-001..006 | Commands | single | Init safety, task lifecycle, mem governance, do permissions, doc validation, destructive refusal |
+| CMD-AUTO-* | Commands | single | 28 auto-generated per-command knowledge checks |
+| ADV-001..009 | Adversarial | single | Hallucination, injection, noise, permissions, credentials, file safety, compiled writes |
 
 ## Ground Truth
 
