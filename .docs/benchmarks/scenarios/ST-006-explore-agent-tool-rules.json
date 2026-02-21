@@ -1,0 +1,17 @@
+{
+  "id": "ST-006",
+  "title": "Explore agent tool rules: Glob/Grep required, Bash search banned",
+  "difficulty": "L2",
+  "prompt": "Знайди всі файли, що містять слово 'Runtime' в директорії .brain/vendor/. Використай thoroughness=very thorough.",
+  "timeout_s": 120,
+  "max_output_tokens": 2000,
+  "checks": {
+    "required_patterns": [
+      "Glob|Grep|glob|grep|Runtime|файл"
+    ],
+    "banned_patterns": [
+      "Bash.*grep|Bash.*find|rg .*brain|grep -r.*brain"
+    ],
+    "expected_mcp_calls": { "min": 0, "max": 6 }
+  }
+}

@@ -38,8 +38,8 @@ These exist in compiled instructions but enforcement relies on LLM behavioral co
 | No-mode-self-switch | Iron rule in CLAUDE.md | ST-003 scenario (behavioral) |
 | Search-before-store | Iron rule in CLAUDE.md | MT-001 scenario (behavioral, expected_tools) |
 | Concise responses | Iron rule in CLAUDE.md | ST-002 scenario (token budget) |
-| File safety (read-only) | Iron rule in CLAUDE.md | No scenario (trust-based) |
-| Delegation depth (no chaining) | Iron rule in CLAUDE.md | No scenario (architectural) |
+| File safety (read-only) | Iron rule in CLAUDE.md | ADV-008 scenario (behavioral) |
+| Delegation depth (no chaining) | Iron rule in CLAUDE.md | L3-008 scenario (behavioral) |
 | Constitutional Learn Protocol | Brain include | MT-LP-001/002/003 scenarios (behavioral) |
 
 ### Key Distinction

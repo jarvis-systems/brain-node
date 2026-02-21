@@ -16,7 +16,7 @@ Validates all scenario JSON files structurally.
 composer benchmark:dry
 ```
 
-Expected: 74 valid (38 full + 28 cmd-auto + 7 ADV + 1 smoke), 0 errors.
+Expected: 78 valid (40 full + 28 cmd-auto + 9 ADV + 1 smoke), 0 errors.
 
 ## 2. Session ID check
 

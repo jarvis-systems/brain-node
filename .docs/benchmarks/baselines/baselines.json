@@ -16,10 +16,10 @@
       "max_total_mcp_calls": 2
     },
     "ci": {
-      "scenarios": 25,
-      "max_total_output_tokens": 32000,
-      "max_total_duration_ms": 800000,
-      "max_total_mcp_calls": 50
+      "scenarios": 26,
+      "max_total_output_tokens": 34000,
+      "max_total_duration_ms": 920000,
+      "max_total_mcp_calls": 56
     },
     "telemetry-ci": {
       "scenarios": 12,
@@ -28,10 +28,10 @@
       "max_total_mcp_calls": 35
     },
     "full": {
-      "scenarios": 38,
-      "max_total_output_tokens": 62000,
-      "max_total_duration_ms": 1600000,
-      "max_total_mcp_calls": 80
+      "scenarios": 40,
+      "max_total_output_tokens": 67000,
+      "max_total_duration_ms": 1860000,
+      "max_total_mcp_calls": 86
     },
     "matrix": {
       "scenarios": 4,
@@ -46,7 +46,7 @@
       "max_total_mcp_calls": 15
     },
     "adversarial-matrix": {
-      "scenarios": 7,
+      "scenarios": 9,
       "stress_scenarios": [
         "ADV-001",
         "ADV-002",
@@ -54,10 +54,12 @@
         "ADV-004",
         "ADV-005",
         "ADV-006",
-        "ADV-007"
+        "ADV-007",
+        "ADV-008",
+        "ADV-009"
       ],
-      "max_total_output_tokens": 7000,
-      "max_total_duration_ms": 490000,
+      "max_total_output_tokens": 10000,
+      "max_total_duration_ms": 670000,
       "max_total_mcp_calls": 8
     },
     "cmd-auto": {
