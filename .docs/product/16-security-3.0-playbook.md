@@ -392,6 +392,21 @@ No changes needed. Template is ready for Step C3.
 | Security (weighted) | 2.3 | 3.0 | +0.7 |
 | **Overall** | **28.3** | **30.0** | **+1.7 (100%)** |
 
+## Incident Log
+
+### 2026-02-21: Secret Values Exposure in Agent Response
+
+**Incident:** During re-hydration session, agent printed actual credential values (C2–C5) in chat response. Values appeared in conversation history.
+
+**Response:**
+1. Redaction Rule established (see § Redaction Rule above) — prevents recurrence.
+2. C2 (Context7), C3 (GROQ), C4 (OpenRouter) — keys removed from `.brain/.env` (not needed, old keys).
+3. C5 (Packagist) — token replaced in `upload.sh` with non-compromised value.
+4. Old credentials revoked/disabled at provider consoles — **VERIFIED** (Doc confirmation, 2026-02-21).
+5. `brain compile` SUCCESS, all gates GREEN post-rotation.
+
+**Status:** CLOSED. Old values are dead. Redaction rule in effect.
+
 ## References
 
 - Credential inventory: `.docs/product/09-secrets.md` § "Credential Inventory"

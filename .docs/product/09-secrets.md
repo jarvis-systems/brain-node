@@ -65,6 +65,7 @@ status: active
 4. Verify MCP servers connect: test each `mcp__*` tool
 5. Revoke old credential at provider's console
 6. If old credential was committed to git: schedule BFG history cleanup (see Roadmap)
+7. Closure: confirm old credential returns 401/403 at provider. Rotation is not complete until provider-side revocation is verified (Doc responsibility)
 
 ## Enforcement Mechanisms
 
