@@ -119,7 +119,50 @@ If multi-agent / quad-mode was used during the release cycle:
 
 Failure: stop release until root repo is verified clean and all agent worktrees are pruned.
 
-## 4. Release Bundle Inspection (BLOCKING)
+## 4. Version Alignment (BLOCKING)
+
+All three repos must have matching git tags and matching `composer.json` version fields before publication. This gate applies only at release time (GO PRE-PUB). During normal dev batches, version drift is non-blocking — do not tag during regular work.
+
+### Steps
+
+1. Verify `composer.json` version fields match across repos:
+
+```bash
+echo "root: $(jq -r '.version' composer.json)"
+echo "core: $(jq -r '.version' core/composer.json)"
+echo "cli:  $(jq -r '.version' cli/composer.json)"
+# All three must be identical (e.g., v0.2.0)
+```
+
+2. Verify git tags exist and are exact (no `-N-gXXXXXXX` suffix):
+
+```bash
+git describe --tags --exact-match            # root
+git -C core describe --tags --exact-match    # core
+git -C cli describe --tags --exact-match     # cli
+# All three must succeed. Failure = HEAD is not tagged.
+```
+
+3. If tags are missing, create them (operator action):
+
+```bash
+cd core && git tag v0.2.0 && cd ..
+cd cli  && git tag v0.2.0 && cd ..
+git tag v0.2.0
+```
+
+4. Verify composer constraints are release-ready:
+
+```bash
+jq -r '.require["jarvis-brain/core"]' composer.json      # root: "*" (path dev) or "^0.2.0"
+jq -r '.require["jarvis-brain/core"]' cli/composer.json  # cli: "^v0.x.y"
+```
+
+Any mismatch = BLOCKED. Fix versions/tags before proceeding.
+
+For the canonical version model (dev vs release), see `.docs/architecture/repo-topology.md` § "Canonical Version Sources".
+
+## 5. Release Bundle Inspection (BLOCKING)
 
 ```bash
 # Verify bundle contents — NO secrets
@@ -132,7 +175,7 @@ grep -rE 'github_pat_|ctx7sk-|gsk_|sk-or-v1-' /tmp/bundle-check/ || echo "CLEAN"
 rm -rf /tmp/bundle-check/
 ```
 
-## 5. Post-Publication Verification
+## 6. Post-Publication Verification
 
 After publication, verify:
 

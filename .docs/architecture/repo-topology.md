@@ -78,9 +78,9 @@ Same pattern: `cd cli && git status && git add && git commit && cd ..`
 
 ### Referencing a core version from root
 
-Currently: root `composer.json` uses `"jarvis-brain/core": "*"` with a local symlink. For production: pin to a tagged version (`"jarvis-brain/core": "^0.2.0"`).
+Currently: root `composer.json` uses `"jarvis-brain/core": "*"` with a local path symlink (dev mode). For production release: pin to a tagged version (`"jarvis-brain/core": "^0.2.0"`).
 
-**TBD:** Version pinning strategy for release bundles. Should live in `.docs/product/10-pre-publication.md` when publication workflow matures.
+Version pinning strategy: see section 6 (Canonical Version Sources) and `.docs/product/10-pre-publication.md` § "Version Alignment".
 
 ### Running gates across repos
 
@@ -131,7 +131,43 @@ This returns the owning repo's root. If the result differs from the expected rep
 4. If result is core/ or cli/ → switch to that repo, commit there
 5. Never force-add (`-f`) gitignored paths — it breaks the topology invariant
 
-## 6. Future: X-Brain Single Bundle
+## 6. Canonical Version Sources
+
+Two modes with different version contracts:
+
+### Dev mode (daily work)
+
+Canonical version signal per repo: `git describe --tags --always`. This produces a string like `v0.2.0-50-g500a03f` (tag + commits-since-tag + short SHA). The `composer.json` version field may drift ahead of the latest git tag during development — this is non-blocking and expected.
+
+No tagging required per commit or per batch.
+
+### Release mode (GO PRE-PUB only)
+
+All three repos MUST have matching git tags AND matching `composer.json` version fields. See `.docs/product/10-pre-publication.md` § "Version Alignment" for the blocking gate.
+
+| Signal | Dev (non-blocking) | Release (BLOCKING) |
+|--------|--------------------|--------------------|
+| `git describe --tags` | Any value (informational) | Must return exact tag, no `-N-gXXX` suffix |
+| `composer.json` version | May drift ahead of tag | Must equal the git tag |
+| Cross-repo alignment | Not required | root = core = cli version |
+
+### Evidence commands
+
+```bash
+# Per-repo version snapshot (dev or release)
+jq -r '.version' composer.json                  # root
+jq -r '.version' core/composer.json             # core
+jq -r '.version' cli/composer.json              # cli
+git describe --tags --always                    # root
+git -C core describe --tags --always            # core
+git -C cli describe --tags --always             # cli
+```
+
+### Known mismatch (release-time debt)
+
+As of 2026-02-22: `core/composer.json` says `v0.2.0` but core's latest git tag is `v0.0.1`. This is acceptable during dev (composer.json was bumped manually, tag was not). Before any release: either tag core `v0.2.0` or revert the composer.json version to match the tag. Tracked as release-time prerequisite, not a dev-blocking issue.
+
+## 7. Future: X-Brain Single Bundle
 
 **Status:** Informational roadmap. Not enforced. No current action required.
 
@@ -139,7 +175,7 @@ X-Brain (Go rewrite) will consolidate node + core + cli into a single binary dis
 
 This does not affect current development. The three-repo topology remains the canonical structure until X-Brain reaches feature parity.
 
-## 7. Cross-References
+## 8. Cross-References
 
 - Worktree Isolation: `.docs/product/17-worktree-isolation-contract.md` (per-repo boundary awareness)
 - Pre-Publication: `.docs/product/10-pre-publication.md` (credential rotation spans all repos)
