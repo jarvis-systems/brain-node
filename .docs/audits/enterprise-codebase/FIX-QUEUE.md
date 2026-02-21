@@ -157,21 +157,54 @@ status: active
 | Issue | API keys in source code (mitigated: files excluded from git) |
 | Fix | Extract to environment variables |
 
-### P1-003: Low test coverage
+### P1-003: Low test coverage (PARTIALLY FIXED)
 
 | Field | Value |
 |-------|-------|
 | Scope | Core: 4 tests/167 files (2.4%), Node: 0 tests, CLI: 7 test files |
 | Issue | Critical paths untested: JsonBuilder, YamlBuilder, Runtime, Operator, Tool classes |
-| Fix | Incremental test coverage plan |
+| Fix (partial) | **FIXED**: MergerTest (3 errors → 0, Reflection-based), TomlBuilderTest (2 errors → 0, removed stale `->build()` chain), Merger stale-index bug (1 failure → 0, rebuild index after splice). Full suite: 19/19 PASS. |
+| Remaining | Incremental test coverage plan for untested critical paths |
+| Status | **PARTIALLY FIXED** |
+| Validate | `composer test` = 19 tests, 38 assertions, 0 failures |
 
-### P1-004: Swallowing catch blocks in archetypes
+### P1-003a: MergerTest broken — protected handle()
+
+| Field | Value |
+|-------|-------|
+| File | `core/tests/MergerTest.php:33,85,149` |
+| Issue | Tests call `(new Merger($structure))->handle()` but `handle()` is `protected` |
+| Fix | Added `merge()` helper using `ReflectionMethod` — standard PHPUnit pattern for testing internals |
+| Status | **FIXED** |
+
+### P1-003b: TomlBuilderTest broken — from() returns string
+
+| Field | Value |
+|-------|-------|
+| File | `core/tests/TomlBuilderTest.php:37,75` |
+| Issue | `TomlBuilder::from($data)->build()` — `from()` returns `string`, chain `->build()` is error |
+| Fix | Removed `->build()` — `from()` already returns the built string |
+| Status | **FIXED** |
+
+### P1-003c: Merger stale-index bug
+
+| Field | Value |
+|-------|-------|
+| File | `core/src/Merger.php:190` |
+| Issue | `buildChildrenIndex()` built once, but `array_splice` shifts positions — subsequent lookups hit wrong elements |
+| Fix | Added `$index = $this->buildChildrenIndex($current)` after splice to rebuild stale index |
+| Size | 1 line |
+| Status | **FIXED** |
+| Validate | `composer test` — testPurposeNodesRemainGrouped now PASS |
+
+### ~~P1-004~~: Catch blocks in archetypes (RECLASSIFIED to P2)
 
 | Field | Value |
 |-------|-------|
 | Files | `CommandArchetype.php:75`, `McpArchitecture.php:44,87` |
-| Issue | Catch blocks that may swallow significant errors |
-| Fix | Analyze and add appropriate error handling |
+| Original issue | Classified as "swallowing catch blocks" |
+| Actual issue | Same VarExporter graceful degradation pattern as CompileStandardsTrait (P0-005/P0-006). CommandArchetype uses `unset()` (drops unserializable args), McpArchitecture uses `"unserializable_argument"` placeholder. Both are correct for string-formatting utility methods. |
+| Status | **Reclassified** — not swallowing, not P1. Consider adding observability logging (P2). |
 
 ### P1-005: Missing root composer scripts
 
@@ -179,7 +212,9 @@ status: active
 |-------|-------|
 | File | `composer.json` (root) |
 | Issue | No `test` or `analyse` scripts — CLAUDE.md iron rules reference them as CRITICAL |
-| Fix | Add scripts that proxy to core/cli test commands |
+| Fix | Added `"test": "cd core && ./vendor/bin/phpunit"` and `"analyse": "cd core && ./vendor/bin/phpstan analyse"` |
+| Status | **FIXED** |
+| Validate | `composer test` = 19/19 PASS, `composer analyse` = [OK] No errors |
 
 ## P2 — Nice to Have (Backlog)
 
@@ -207,14 +242,24 @@ status: active
 | Issue | `error_log()` for profiling (gated by `BRAIN_PROFILE` env var) |
 | Fix | Acceptable for now, consider structured logging later |
 
+### NEW: strict_types quality gate
+
+| Field | Value |
+|-------|-------|
+| File | `scripts/audit-enterprise.sh` (Check 13) |
+| Issue | No automated enforcement of `declare(strict_types=1)` — P0-001 was this exact regression |
+| Fix | Added Check 13: scans all PHP files in core/src, node/, scripts/*.php for `declare(strict_types=1)` in first 5 lines. FAIL category = blocking |
+| Status | **IMPLEMENTED** |
+| Validate | `audit-enterprise.sh` Check 13 = PASS |
+
 ## Summary
 
 | Priority | Total | Fixed | Reclassified | Open |
 |----------|-------|-------|--------------|------|
 | P0 | 12 | 10 | 2 (to P2) | 0 |
-| P1 | 5 | 0 | 0 | 5 |
-| P2 | 3+2 | 0 | 0 | 5 |
-| **Total** | **20** | **10** | **2** | **10** |
+| P1 | 8 | 4 | 1 (to P2) | 3 |
+| P2 | 3+2+1 | 0 | 0 | 6 |
+| **Total** | **23** | **14** | **3** | **9** |
 
 ### Audit Check Coverage
 
@@ -230,3 +275,8 @@ status: active
 | P0-010 (phpstan) | `audit-enterprise.sh` Check 12 (phpstan) + CI blocking step |
 | P0-011 (faker→dev) | `audit-enterprise.sh` Check 11 (dev deps in prod) |
 | P0-012 (self→static) | `audit-enterprise.sh` Check 9 (trait LSB) |
+| P1-003a (MergerTest) | `composer test` — PHPUnit blocks on error (Check 2) |
+| P1-003b (TomlBuilderTest) | `composer test` — PHPUnit blocks on error (Check 2) |
+| P1-003c (Merger stale-index) | `composer test` — testPurposeNodesRemainGrouped (Check 2) |
+| P1-005 (root scripts) | `composer test` / `composer analyse` existence (manual) |
+| NEW (strict_types gate) | `audit-enterprise.sh` Check 13 (strict_types) |

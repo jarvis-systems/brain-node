@@ -17,6 +17,7 @@
 #   - Known typos (Standarts→Standards)
 #   - Dev dependencies in production require
 #   - PHPStan static analysis
+#   - Missing declare(strict_types=1)
 #
 # Output: dist/audit-report.json + stdout summary
 #
@@ -93,7 +94,7 @@ add_category() {
 
 # ── Check 1: PHP syntax ──────────────────────────────────────────────────
 
-log "${BOLD}[1/12] PHP syntax check${NC}"
+log "${BOLD}[1/13] PHP syntax check${NC}"
 
 PHP_ERRORS=0
 PHP_FINDINGS="[]"
@@ -130,7 +131,7 @@ add_category "php-syntax" "$([ $PHP_ERRORS -eq 0 ] && echo pass || echo fail)" "
 
 # ── Check 2: PHPUnit (if available) ─────────────────────────────────────
 
-log "${BOLD}[2/12] PHPUnit tests${NC}"
+log "${BOLD}[2/13] PHPUnit tests${NC}"
 
 TEST_FINDINGS="[]"
 TEST_COUNT=0
@@ -145,11 +146,11 @@ if [[ -f "$PROJECT_ROOT/core/vendor/bin/phpunit" ]]; then
 else
     log "  ${YELLOW}SKIP${NC} PHPUnit not installed (run: cd core && composer install)"
 fi
-add_category "phpunit" "$([ $TEST_COUNT -eq 0 ] && echo pass || echo warn)" "$TEST_COUNT" "$TEST_FINDINGS"
+add_category "phpunit" "$([ $TEST_COUNT -eq 0 ] && echo pass || echo fail)" "$TEST_COUNT" "$TEST_FINDINGS"
 
 # ── Check 3: Silent catch blocks ────────────────────────────────────────
 
-log "${BOLD}[3/12] Silent catch blocks${NC}"
+log "${BOLD}[3/13] Silent catch blocks${NC}"
 
 CATCH_FINDINGS="[]"
 CATCH_COUNT=0
@@ -209,7 +210,7 @@ add_category "silent-catches" "$([ $CATCH_COUNT -eq 0 ] && echo pass || echo war
 
 # ── Check 4: Debug artifacts ────────────────────────────────────────────
 
-log "${BOLD}[4/12] Debug artifacts${NC}"
+log "${BOLD}[4/13] Debug artifacts${NC}"
 
 DEBUG_FINDINGS="[]"
 DEBUG_COUNT=0
@@ -245,7 +246,7 @@ add_category "debug-artifacts" "$([ $DEBUG_COUNT -eq 0 ] && echo pass || echo wa
 
 # ── Check 5: TODO/FIXME markers ────────────────────────────────────────
 
-log "${BOLD}[5/12] TODO/FIXME markers${NC}"
+log "${BOLD}[5/13] TODO/FIXME markers${NC}"
 
 TODO_FINDINGS="[]"
 TODO_COUNT=0
@@ -277,7 +278,7 @@ add_category "todo-fixme" "$([ $TODO_COUNT -eq 0 ] && echo pass || echo info)" "
 
 # ── Check 6: Unsafe patterns ───────────────────────────────────────────
 
-log "${BOLD}[6/12] Unsafe patterns (eval/shell_exec/die/exit)${NC}"
+log "${BOLD}[6/13] Unsafe patterns (eval/shell_exec/die/exit)${NC}"
 
 UNSAFE_FINDINGS="[]"
 UNSAFE_COUNT=0
@@ -324,7 +325,7 @@ add_category "unsafe-patterns" "$([ $UNSAFE_COUNT -eq 0 ] && echo pass || echo w
 
 # ── Check 7: Shell script safety ────────────────────────────────────────
 
-log "${BOLD}[7/12] Shell script safety headers${NC}"
+log "${BOLD}[7/13] Shell script safety headers${NC}"
 
 SHELL_FINDINGS="[]"
 SHELL_COUNT=0
@@ -352,7 +353,7 @@ add_category "shell-safety" "$([ $SHELL_COUNT -eq 0 ] && echo pass || echo warn)
 
 # ── Check 8: No-op escape methods ───────────────────────────────────────
 
-log "${BOLD}[8/12] No-op escape method detection${NC}"
+log "${BOLD}[8/13] No-op escape method detection${NC}"
 
 NOOP_FINDINGS="[]"
 NOOP_COUNT=0
@@ -390,7 +391,7 @@ add_category "noop-escape" "$([ $NOOP_COUNT -eq 0 ] && echo pass || echo warn)" 
 
 # ── Check 9: self:: in trait files ─────────────────────────────────────
 
-log "${BOLD}[9/12] Late static binding in traits${NC}"
+log "${BOLD}[9/13] Late static binding in traits${NC}"
 
 LSB_FINDINGS="[]"
 LSB_COUNT=0
@@ -417,7 +418,7 @@ add_category "trait-lsb" "$([ $LSB_COUNT -eq 0 ] && echo pass || echo warn)" "$L
 
 # ── Check 10: Known typos ──────────────────────────────────────────────
 
-log "${BOLD}[10/12] Known typos in codebase${NC}"
+log "${BOLD}[10/13] Known typos in codebase${NC}"
 
 TYPO_FINDINGS="[]"
 TYPO_COUNT=0
@@ -447,7 +448,7 @@ add_category "known-typos" "$([ $TYPO_COUNT -eq 0 ] && echo pass || echo fail)" 
 
 # ── Check 11: Dev deps in production require ───────────────────────────
 
-log "${BOLD}[11/12] Dev dependencies in production require${NC}"
+log "${BOLD}[11/13] Dev dependencies in production require${NC}"
 
 DEVDEP_FINDINGS="[]"
 DEVDEP_COUNT=0
@@ -478,7 +479,7 @@ add_category "dev-deps-prod" "$([ $DEVDEP_COUNT -eq 0 ] && echo pass || echo fai
 
 # ── Check 12: PHPStan (static analysis) ───────────────────────────────
 
-log "${BOLD}[12/12] PHPStan static analysis${NC}"
+log "${BOLD}[12/13] PHPStan static analysis${NC}"
 
 PHPSTAN_FINDINGS="[]"
 PHPSTAN_COUNT=0
@@ -494,6 +495,45 @@ else
     log "  ${YELLOW}SKIP${NC} PHPStan not installed (run: cd core && composer install)"
 fi
 add_category "phpstan" "$([ $PHPSTAN_COUNT -eq 0 ] && echo pass || echo fail)" "$PHPSTAN_COUNT" "$PHPSTAN_FINDINGS"
+
+# ── Check 13: strict_types declaration ─────────────────────────────────
+
+log "${BOLD}[13/13] Missing declare(strict_types=1)${NC}"
+
+STRICT_FINDINGS="[]"
+STRICT_COUNT=0
+
+# Every PHP file in core/src, node/, scripts/*.php must have declare(strict_types=1)
+while IFS= read -r -d '' file; do
+    relative="${file#$PROJECT_ROOT/}"
+    [[ "$relative" == vendor/* ]] && continue
+    [[ "$relative" == */vendor/* ]] && continue
+    # Check first 5 lines for strict_types declaration
+    if ! head -5 "$file" 2>/dev/null | grep -q 'declare(strict_types=1)'; then
+        STRICT_COUNT=$((STRICT_COUNT + 1))
+        STRICT_FINDINGS=$(echo "$STRICT_FINDINGS" | jq \
+            --arg file "$relative" \
+            '. + [{"file": $file, "message": "Missing declare(strict_types=1)"}]')
+        log "  ${RED}FAIL${NC} $relative — missing strict_types"
+    fi
+done < <(find "$PROJECT_ROOT/core/src" "$PROJECT_ROOT/node" -name '*.php' -print0 2>/dev/null)
+
+# Also check scripts/*.php
+while IFS= read -r -d '' file; do
+    relative="${file#$PROJECT_ROOT/}"
+    if ! head -5 "$file" 2>/dev/null | grep -q 'declare(strict_types=1)'; then
+        STRICT_COUNT=$((STRICT_COUNT + 1))
+        STRICT_FINDINGS=$(echo "$STRICT_FINDINGS" | jq \
+            --arg file "$relative" \
+            '. + [{"file": $file, "message": "Missing declare(strict_types=1)"}]')
+        log "  ${RED}FAIL${NC} $relative — missing strict_types"
+    fi
+done < <(find "$PROJECT_ROOT/scripts" -maxdepth 1 -name '*.php' -print0 2>/dev/null)
+
+if [[ $STRICT_COUNT -eq 0 ]]; then
+    log "  ${GREEN}PASS${NC} All PHP files declare strict_types"
+fi
+add_category "strict-types" "$([ $STRICT_COUNT -eq 0 ] && echo pass || echo fail)" "$STRICT_COUNT" "$STRICT_FINDINGS"
 
 # ── Output JSON report ──────────────────────────────────────────────────
 
