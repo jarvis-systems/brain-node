@@ -15,6 +15,7 @@ Prove enterprise quality in 2-3 minutes. Copy-paste commands, observe green gate
 
 - Quad-mode stabilization window active (no parallel agents running)
 - Worktree clean: `git status --porcelain` returns empty
+- Repo boundary confirmed: `git rev-parse --show-toplevel` returns root repo path. If demo touches core/ or cli/, verify sub-repo boundary: `cd core && git rev-parse --show-toplevel && cd ..`. Three independent repos share the disk — see `.docs/architecture/repo-topology.md`.
 - All dependencies installed (`composer install` in core/ and cli/)
 
 ## Demo Steps

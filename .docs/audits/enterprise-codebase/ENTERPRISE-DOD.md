@@ -93,6 +93,7 @@ All 19 checks in `audit-enterprise.sh` must PASS or WARN (no FAIL):
 - [ ] Benchmark scenarios cover new features (if applicable)
 - [ ] Demo script updated if public API changed
 - [ ] **Worktree isolation (when quad-mode active):** agents run in dedicated worktrees, not root repo; no cross-agent writes; artifacts local to worktree; no force push. See `.docs/product/17-worktree-isolation-contract.md`. Evidence: `git worktree list` + clean root `git status`.
+- [ ] **Repo boundary preflight (manual):** before editing, confirm correct repo root. Three independent repos share the disk — edits must be committed in the owning repo. Commands: `git rev-parse --show-toplevel` (from file's directory); for sub-repos: `cd core && git rev-parse --show-toplevel` / `cd cli && git rev-parse --show-toplevel`. See `.docs/architecture/repo-topology.md`.
 
 ## Quad-Mode Drift Policy
 
