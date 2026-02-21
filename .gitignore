@@ -4,14 +4,14 @@ vendor
 core
 cli
 memory
-.claude
-.mcp.json
 composer.lock
 brain.lock
 dist
 upload.sh
-settings.json
 
 # Build outputs (compiled artifacts from brain compile)
 AGENTS.md
 GEMINI.md
+.mcp.json
+.claude
+settings.json
