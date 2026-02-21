@@ -311,7 +311,7 @@ $this->include(NewInclude::class);
 - **Includes:** Compile-time merging (not runtime)
 - **Merger:** Flattens include chains to associative array
 - **XmlBuilder:** Compact XML (no tabs, only newlines)
-- **Testing:** MergerTest, XmlBuilderTest, JsonBuilderTest, LegacyParityTest
+- **Testing:** MergerTest, XmlBuilderTest, TomlBuilderTest, CompilationOutputTest, BuilderDeterminismTest, MergerInvariantsTest, CompileIdempotencyTest, NodeIntegrityTest, McpSchemaValidatorTest
 
 ## Output Format
 

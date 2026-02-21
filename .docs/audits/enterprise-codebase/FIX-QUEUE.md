@@ -304,14 +304,46 @@ status: active
 | Status | **FIXED** |
 | Validate | `brain make:mcp vector-memory --force` → generated file contains `getcwd()` not hardcoded path; `audit-enterprise.sh` Check 15 = PASS |
 
+### P2-005: VarExporter catches lack observability
+
+| Field | Value |
+|-------|-------|
+| Files | `CompileStandardsTrait.php`, `TaskTool.php`, `McpArchitecture.php`, `CommandArchetype.php` |
+| Issue | 9 catch blocks with `[unserializable]` fallback but no logging — silent degradation |
+| Fix | Added `logDegradation()` helper (CompileStandardsTrait) + inline `error_log()` (McpArchitecture, CommandArchetype). Gated by `BRAIN_COMPILE_DEBUG` env. Added `VarExporterDegradationTest` (8 tests). Added audit Check 16 (degradation observability). |
+| Status | **FIXED** |
+| Validate | `BRAIN_COMPILE_DEBUG=1 brain compile 2>&1 | grep brain-compile` + `audit-enterprise.sh` Check 16 = PASS |
+
+### P2-006: LegacyParityTest reference in CLAUDE.md
+
+| Field | Value |
+|-------|-------|
+| File | `CLAUDE.md:314` |
+| Issue | Documentation lists `LegacyParityTest` as existing test, but file never existed |
+| Fix | Removed false reference, replaced with actual 9 test file names |
+| Status | **FIXED** |
+| Validate | `grep LegacyParityTest CLAUDE.md` = no matches in Testing section |
+
+### P2-007: docs validation fails (1 invalid)
+
+| Field | Value |
+|-------|-------|
+| File | `.docs/DocDiscovery/deep-research-report-system-prompting.md` |
+| Issue | Missing YAML front matter — `brain docs --validate` reports 1 invalid |
+| Fix | Added YAML front matter (name, description, type, date) |
+| Status | **FIXED** |
+| Validate | `brain docs --validate` → 0 invalid |
+
 ## Summary
 
 | Priority | Total | Fixed | Reclassified | Open |
 |----------|-------|-------|--------------|------|
 | P0 | 15 | 13 | 2 (to P2) | 0 |
 | P1 | 8 | 7 | 1 (to P2) | 0 |
-| P2 | 3+2+1+1 | 3 | 0 | 4 |
-| **Total** | **27** | **23** | **3** | **4** |
+| P2 | 3+2+1+1+3 | 6 | 0 | 3 |
+| **Total** | **30** | **26** | **3** | **3** |
+
+Remaining P2 open: P2-003 (error_log in ConvertCommand — acceptable, env-gated), git history cleanup, DocChallenge.md paths.
 
 ### Audit Check Coverage
 
@@ -349,3 +381,6 @@ status: active
 | P2-002 (concurrency) | `grep -c 'concurrency:' .github/workflows/*.yml` = 3 (manual/PR review) |
 | NEW (pre-pub checklist) | `.docs/product/10-pre-publication.md` — kill-switch before any public release |
 | P2-004 (hardcoded paths) | `audit-enterprise.sh` Check 15 (hardcoded user paths in tracked files) + `exportWithDynamicPaths()` in generator |
+| P2-005 (observability) | `audit-enterprise.sh` Check 16 (degradation observability) + `VarExporterDegradationTest` |
+| P2-006 (LegacyParityTest) | `grep LegacyParityTest CLAUDE.md` = no matches |
+| P2-007 (docs validation) | `brain docs --validate` → 0 invalid |
