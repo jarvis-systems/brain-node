@@ -426,6 +426,18 @@ No changes needed. Template is ready for Step C3.
 
 **Status:** CLOSED. Old values are dead. Redaction rule in effect.
 
+## Current State: History Dirty (Mitigated)
+
+As of 2026-02-21, git history contains leaked credential patterns:
+
+- **Matches:** 10 (via `scan-secrets-history.sh`, excluding docs/scripts noise)
+- **Commits:** 6 (`89f7e88`, `40afe0d`, `2b54793`, `375e8bd`, `002a157`, `ad73b3d`)
+- **Files:** 5 (`.env`, `.env.example`, `.mcp.json`, `node/Mcp/Context7Mcp.php`, `settings.json`)
+
+**Operational risk: NEUTRALIZED.** All leaked credentials have been rotated or revoked at provider consoles (incident CLOSED). Old values return 401/403. HEAD is clean (`scan-secrets.sh` = 0, `audit-enterprise.sh` PASS:18).
+
+**History cleanup: DEFERRED.** No BFG/force-push — private repo, dead credentials. Cleanup happens naturally via Option C (new canon repo) when X-Brain migration proceeds. Tracked as FIX-QUEUE P2-008.
+
 ## References
 
 - Credential inventory: `.docs/product/09-secrets.md` § "Credential Inventory"

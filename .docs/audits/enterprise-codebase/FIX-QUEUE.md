@@ -334,6 +334,20 @@ status: active
 | Status | **FIXED** |
 | Validate | `brain docs --validate` → 0 invalid |
 
+### P2-008: History contamination (secrets in old commits)
+
+| Field | Value |
+|-------|-------|
+| Scope | Git history contains secret patterns in 6 commits across 5 files |
+| Evidence | `scan-secrets-history.sh`: TOTAL_MATCHES=10, AFFECTED_COMMITS=6, AFFECTED_FILES=5 (2026-02-21) |
+| Affected commits | `89f7e88`, `40afe0d`, `2b54793`, `375e8bd`, `002a157`, `ad73b3d` |
+| Affected files | `.env`, `.env.example`, `.mcp.json`, `node/Mcp/Context7Mcp.php`, `settings.json` |
+| Mitigation | All leaked credentials rotated/revoked (incident CLOSED 2026-02-21). HEAD is clean (`scan-secrets.sh` = 0). |
+| Decision | No BFG now (private repo, creds dead). Cleanup via Option C (new canon repo) when X-Brain migration happens. |
+| Status | **MITIGATED** — operational risk neutralized, history cleanup deferred |
+| Validate | `bash scripts/scan-secrets-history.sh --quiet` → TOTAL_MATCHES=10 (stable baseline) |
+| Reference | `.docs/product/16-security-3.0-playbook.md` § "Current State: History Dirty (Mitigated)" |
+
 ## Refactor Batches
 
 ### Refactor Batch 1 (commit 08124c3)
@@ -471,7 +485,7 @@ Regression prevention: `audit-enterprise.sh` Check 18 (mcp-schema-bypass) + `Nod
 | Cat-B | 2 | 2 | 0 | 0 |
 | **Total** | **33** | **29** | **3** | **3** |
 
-Remaining P2 open: P2-003 (error_log in ConvertCommand — acceptable, env-gated), git history cleanup, DocChallenge.md paths.
+Remaining P2 open: P2-003 (error_log in ConvertCommand — acceptable, env-gated), P2-008 (history contamination — mitigated, cleanup deferred to Option C), DocChallenge.md paths.
 
 **Non-P0/P1 fixes (contract consistency):** commands-no-includes rule amended (false positive eliminated), AgentArchetype::id() and McpArchitecture::id() silent fallbacks replaced with RuntimeException (compile-time safety), 7 script shebangs normalized, Category B MCP schema bypass annotated (2 sites).
 
