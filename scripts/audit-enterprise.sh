@@ -220,6 +220,7 @@ DEBUG_FINDINGS="[]"
 DEBUG_COUNT=0
 
 # Search for dd(), dump(), var_dump(), print_r() — excluding compiled output and vendor
+# CLI scanned for dd()/var_dump() only — dump() is intentional --dump CLI feature
 while IFS=: read -r file line content; do
     [[ -z "$file" ]] && continue
     relative="${file#$PROJECT_ROOT/}"
@@ -234,6 +235,11 @@ while IFS=: read -r file line content; do
     # Skip legitimate library method calls (Yaml::dump, ->dump, etc.)
     [[ "$content" == *"::dump("* ]] && continue
     [[ "$content" == *"->dump("* ]] && continue
+    # Skip commented-out debug lines
+    local trimmed="${content#"${content%%[![:space:]]*}"}"
+    [[ "$trimmed" == //* ]] && continue
+    # Skip dump method definitions
+    [[ "$content" == *"function dump("* ]] && continue
     DEBUG_COUNT=$((DEBUG_COUNT + 1))
     DEBUG_FINDINGS=$(echo "$DEBUG_FINDINGS" | jq \
         --arg file "$relative" \
@@ -241,7 +247,10 @@ while IFS=: read -r file line content; do
         --arg content "$(echo "$content" | head -c 200)" \
         '. + [{"file": $file, "line": ($line | tonumber), "content": $content}]')
     log "  ${YELLOW}WARN${NC} $relative:$line"
-done < <(grep -rn '\bvar_dump\s*(\|dump\s*(\|print_r\s*(\|\bdd\s*(' "$PROJECT_ROOT/core/src" "$PROJECT_ROOT/node" "$PROJECT_ROOT/scripts" --include='*.php' 2>/dev/null || true)
+done < <(
+    grep -rn '\bvar_dump\s*(\|dump\s*(\|print_r\s*(\|\bdd\s*(' "$PROJECT_ROOT/core/src" "$PROJECT_ROOT/node" "$PROJECT_ROOT/scripts" --include='*.php' 2>/dev/null || true
+    grep -rn '\bvar_dump\s*(\|\bdd\s*(' "$PROJECT_ROOT/cli/src" --include='*.php' 2>/dev/null || true
+)
 
 if [[ $DEBUG_COUNT -eq 0 ]]; then
     log "  ${GREEN}PASS${NC} No debug artifacts"
