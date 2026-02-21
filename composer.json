@@ -32,9 +32,18 @@
     "benchmark:regression": "bash scripts/benchmark-regression-check.sh",
     "demo:enterprise": "bash scripts/demo-enterprise.sh"
   },
+  "repositories": [
+    {
+      "type": "path",
+      "url": "./core",
+      "options": {
+        "symlink": true
+      }
+    }
+  ],
   "require": {
     "php": "^8.2",
-    "jarvis-brain/core": "^v0.0.1",
+    "jarvis-brain/core": "*",
     "symfony/yaml": "^7.3",
     "yosymfony/toml": "^1.0",
     "ext-posix": "*",

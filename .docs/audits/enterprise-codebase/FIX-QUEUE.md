@@ -355,6 +355,24 @@ status: active
 | CompilationHelpersTrait return types | **Already complete** — all 16 methods typed (`: static`) | Verified: false finding from audit agent |
 | TestMcp.php cleanup | Deleted untracked stub from `brain make:mcp Test` (empty defaultCommand()) | 75/75 tests PASS after removal |
 
+### Refactor Batch 3
+
+| Item | Change | Proof |
+|------|--------|-------|
+| MDTest (30 tests, 90 assertions) | New test file covering all 24 MD static methods + 4 constants: formatting (bold/code/caps/critical), separators, flow/when/ifThen/alt, list builders (bullet/numbered/step), headers (level clamping 0→1, 7→6), kv/define/severity/fileRef, table helpers, validation result, autoCode (status wrapping + already-backticked skip + case sensitivity + quoted skip), mcpTool (with/without args), fromArray (flat/nested/recursive/headers/empty/start offset), determinism | 153/153 PASS |
+| CoreTest (28 tests, 52 assertions) | New test file covering Core variable store + env resolution: setVariable/getVariable (exact key, UPPER_CASE fallback, exact-over-upper precedence, missing→default, closure default via value()), mergeVariables (overwrite + multi-array later-wins), getVariables/allVariables (prefix filter), basePath (relative/absolute/array/empty segment filter), version() (reads composer.json + caches), getEnv type casting (null/int/float/bool-true/bool-false/JSON array/JSON object/plain string/uppercase name), hasEnv, isDebug (BRAIN_CORE_DEBUG + DEBUG), allEnv filter, CompileDto null roundtrip, determinism | 153/153 PASS |
+| VarChainTest (20 tests, 30 assertions) | New test file with StubArchitecture subclass + Container+Facade bootstrap. Full resolution chain: ENV→Store→Meta→Method Hook→Default. ENV wins over store, store wins over meta, meta + hook transforms, ENV skips hook, default fallback. varIs strict (=== rejects type mismatch) and loose (== accepts). varIsPositive (true/1/"1" match, false/0/"" reject). varIsNegative (false/0/"" match, true/1 reject). allVars merges variables+env. groupVars strips prefix. disableByDefault returns false. Determinism proof. | 153/153 PASS |
+
+### Refactor Batch 4
+
+| Item | Change | Proof |
+|------|--------|-------|
+| Guideline::workflow() dead method | **REMOVED** — empty method with 0 callers, -4 lines from `core/src/Blueprints/Guideline.php` | 197/197 PASS, phpstan 0 errors |
+| BlueprintArchitecture::mutateToString() return type | Added `: mixed` return type annotation in `core/src/Architectures/BlueprintArchitecture.php:84` | phpstan 0 errors |
+| BlueprintTest (44 tests, 56 assertions) | New test file covering all 4 Blueprint classes: mutateToString (passthrough/array-implode/null/empty-array), defaultElement for IronRule/Guideline/Style/Response, IronRule severity chain (all 4 helpers + string-to-enum + enum-direct + default UNSPECIFIED), IronRule builder fluency (text/why/onViolation return self + array imploding + full chain child accumulation), Guideline (text/example + no-workflow-method contract), Style (language/tone/brevity/formatting fluency + forbiddenPhrases singleton), Response (sections DTO + codeBlocks/patches), BlueprintArchitecture::text append-with-newline, id via set() production pathway, IronRuleSeverityEnum 5-case contract, determinism proof | 197/197 PASS |
+| False lead: McpArchitecture::ksortRecursive() | Audit claimed missing `: void` — **ALREADY HAD IT** at line 69. No change needed. | Source verified |
+| New finding: BlueprintArchitecture::id() broken | `id()` uses property assignment (`$this->id = $id`) which doesn't sync with Dto internal storage. `toArray()` returns null after `id()`. Production code uses `set('id', ...)` via findOrCreateChild — not affected. P2 backlog item. | Test documents production pathway via set() |
+
 ## Summary
 
 | Priority | Total | Fixed | Reclassified | Open |
@@ -397,6 +415,9 @@ Remaining P2 open: P2-003 (error_log in ConvertCommand — acceptable, env-gated
 | NEW (NodeIntegrityTest) | `composer test` — 8 tests: strict_types, attributes, MCP contracts, secrets, pins.json |
 | NEW (CLI phpstan) | `composer analyse` — covers core + CLI (level 0) |
 | NEW (secret scanning) | `scan-secrets.sh` CI gate + `audit-enterprise.sh` Check 14 |
+| NEW (BlueprintTest) | `composer test` — 44 tests: severity chain, builder fluency, mutateToString, defaultElement, id pathway, determinism |
+| Batch 4 (workflow removal) | `composer test` — testGuidelineHasNoWorkflowMethod asserts method_exists = false |
+| Batch 4 (mutateToString type) | `composer analyse` — phpstan enforces `: mixed` return type |
 | NEW (secrets doc) | `.docs/product/09-secrets.md` — threat model, rotation, roadmap |
 | P2-001 (SHA pinning) | `grep -c '@v[0-9]' .github/workflows/*.yml` = 0 (manual/PR review) |
 | P2-002 (concurrency) | `grep -c 'concurrency:' .github/workflows/*.yml` = 3 (manual/PR review) |
@@ -405,3 +426,6 @@ Remaining P2 open: P2-003 (error_log in ConvertCommand — acceptable, env-gated
 | P2-005 (observability) | `audit-enterprise.sh` Check 16 (degradation observability) + `VarExporterDegradationTest` |
 | P2-006 (LegacyParityTest) | `grep LegacyParityTest CLAUDE.md` = no matches |
 | P2-007 (docs validation) | `brain docs --validate` → 0 invalid |
+| NEW (MDTest) | `composer test` — 30 tests: all 24 MD static methods, autoCode edge cases, fromArray recursion, determinism |
+| NEW (CoreTest) | `composer test` — 28 tests: variable store semantics, getEnv type casting, basePath contracts, version caching |
+| NEW (VarChainTest) | `composer test` — 20 tests: resolution chain ENV→Store→Meta→Hook→Default, varIs strict/loose, varIsPositive/Negative |

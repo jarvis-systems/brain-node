@@ -27,11 +27,11 @@ status: active
 | 3 | Input Validation | 2 | 2 | -- | 2.0 | MCP schema validator exists (3 modes) but not all methods use it |
 | 4 | Security | 2 | 3 | 2 | 2.3 | ~~No static analysis~~ **FIXED** (phpstan level 0); ~~API keys in MCP files~~ **FIXED** (getenv()); ~~CI actions tag-pinned~~ **FIXED** (SHA-pinned); **NEW**: Secret scanning CI gate, release bundle .mcp.json exclusion, upload.sh/settings.json untracked, threat model doc, CI concurrency guards, pre-publication kill-switch |
 | 5 | Docs Parity | 3 | 3 | -- | 3.0 | ~~`composer test`/`analyse` missing at root~~ **FIXED**; ~~LegacyParityTest referenced but never existed~~ **FIXED** (removed from CLAUDE.md, actual test list updated); ~~docs validation 1 invalid~~ **FIXED** (YAML front matter added); `brain docs --validate` = 0 invalid |
-| 6 | Testability | 3 | 2 | 1 | 2.0 | 75/75 tests, 218 assertions; **NEW Phase 7**: RuntimeTest (9 tests incl. __callStatic resolution), ToolFormatTest (8 tests), VarExporterDegradationTest (8 tests); Node: 8 tests via NodeIntegrityTest covering all contracts; CLI: phpstan level 0; **Refactor Batch 1**: dead code removal (-70 lines), Runtime::__callStatic fix |
+| 6 | Testability | 3 | 2 | 1 | 2.0 | 197/197 tests, 446 assertions; **Refactor Batch 4**: BlueprintTest (44 tests, 56 assertions — IronRule severity chain, builder fluency, mutateToString contract, defaultElement, Guideline/Style/Response builder APIs, id via set(), child accumulation, determinism); **Refactor Batch 3**: MDTest (30), CoreTest (28), VarChainTest (20); Node: 8 tests via NodeIntegrityTest; CLI: phpstan level 0 |
 | 7 | Release Discipline | 3 | 3 | -- | 3.0 | Pinning, manifest, bundle, release CI -- all good |
 | 8 | Operability | 3 | 3 | -- | 3.0 | Benchmarks, runbooks, ops-evidence, demo -- comprehensive |
-| 9 | Footguns | 3 | 3 | -- | 3.0 | ~~Debug artifacts~~ **FIXED**; ~~typo in class name~~ **FIXED**; ~~dead scaffold~~ **FIXED**; ~~hardcoded MCP paths~~ **FIXED** (generator emits getcwd()); **Refactor Batch 2**: awesome-mcp.json `--save-as` → `--as` CLI bug fix |
-| 10 | Maintainability | 3 | 3 | -- | 3.0 | ~~strict_types~~ **FIXED**; ~~CompileStandartsTrait typo~~ **FIXED**; ~~faker in prod~~ **FIXED**; ~~hardcoded paths~~ **FIXED** (generator + test); **Refactor Batch 1**: var-dumper→require-dev (17 prod deps); **Refactor Batch 2**: workspace.json portable paths, both Compilation traits 100% return-typed (verified) |
+| 9 | Footguns | 3 | 3 | -- | 3.0 | ~~Debug artifacts~~ **FIXED**; ~~typo in class name~~ **FIXED**; ~~dead scaffold~~ **FIXED**; ~~hardcoded MCP paths~~ **FIXED** (generator emits getcwd()); **Refactor Batch 2**: awesome-mcp.json `--save-as` → `--as` CLI bug fix; **Refactor Batch 4**: ~~Guideline::workflow() dead method~~ **REMOVED** |
+| 10 | Maintainability | 3 | 3 | -- | 3.0 | ~~strict_types~~ **FIXED**; ~~CompileStandartsTrait typo~~ **FIXED**; ~~faker in prod~~ **FIXED**; ~~hardcoded paths~~ **FIXED** (generator + test); **Refactor Batch 1**: var-dumper→require-dev (17 prod deps); **Refactor Batch 2**: workspace.json portable paths, both Compilation traits 100% return-typed (verified); **Refactor Batch 4**: BlueprintArchitecture::mutateToString() `: mixed` return type added |
 
 **Overall Score: 27.3 / 30 (91.0%)**
 
@@ -83,7 +83,7 @@ No sources of non-determinism found. No `rand()`, `shuffle()`, `mt_rand()`, `arr
 
 | Package | Test Files | Source Files | Tests | Assertions | Status |
 |---------|-----------|--------------|-------|------------|--------|
-| Core | 12 | 167+ | 75 | 218 | 75/75 PASS |
+| Core | 16 | 167+ | 197 | 446 | 197/197 PASS |
 | Node | 0 (tested via Core) | 44 | 8 | 22 | via NodeIntegrityTest |
 | CLI | 7 | ~30+ | ~20 | ~50 | Separate repo + PHPStan level 0 |
 
@@ -115,7 +115,19 @@ No sources of non-determinism found. No `rand()`, `shuffle()`, `mt_rand()`, `arr
 - `VarExporterDegradationTest` (8 tests): closure graceful handling, mixed valid+invalid args, determinism, `logDegradation()` callable, debug logging emission, multiple operator catch paths
 - Suite: 52→75 tests, 125→218 assertions
 
-Remaining gaps: Archetypes, Variable system. CLI runtime tests require Laravel framework.
+**Refactor Batch 3 — Coverage expansion (MD, Core, Variable chain):**
+- `MDTest` (30 tests, 90 assertions): all 24 static methods + 4 constants; autoCode status wrapping, case sensitivity, double-backtick prevention; fromArray recursive builder with header levels; determinism proof
+- `CoreTest` (28 tests, 52 assertions): setVariable/getVariable (exact key, UPPER_CASE fallback, closure default), mergeVariables precedence (later wins), allVariables prefix filter, basePath relative/absolute/array, version() reading + caching, getEnv full type casting (null/int/float/bool/JSON array/JSON object/string), hasEnv, isDebug, allEnv filter, CompileDto roundtrip
+- `VarChainTest` (20 tests, 30 assertions): full resolution order (ENV > Store > Meta > Method Hook > Default), method hook receives meta, ENV skips hook, varIs strict/loose, varIsPositive/Negative with truthy/falsy edge cases, allVars merge, groupVars prefix stripping, disableByDefault contract, determinism proof
+- Suite: 75→153 tests, 218→390 assertions
+
+**Refactor Batch 4 — Blueprint contracts + production code cleanup:**
+- `BlueprintTest` (44 tests, 56 assertions): mutateToString passthrough/array-implode/null/empty-array; defaultElement for all 4 blueprints (rule/guideline/style/response_contract); IronRule severity chain — all 4 helpers (critical/high/medium/low) + string-to-enum + enum-direct + default UNSPECIFIED; IronRule builder fluency — text/why/onViolation return self + array imploding + full chain child accumulation; Guideline builder — text/example fluency + no-workflow-method contract; Style builder — language/tone/brevity/formatting fluency + forbiddenPhrases singleton pattern; Response builder — sections returns DTO + codeBlocks/patches fluency; BlueprintArchitecture::text append-with-newline + array-implode; id via set() (production pathway); determinism proof
+- Production code: Guideline::workflow() dead method **REMOVED** (-4 lines); BlueprintArchitecture::mutateToString() `: mixed` return type added
+- False lead closed: McpArchitecture::ksortRecursive() already has `: void` (audit was wrong)
+- Suite: 153→197 tests, 390→446 assertions
+
+Remaining gaps: XmlBuilder edge cases. CLI runtime tests require Laravel framework.
 
 ### 7. Release Discipline (3/3)
 

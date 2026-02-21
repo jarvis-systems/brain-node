@@ -1,0 +1,20 @@
+{
+  "id": "CMD-002",
+  "title": "Commands: task lifecycle MCP compliance",
+  "difficulty": "L2",
+  "prompt": "Уяви, що ти виконуєш /task:create для нової задачі 'Refactor auth module'. Покажи правильний MCP виклик для створення задачі з тегами і пріоритетом. Формат має бути JSON.",
+  "timeout_s": 60,
+  "max_output_tokens": 1000,
+  "checks": {
+    "required_patterns": [
+      "task_create|mcp__vector-task",
+      "\\{",
+      "title|Refactor",
+      "tag|priority|пріоритет"
+    ],
+    "banned_patterns": [
+      "mcp__vector-task__task_create\\s*\\(",
+      "task_create\\s*\\(\\s*'\\{"
+    ]
+  }
+}
