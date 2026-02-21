@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - 'core/src/**'
+      - 'cli/src/**'
       - '.brain/node/**'
       - 'node/**'
       - 'scripts/**'
@@ -15,6 +16,7 @@ on:
   pull_request:
     paths:
       - 'core/src/**'
+      - 'cli/src/**'
       - '.brain/node/**'
       - 'node/**'
       - 'scripts/**'
@@ -61,9 +63,20 @@ jobs:
         env:
           PIN_STRICT: ${{ vars.PIN_STRICT || '0' }}
 
-      - name: PHPStan static analysis
+      - name: Secret scanning
+        run: bash scripts/scan-secrets.sh
+
+      - name: PHPStan static analysis (core)
         run: composer analyse
         working-directory: core
+
+      - name: Install CLI dependencies
+        run: composer install --no-interaction --prefer-dist
+        working-directory: cli
+
+      - name: PHPStan static analysis (CLI)
+        run: composer analyse
+        working-directory: cli
 
       - name: Enterprise audit (blocking — P0 gate)
         run: bash scripts/audit-enterprise.sh

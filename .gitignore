@@ -9,3 +9,5 @@ memory
 composer.lock
 brain.lock
 dist
+upload.sh
+settings.json

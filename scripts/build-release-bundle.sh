@@ -89,10 +89,9 @@ for FILE in RELEASE.md CHANGELOG.md LICENSE SECURITY.md SUPPORT.md pins.json; do
     fi
 done
 
-# MCP config (compiled)
-if [[ -f ".mcp.json" ]]; then
-    cp .mcp.json "$STAGING/"
-fi
+# .mcp.json is EXCLUDED from bundles — it contains resolved secrets
+# (API keys, tokens) materialized at compile time via getenv().
+# Users must run 'brain compile' locally to generate their own .mcp.json.
 
 # Demo: scripts + scenarios (for demo-enterprise.sh from bundle)
 mkdir -p "$STAGING/scripts"

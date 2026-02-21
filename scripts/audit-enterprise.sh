@@ -18,6 +18,7 @@
 #   - Dev dependencies in production require
 #   - PHPStan static analysis
 #   - Missing declare(strict_types=1)
+#   - Secret patterns in tracked files
 #
 # Output: dist/audit-report.json + stdout summary
 #
@@ -94,7 +95,7 @@ add_category() {
 
 # ── Check 1: PHP syntax ──────────────────────────────────────────────────
 
-log "${BOLD}[1/13] PHP syntax check${NC}"
+log "${BOLD}[1/14] PHP syntax check${NC}"
 
 PHP_ERRORS=0
 PHP_FINDINGS="[]"
@@ -131,7 +132,7 @@ add_category "php-syntax" "$([ $PHP_ERRORS -eq 0 ] && echo pass || echo fail)" "
 
 # ── Check 2: PHPUnit (if available) ─────────────────────────────────────
 
-log "${BOLD}[2/13] PHPUnit tests${NC}"
+log "${BOLD}[2/14] PHPUnit tests${NC}"
 
 TEST_FINDINGS="[]"
 TEST_COUNT=0
@@ -150,7 +151,7 @@ add_category "phpunit" "$([ $TEST_COUNT -eq 0 ] && echo pass || echo fail)" "$TE
 
 # ── Check 3: Silent catch blocks ────────────────────────────────────────
 
-log "${BOLD}[3/13] Silent catch blocks${NC}"
+log "${BOLD}[3/14] Silent catch blocks${NC}"
 
 CATCH_FINDINGS="[]"
 CATCH_COUNT=0
@@ -210,7 +211,7 @@ add_category "silent-catches" "$([ $CATCH_COUNT -eq 0 ] && echo pass || echo war
 
 # ── Check 4: Debug artifacts ────────────────────────────────────────────
 
-log "${BOLD}[4/13] Debug artifacts${NC}"
+log "${BOLD}[4/14] Debug artifacts${NC}"
 
 DEBUG_FINDINGS="[]"
 DEBUG_COUNT=0
@@ -246,7 +247,7 @@ add_category "debug-artifacts" "$([ $DEBUG_COUNT -eq 0 ] && echo pass || echo wa
 
 # ── Check 5: TODO/FIXME markers ────────────────────────────────────────
 
-log "${BOLD}[5/13] TODO/FIXME markers${NC}"
+log "${BOLD}[5/14] TODO/FIXME markers${NC}"
 
 TODO_FINDINGS="[]"
 TODO_COUNT=0
@@ -278,7 +279,7 @@ add_category "todo-fixme" "$([ $TODO_COUNT -eq 0 ] && echo pass || echo info)" "
 
 # ── Check 6: Unsafe patterns ───────────────────────────────────────────
 
-log "${BOLD}[6/13] Unsafe patterns (eval/shell_exec/die/exit)${NC}"
+log "${BOLD}[6/14] Unsafe patterns (eval/shell_exec/die/exit)${NC}"
 
 UNSAFE_FINDINGS="[]"
 UNSAFE_COUNT=0
@@ -325,7 +326,7 @@ add_category "unsafe-patterns" "$([ $UNSAFE_COUNT -eq 0 ] && echo pass || echo w
 
 # ── Check 7: Shell script safety ────────────────────────────────────────
 
-log "${BOLD}[7/13] Shell script safety headers${NC}"
+log "${BOLD}[7/14] Shell script safety headers${NC}"
 
 SHELL_FINDINGS="[]"
 SHELL_COUNT=0
@@ -353,7 +354,7 @@ add_category "shell-safety" "$([ $SHELL_COUNT -eq 0 ] && echo pass || echo warn)
 
 # ── Check 8: No-op escape methods ───────────────────────────────────────
 
-log "${BOLD}[8/13] No-op escape method detection${NC}"
+log "${BOLD}[8/14] No-op escape method detection${NC}"
 
 NOOP_FINDINGS="[]"
 NOOP_COUNT=0
@@ -391,7 +392,7 @@ add_category "noop-escape" "$([ $NOOP_COUNT -eq 0 ] && echo pass || echo warn)" 
 
 # ── Check 9: self:: in trait files ─────────────────────────────────────
 
-log "${BOLD}[9/13] Late static binding in traits${NC}"
+log "${BOLD}[9/14] Late static binding in traits${NC}"
 
 LSB_FINDINGS="[]"
 LSB_COUNT=0
@@ -418,7 +419,7 @@ add_category "trait-lsb" "$([ $LSB_COUNT -eq 0 ] && echo pass || echo warn)" "$L
 
 # ── Check 10: Known typos ──────────────────────────────────────────────
 
-log "${BOLD}[10/13] Known typos in codebase${NC}"
+log "${BOLD}[10/14] Known typos in codebase${NC}"
 
 TYPO_FINDINGS="[]"
 TYPO_COUNT=0
@@ -448,7 +449,7 @@ add_category "known-typos" "$([ $TYPO_COUNT -eq 0 ] && echo pass || echo fail)" 
 
 # ── Check 11: Dev deps in production require ───────────────────────────
 
-log "${BOLD}[11/13] Dev dependencies in production require${NC}"
+log "${BOLD}[11/14] Dev dependencies in production require${NC}"
 
 DEVDEP_FINDINGS="[]"
 DEVDEP_COUNT=0
@@ -479,7 +480,7 @@ add_category "dev-deps-prod" "$([ $DEVDEP_COUNT -eq 0 ] && echo pass || echo fai
 
 # ── Check 12: PHPStan (static analysis) ───────────────────────────────
 
-log "${BOLD}[12/13] PHPStan static analysis${NC}"
+log "${BOLD}[12/14] PHPStan static analysis${NC}"
 
 PHPSTAN_FINDINGS="[]"
 PHPSTAN_COUNT=0
@@ -498,7 +499,7 @@ add_category "phpstan" "$([ $PHPSTAN_COUNT -eq 0 ] && echo pass || echo fail)" "
 
 # ── Check 13: strict_types declaration ─────────────────────────────────
 
-log "${BOLD}[13/13] Missing declare(strict_types=1)${NC}"
+log "${BOLD}[13/14] Missing declare(strict_types=1)${NC}"
 
 STRICT_FINDINGS="[]"
 STRICT_COUNT=0
@@ -534,6 +535,46 @@ if [[ $STRICT_COUNT -eq 0 ]]; then
     log "  ${GREEN}PASS${NC} All PHP files declare strict_types"
 fi
 add_category "strict-types" "$([ $STRICT_COUNT -eq 0 ] && echo pass || echo fail)" "$STRICT_COUNT" "$STRICT_FINDINGS"
+
+# ── Check 14: Secret patterns in tracked files ─────────────────────────
+
+log "${BOLD}[14/14] Secret patterns in tracked files${NC}"
+
+SECRET_FINDINGS="[]"
+SECRET_COUNT=0
+
+# Patterns that indicate leaked secrets
+SECRET_PATTERN='github_pat_[A-Za-z0-9_]{10,}|ctx7sk-[a-f0-9-]{8,}|gsk_[A-Za-z0-9]{10,}|sk-or-v1-[A-Za-z0-9]{10,}'
+
+while IFS= read -r tracked_file; do
+    [[ -z "$tracked_file" ]] && continue
+    # Skip files that legitimately reference patterns
+    case "$tracked_file" in
+        .env.example|*.env.example) continue ;;
+        scripts/scan-secrets.sh) continue ;;
+        scripts/audit-enterprise.sh) continue ;;
+        .docs/*) continue ;;
+        CLAUDE.md) continue ;;
+        .claude/*) continue ;;
+        .opencode/*) continue ;;
+    esac
+    # Scan for secret patterns
+    while IFS=: read -r line_num content; do
+        [[ -z "$line_num" ]] && continue
+        SECRET_COUNT=$((SECRET_COUNT + 1))
+        SECRET_FINDINGS=$(echo "$SECRET_FINDINGS" | jq \
+            --arg file "$tracked_file" \
+            --arg line "$line_num" \
+            --arg content "$(echo "$content" | head -c 80)" \
+            '. + [{"file": $file, "line": ($line | tonumber), "content": $content}]')
+        log "  ${RED}FAIL${NC} $tracked_file:$line_num — secret pattern detected"
+    done < <(grep -nE "$SECRET_PATTERN" "$PROJECT_ROOT/$tracked_file" 2>/dev/null || true)
+done < <(cd "$PROJECT_ROOT" && git ls-files 2>/dev/null)
+
+if [[ $SECRET_COUNT -eq 0 ]]; then
+    log "  ${GREEN}PASS${NC} No secret patterns in tracked files"
+fi
+add_category "secrets" "$([ $SECRET_COUNT -eq 0 ] && echo pass || echo fail)" "$SECRET_COUNT" "$SECRET_FINDINGS"
 
 # ── Output JSON report ──────────────────────────────────────────────────
 

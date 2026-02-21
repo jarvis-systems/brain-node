@@ -165,13 +165,14 @@ status: active
 
 | Field | Value |
 |-------|-------|
-| Scope | Core: 7 test files / 167 source files, Node: 0 tests, CLI: 7 test files |
+| Scope | Core: 8 test files / 167 source files, Node: covered via NodeIntegrityTest, CLI: phpstan level 0 |
 | Issue | Critical paths untested |
 | Fix (batch 1) | **FIXED**: MergerTest (3 errors → 0, Reflection-based), TomlBuilderTest (2 errors → 0, removed stale `->build()` chain), Merger stale-index bug (1 failure → 0, rebuild index after splice). Suite: 19/19 PASS. |
 | Fix (batch 2 — Proof Pack v1) | **NEW**: `BuilderDeterminismTest` (5 tests: XmlBuilder/TomlBuilder idempotency, ordering, newline contract), `MergerInvariantsTest` (4 tests: no child loss, empty includes, 3-level nesting, determinism), `CompilationOutputTest` (13 tests: Store format, Operator format, BrainCLI constants/methods, chaining, determinism). Suite: 40/40 PASS, 95 assertions. |
-| Remaining | Runtime class, Tool classes, Archetypes, Variable system, Node package (0 tests) |
+| Fix (batch 3 — Node + CLI) | **NEW**: `NodeIntegrityTest` (8 tests: strict_types, agent/command/MCP attributes, MCP contracts, no secrets, pins.json). CLI phpstan level 0 (7 ignoreErrors, 2 excludePaths). Suite: 48/48 PASS, 117 assertions. |
+| Remaining | Runtime class, Tool classes, Archetypes, Variable system |
 | Status | **SUBSTANTIALLY IMPROVED** |
-| Validate | `composer test` = 40 tests, 95 assertions, 0 failures |
+| Validate | `composer test` = 48 tests, 117 assertions, 0 failures |
 
 ### P1-003a: MergerTest broken — protected handle()
 
@@ -257,14 +258,44 @@ status: active
 | Status | **IMPLEMENTED** |
 | Validate | `audit-enterprise.sh` Check 13 = PASS |
 
+### P0-013: upload.sh tracked with Packagist API key
+
+| Field | Value |
+|-------|-------|
+| File | `upload.sh:3` |
+| Risk | Live Packagist API key committed to git and tracked |
+| Fix | Added to `.gitignore`, `git rm --cached upload.sh` |
+| Status | **FIXED** |
+| Validate | `git ls-files upload.sh` = empty + `scan-secrets.sh` = 0 |
+
+### P0-014: settings.json tracked with Context7 API key
+
+| Field | Value |
+|-------|-------|
+| File | `settings.json:10` |
+| Risk | Live Context7 API key committed to git and tracked |
+| Fix | Added to `.gitignore`, `git rm --cached settings.json` |
+| Status | **FIXED** |
+| Validate | `git ls-files settings.json` = empty + `scan-secrets.sh` = 0 |
+
+### P0-015: build-release-bundle.sh copies .mcp.json with secrets
+
+| Field | Value |
+|-------|-------|
+| File | `scripts/build-release-bundle.sh:92-95` |
+| Risk | `.mcp.json` contains resolved secrets (API keys), was copied into release tarball |
+| Fix | Removed `.mcp.json` copy block, added comment explaining exclusion |
+| Status | **FIXED** |
+| Validate | `grep -c '.mcp.json' scripts/build-release-bundle.sh` = 0 copy commands |
+
 ## Summary
 
 | Priority | Total | Fixed | Reclassified | Open |
 |----------|-------|-------|--------------|------|
-| P0 | 12 | 10 | 2 (to P2) | 0 |
-| P1 | 8 | 6 | 1 (to P2) | 1 (P1-003 remaining gaps) |
-| P2 | 3+2+1 | 0 | 0 | 6 |
-| **Total** | **23** | **16** | **3** | **7** |
+| P0 | 15 | 13 | 2 (to P2) | 0 |
+| P1 | 8 | 7 | 1 (to P2) | 0 |
+| P2 | 3+2+1 | 0 | 0 | 7 |
+| **Total** | **26** | **20** | **3** | **7** |
 
 ### Audit Check Coverage
 
@@ -291,3 +322,10 @@ status: active
 | Proof Pack v1 (compilation) | `composer test` — CompilationOutputTest (13 tests, format stability + determinism) |
 | NEW (strict_types gate) | `audit-enterprise.sh` Check 13 (strict_types) |
 | NEW (ADV-007) | `benchmark-llm-suite.sh` — MCP credential extraction scenario |
+| P0-013 (upload.sh secrets) | `scan-secrets.sh` + `audit-enterprise.sh` Check 14 (secrets) |
+| P0-014 (settings.json secrets) | `scan-secrets.sh` + `audit-enterprise.sh` Check 14 (secrets) |
+| P0-015 (bundle .mcp.json) | `build-release-bundle.sh` — .mcp.json excluded |
+| NEW (NodeIntegrityTest) | `composer test` — 8 tests: strict_types, attributes, MCP contracts, secrets, pins.json |
+| NEW (CLI phpstan) | `composer analyse` — covers core + CLI (level 0) |
+| NEW (secret scanning) | `scan-secrets.sh` CI gate + `audit-enterprise.sh` Check 14 |
+| NEW (secrets doc) | `.docs/product/09-secrets.md` — threat model, rotation, roadmap |

@@ -25,15 +25,15 @@ status: active
 | 1 | Determinism | 3 | 3 | -- | 3.0 | No rand/shuffle; compile is idempotent (verified S12) |
 | 2 | Error Handling | 2 | 2 | -- | 2.0 | Catch blocks have fallback code (not silent); P1-004 reclassified to P2 (same VarExporter pattern) |
 | 3 | Input Validation | 2 | 2 | -- | 2.0 | MCP schema validator exists (3 modes) but not all methods use it |
-| 4 | Security | 2 | 2 | 1 | 1.7 | ~~No static analysis~~ **FIXED** (phpstan level 0); ~~API keys in MCP files~~ **FIXED** (getenv()) |
+| 4 | Security | 2 | 3 | 2 | 2.3 | ~~No static analysis~~ **FIXED** (phpstan level 0); ~~API keys in MCP files~~ **FIXED** (getenv()); **NEW**: Secret scanning CI gate, release bundle .mcp.json exclusion, upload.sh/settings.json untracked, threat model doc |
 | 5 | Docs Parity | 3 | 2 | -- | 2.5 | ~~`composer test`/`analyse` missing at root~~ **FIXED** — scripts added, both pass |
-| 6 | Testability | 2 | 0 | 1 | 1.0 | ~~MergerTest/TomlBuilderTest broken~~ **FIXED** — 40/40 pass (95 assertions); Proof Pack: builder determinism, merger invariants, compilation output; strict_types CI gate |
+| 6 | Testability | 2 | 1 | 1 | 1.5 | ~~MergerTest/TomlBuilderTest broken~~ **FIXED** — 48/48 pass (117 assertions); Proof Pack: builder determinism, merger invariants, compilation output; **NEW**: NodeIntegrityTest (8 tests: strict_types, attributes, MCP contracts, secrets, pins.json); CLI phpstan level 0 |
 | 7 | Release Discipline | 3 | 3 | -- | 3.0 | Pinning, manifest, bundle, release CI -- all good |
 | 8 | Operability | 3 | 3 | -- | 3.0 | Benchmarks, runbooks, ops-evidence, demo -- comprehensive |
 | 9 | Footguns | 3 | 2 | -- | 2.5 | ~~Debug artifacts~~ **FIXED**; ~~typo in class name~~ **FIXED**; ~~dead scaffold~~ **FIXED** |
 | 10 | Maintainability | 3 | 2 | -- | 2.5 | ~~strict_types~~ **FIXED**; ~~CompileStandartsTrait typo~~ **FIXED**; ~~faker in prod~~ **FIXED** |
 
-**Overall Score: 23.2 / 30 (77.3%)**
+**Overall Score: 24.3 / 30 (81.0%)**
 
 ## Category Details
 
@@ -51,13 +51,18 @@ No sources of non-determinism found. No `rand()`, `shuffle()`, `mt_rand()`, `arr
 
 `McpSchemaTrait` provides 3 validation modes (`callJson`, `callValidatedJson`, schema generation). ~~`self::callJson()` at line 28 uses early static binding~~ **FIXED** — now uses `static::` for proper LSB. Not all MCP call sites use validated variants.
 
-### 4. Security (1.3/3)
+### 4. Security (2.3/3)
 
 - ~~No static analysis tool~~ **FIXED** — phpstan 2.x installed in core (level 0, 4 documented suppressions), `composer analyse` in CI
 - ~~API keys hardcoded in `GithubMcp.php:21` and `Context7Mcp.php:24`~~ **FIXED** — migrated to `getenv()`, credentials in `.brain/.env` (gitignored), `.brain/.env.example` documented
 - CI actions pinned by tag (`@v4`) not SHA -- supply chain risk
 - ~~`fakerphp/faker` in CLI production `require`~~ **FIXED** — moved to `require-dev`, dead `fake()` function removed
 - ADV-007 benchmark scenario added for MCP credential extraction attempts
+- **NEW**: `scripts/scan-secrets.sh` — standalone secret scanner (CI gate, blocking)
+- **NEW**: `audit-enterprise.sh` Check 14 — secret pattern scanning in tracked files
+- **NEW**: `upload.sh` and `settings.json` untracked from git (contained live API keys)
+- **NEW**: `build-release-bundle.sh` — `.mcp.json` excluded from release bundles (contained resolved secrets)
+- **NEW**: `.docs/product/09-secrets.md` — threat model, do/don't, key rotation, roadmap
 
 ### 5. Docs Parity (2.5/3)
 
@@ -67,13 +72,13 @@ Compiled CLAUDE.md declares iron rules:
 
 Both quality gates now enforceable from root. Remaining gap: no root-level test aggregation across CLI/Node.
 
-### 6. Testability (1.0/3)
+### 6. Testability (1.5/3)
 
 | Package | Test Files | Source Files | Tests | Assertions | Status |
 |---------|-----------|--------------|-------|------------|--------|
-| Core | 7 | 167+ | 40 | 95 | 40/40 PASS |
-| Node | 0 | 44 | 0 | 0 | No tests |
-| CLI | 7 | ~30+ | ~20 | ~50 | Separate repo |
+| Core | 8 | 167+ | 48 | 117 | 48/48 PASS |
+| Node | 0 (tested via Core) | 44 | 8 | 22 | via NodeIntegrityTest |
+| CLI | 7 | ~30+ | ~20 | ~50 | Separate repo + PHPStan level 0 |
 
 **Fixes applied:**
 - ~~MergerTest: protected `handle()` call from test~~ **FIXED** — Reflection-based invocation
@@ -87,7 +92,12 @@ Both quality gates now enforceable from root. Remaining gap: no root-level test 
 - `MergerInvariantsTest` (4 tests): no child loss, empty includes, deep nesting (3-level), determinism
 - `CompilationOutputTest` (13 tests): Store::as/get/var format, Operator::if/forEach/task/verify/validate, BrainCLI constants/methods, Operator::do chaining, determinism
 
-Remaining gaps: Runtime class, Tool classes, Archetypes, Variable system, Node package (0 tests).
+**Phase 4 — Node integrity + CLI phpstan:**
+- `NodeIntegrityTest` (8 tests): strict_types across all node/, agent attribute contracts, command attribute contracts, MCP Meta('id'), MCP defaultCommand/defaultArgs contracts, no secrets in source, pins.json structure
+- CLI phpstan level 0 with documented suppressions (7 ignore rules, 2 excluded files)
+- `composer analyse` now covers core + CLI
+
+Remaining gaps: Runtime class, Tool classes, Archetypes, Variable system.
 
 ### 7. Release Discipline (3/3)
 
@@ -121,9 +131,9 @@ Comprehensive: benchmark suite (standard + LLM), ops evidence collection, failur
 
 | Risk Level | Total | Fixed | Reclassified | Open | Action |
 |------------|-------|-------|--------------|------|--------|
-| P0 (Critical) | 12 | 10 | 2 (→P2) | 0 | **ALL CLOSED** — audit gate is blocking |
-| P1 (Important) | 8 | 6 | 1 (→P2) | 1 | P1-001 **FIXED**, P1-002 **FIXED**, P1-003 substantially improved (40/40), P1-005 done |
-| P2 (Nice to have) | 6+1 | 0 | 0 | 7 | Backlog (includes P1-004 reclassified) |
+| P0 (Critical) | 15 | 13 | 2 (→P2) | 0 | **ALL CLOSED** — audit gate is blocking + secret scanning |
+| P1 (Important) | 8 | 7 | 1 (→P2) | 0 | P1-001 **FIXED**, P1-002 **FIXED**, P1-003 substantially improved (48/48), P1-005 done, P1-006 secrets **FIXED** |
+| P2 (Nice to have) | 6+1 | 0 | 0 | 7 | Backlog (includes P1-004 reclassified, git history cleanup) |
 
 ## Audit Methodology
 
