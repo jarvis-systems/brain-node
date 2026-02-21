@@ -25,9 +25,9 @@ Every merge to `master` MUST satisfy ALL gates below. A single FAIL = merge bloc
 | 8 | Benchmark Dry-Run | `composer benchmark:dry` (0 errors) | YES | `brain-benchmark.yml` → `scripts/benchmark-llm-suite.sh` |
 | 9 | Release Gate | Version/pin/manifest/bundle validation | YES | `brain-release.yml` → `scripts/build-release-bundle.sh` |
 
-## Enterprise Audit Sub-Gates (17 Checks)
+## Enterprise Audit Sub-Gates (18 Checks)
 
-All 17 checks in `audit-enterprise.sh` must PASS or WARN (no FAIL):
+All 18 checks in `audit-enterprise.sh` must PASS or WARN (no FAIL):
 
 | Check | What it catches | Severity |
 |-------|----------------|----------|
@@ -38,7 +38,7 @@ All 17 checks in `audit-enterprise.sh` must PASS or WARN (no FAIL):
 | 5. TODO/FIXME | Unresolved items | INFO |
 | 6. Unsafe exec | `shell_exec()`, `eval()` | WARN |
 | 7. Shell safety | Missing `set -euo pipefail` in scripts | WARN |
-| 8. Hardcoded paths | `/Users/xsaven` in tracked files | WARN |
+| 8. No-op escape methods | Contract lie: method named *escape* returns input unchanged | WARN |
 | 9. Trait LSB | `self::` in traits where `static::` required | WARN |
 | 10. Known typos | "Standarts", "Compliation", etc. | FAIL |
 | 11. Dev deps in prod | `fakerphp/faker` etc. in `require` (not `require-dev`) | FAIL |
@@ -48,6 +48,7 @@ All 17 checks in `audit-enterprise.sh` must PASS or WARN (no FAIL):
 | 15. Hardcoded paths | `/Users/`, `/home/` in tracked source files | WARN |
 | 16. Degradation observability | Catch blocks without logging/fallback signal | WARN |
 | 17. Version consistency | Root vs core `composer.json` version mismatch | FAIL |
+| 18. MCP schema bypass | Raw `::call()` on schema-enabled MCP without `@mcp-schema-bypass` | FAIL |
 
 ## CI Supply Chain
 

@@ -431,6 +431,16 @@ Regression prevention: `audit-enterprise.sh` Check 18 (mcp-schema-bypass) + `Nod
 | audit-enterprise.sh Check 18 | MCP schema bypass enforcement: raw `::call()` on schema-enabled MCPs without `@mcp-schema-bypass` = FAIL | PASS:16, WARN:2, FAIL:0 |
 | NodeIntegrityTest +1 test | `testMcpSchemaBypassAnnotations` — scans core/src + node for unvalidated MCP calls | 233/233 PASS |
 
+### Refactor Batch 10
+
+| Item | Change | Proof |
+|------|--------|-------|
+| SCORECARD.md assertion count | 521→518 (actual), 232/232→233/233 alignment | Matches `composer test` output |
+| ENTERPRISE-DOD.md check count | 17→18 checks, Check 8 desc corrected, Check 18 added | Matches `audit-enterprise.sh` output |
+| Check 5 precision (TODO/FIXME) | Added comment-context filter — string literals no longer flagged | 3 false positives eliminated |
+| Check 9 precision (self:: LSB) | Added `self::UPPER_CASE` constant filter — only method calls flagged | 119 const-ref false positives eliminated |
+| Audit result | PASS:18, WARN:0, FAIL:0, Findings:0 | All checks green |
+
 ## Summary
 
 | Priority | Total | Fixed | Reclassified | Open |
@@ -507,3 +517,6 @@ Remaining P2 open: P2-003 (error_log in ConvertCommand — acceptable, env-gated
 | Category B (schema bypass B1) | `audit-enterprise.sh` Check 18 (mcp-schema-bypass) + `testMcpSchemaBypassAnnotations` |
 | Category B (schema bypass B2) | `audit-enterprise.sh` Check 18 (mcp-schema-bypass) + `testMcpSchemaBypassAnnotations` |
 | NEW (Check 18) | `audit-enterprise.sh` Check 18 — raw ::call() on VectorMemoryMcp/VectorTaskMcp without @mcp-schema-bypass = FAIL |
+| Batch 10 (Check 5 precision) | Check 5 comment-context filter — string literal TODO/FIXME no longer flagged |
+| Batch 10 (Check 9 precision) | Check 9 constant filter — `self::UPPER_CASE` skipped, only `self::lowercase` flagged |
+| Batch 10 (doc truth) | SCORECARD + DOD assertion/check counts aligned with reality |

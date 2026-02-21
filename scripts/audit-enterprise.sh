@@ -266,6 +266,11 @@ while IFS=: read -r file line content; do
     [[ "$relative" == .docs/* ]] && continue
     # Skip this script
     [[ "$relative" == scripts/audit-enterprise.sh ]] && continue
+    # Skip lines where TODO/FIXME appears inside string literals (instruction text, not actual TODO)
+    # Only flag TODO/FIXME in comment context (// # /* * prefixes)
+    if ! echo "$content" | grep -qE '(//|/\*|^[[:space:]]*\*[[:space:]]|^[[:space:]]*#).*(TODO|FIXME|@todo|@fixme)'; then
+        continue
+    fi
     TODO_COUNT=$((TODO_COUNT + 1))
     TODO_FINDINGS=$(echo "$TODO_FINDINGS" | jq \
         --arg file "$relative" \
@@ -406,6 +411,11 @@ while IFS=: read -r file line content; do
     relative="${file#$PROJECT_ROOT/}"
     [[ "$relative" == vendor/* ]] && continue
     [[ "$relative" == */vendor/* ]] && continue
+    # Skip constant references (self::UPPER_CASE) — constants don't participate in LSB
+    # Only flag self:: followed by lowercase (method calls that need static::)
+    if ! echo "$content" | grep -qE 'self::[a-z]'; then
+        continue
+    fi
     LSB_COUNT=$((LSB_COUNT + 1))
     LSB_FINDINGS=$(echo "$LSB_FINDINGS" | jq \
         --arg file "$relative" \
