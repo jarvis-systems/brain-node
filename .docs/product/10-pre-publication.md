@@ -71,12 +71,12 @@ Run ALL gates and confirm green:
 
 ```bash
 # Core quality gates
-composer test           # Expected: 48+ tests, 0 failures
+composer test           # Expected: 233+ tests, 0 failures
 composer analyse        # Expected: 0 errors (core + CLI)
 
 # Security gates
 bash scripts/scan-secrets.sh          # Expected: 0 secrets found
-bash scripts/audit-enterprise.sh      # Expected: PASS:12+, WARN:2, FAIL:0
+bash scripts/audit-enterprise.sh      # Expected: PASS:18, WARN:0, FAIL:0
 
 # Documentation gate
 brain docs --validate                 # Expected: 0 errors, 0 warnings

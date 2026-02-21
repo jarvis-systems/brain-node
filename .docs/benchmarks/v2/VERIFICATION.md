@@ -262,6 +262,50 @@ Tier hierarchy: `haiku(1) < sonnet(2) < opus(3)`.
 - `full` (sonnet): MT-LP-001 executes normally → 38 total, 38 executed.
 - Baselines unchanged — skipped scenarios contribute 0 to token/duration/mcp totals.
 
+## 10. Flakiness Protocol
+
+The runner supports automatic retry for scenarios that may fail due to non-deterministic LLM behavior (variance), as opposed to real regressions.
+
+### Status Classification
+
+| Status | Meaning | CI Effect |
+|--------|---------|-----------|
+| PASS | Passed on first attempt | Counts as passed |
+| FAIL | Failed on first attempt (no retry configured) | Counts as failed |
+| FLAKY_PASS | Failed initially, passed on retry | Counts as passed (signals instability) |
+| FLAKY_FAIL | Failed all retry attempts | Counts as failed |
+| SKIP | Skipped (model gating) | No effect |
+| ERROR | Runtime error (no response) | Counts as error |
+
+### Per-Profile Retry Defaults
+
+| Profile | Retry Default | Max Attempts |
+|---------|---------------|--------------|
+| nightly-live | 1 | 2 |
+| All others | 0 | 1 (no retry) |
+
+### Per-Scenario Override
+
+Scenarios can override the profile default with `"retry": N` in their JSON:
+
+```json
+{
+  "id": "MT-001",
+  "retry": 2,
+  ...
+}
+```
+
+### Behavior
+
+- DRY_RUN: no retry (loop is inside execution branch)
+- SKIPPED scenarios: no retry (handled before run)
+- Only the LAST attempt's metrics are counted (locals reset each iteration)
+- Multi-turn retry restarts the ENTIRE scenario (fresh session)
+- FLAKY_PASS counts as PASSED in CI pass rate
+- FLAKY_FAIL counts as FAILED — regression check sees it
+- regression-check.sh requires ZERO changes (reads `passed`/`failed`, ignores unknown fields)
+
 ## Checklist
 
 - [x] `composer benchmark:dry` → 38/38 pass (full profile)
@@ -283,6 +327,7 @@ Tier hierarchy: `haiku(1) < sonnet(2) < opus(3)`.
 - [x] PR gate: dry-run only (zero API cost)
 - [x] Nightly: nightly-live profile with sonnet
 - [x] Instruction quality contract documented
+- [x] Flakiness protocol: retry support in runner
 - [ ] Regression check passes on nightly-live report
 - [ ] Init DTO contains sessionId
 - [ ] Resume preserves context

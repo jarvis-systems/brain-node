@@ -83,17 +83,27 @@ jq '.mcpServers["vector-memory"].args[0]' .mcp.json
 ## 3. Benchmark Flake vs Real Regression
 
 **Symptoms:**
-- Benchmark scenario intermittently fails (PASS on retry)
+- Benchmark scenario shows FLAKY_PASS or FLAKY_FAIL status in runner output
+- Scenario intermittently fails across nightly runs
 - Regression check warns about token/duration budget exceeded
 - Same scenario passes in one mode but fails in another
 
+**Automated Detection:**
+
+The runner has built-in flakiness detection via retry. Profiles with retry enabled (nightly-live: retry=1) automatically classify results:
+- **FLAKY_PASS**: failed first attempt, passed on retry → counts as PASSED, signals instability
+- **FLAKY_FAIL**: failed all attempts → counts as FAILED
+
+Check the `flaky_passed` / `flaky_failed` fields in JSON reports and the `"attempts"` field per scenario.
+
 **Commands:**
 ```
-# Run the failing scenario in isolation (3 times)
-for i in 1 2 3; do
-    echo "--- Run $i ---"
-    bash scripts/benchmark-llm-suite.sh --scenario <ID> --json --model haiku 2>/dev/null | jq '.results[0] | {status, output_tokens, duration_ms}'
-done
+# Run with retry enabled (nightly-live profile has retry=1 by default)
+bash scripts/benchmark-llm-suite.sh --profile nightly-live --json --model sonnet 2>/dev/null | \
+    jq '{flaky_passed, flaky_failed, scenarios: [.scenarios[] | select(.attempts > 1) | {id, status, attempts}]}'
+
+# Run specific scenario with explicit retry override
+bash scripts/benchmark-llm-suite.sh --scenario <ID> --json --model haiku
 
 # Check regression baselines
 jq '.profiles' .docs/benchmarks/baselines/baselines.json
@@ -106,15 +116,17 @@ bash scripts/benchmark-regression-check.sh
 ```
 
 **Expected Output:**
-- If 3/3 runs fail: **real regression** — investigate prompt, checks, or model behavior change
-- If 1-2/3 fail: **flake** — likely non-deterministic LLM output or MCP latency
+- FLAKY_PASS scenarios: variance, not regression — monitor frequency
+- FLAKY_FAIL in single run: wait for next nightly before declaring regression
+- FLAKY_FAIL in 2+ consecutive nightly runs: **confirmed regression**
 - Dry-run always passes (validates JSON schema, not LLM behavior)
 - Regression check shows which profiles exceed thresholds
 
 **Escalation:**
-- **Flake**: increase `timeout_s` in scenario JSON, broaden `required_patterns` regex, add alternative patterns with `|`
+- **Flake (< 20% rate)**: monitor, no action needed — retry handles it automatically
+- **Flake (> 20% rate)**: increase `timeout_s`, broaden `required_patterns` regex, add `"retry": N` to scenario JSON
 - **Real regression**: check if model version changed, review compiled artifacts for rule changes, compare with last known-good commit
-- **Budget exceeded**: update baselines with `50%` headroom from new observed values, document reason in commit message
+- **Budget exceeded**: update baselines with `50%` headroom from new observed values, document reason in commit message (respect 3-run stability window)
 
 ## 4. Governance Violation Detected
 

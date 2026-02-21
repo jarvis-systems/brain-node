@@ -441,6 +441,17 @@ Regression prevention: `audit-enterprise.sh` Check 18 (mcp-schema-bypass) + `Nod
 | Check 9 precision (self:: LSB) | Added `self::UPPER_CASE` constant filter — only method calls flagged | 119 const-ref false positives eliminated |
 | Audit result | PASS:18, WARN:0, FAIL:0, Findings:0 | All checks green |
 
+### Refactor Batch 11
+
+| Item | Change | Proof |
+|------|--------|-------|
+| `10-pre-publication.md` stale values | 48→233 tests, PASS:12→18, WARN:2→0 | Matches `composer test` + `audit-enterprise.sh` output |
+| `ENTERPRISE-DOD.md` test threshold | 232→233 tests | Matches actual test count |
+| Benchmark flakiness infrastructure | Retry protocol, FLAKY_PASS/FLAKY_FAIL status, stability window | 38/38 dry, 74/74 matrix, 28/28 adversarial |
+| New docs committed | prompt-change-contract, flakiness protocol (4 docs) | `brain docs --validate` = 0 invalid |
+| Baselines metadata | `stability_window` + `stability_rule` in baselines.json | Prevents premature baseline updates |
+| Compiled outputs synced | AGENTS.md (codex target) + GEMINI.md (gemini target) | `brain compile codex` / `brain compile gemini` |
+
 ## Summary
 
 | Priority | Total | Fixed | Reclassified | Open |
@@ -520,3 +531,6 @@ Remaining P2 open: P2-003 (error_log in ConvertCommand — acceptable, env-gated
 | Batch 10 (Check 5 precision) | Check 5 comment-context filter — string literal TODO/FIXME no longer flagged |
 | Batch 10 (Check 9 precision) | Check 9 constant filter — `self::UPPER_CASE` skipped, only `self::lowercase` flagged |
 | Batch 10 (doc truth) | SCORECARD + DOD assertion/check counts aligned with reality |
+| Batch 11 (doc truth phase 2) | pre-publication.md + DOD expected values aligned with current reality |
+| Batch 11 (benchmark flakiness) | 38/38 dry + 74/74 matrix + 28/28 adversarial — all profiles PASS with retry infrastructure |
+| Batch 11 (prompt-change-contract) | `brain docs --validate` = 0 invalid, YAML front matter present |

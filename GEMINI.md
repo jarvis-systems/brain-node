@@ -1,5 +1,3 @@
-# Instruction in XML format
-
 <system>
 <meta>
 <id>brain-core</id>
@@ -134,7 +132,7 @@ BEFORE generating ANY Brain component code (Command, Agent, Skill, Include, MCP)
 - **on_violation**: STOP. Execute scanning workflow FIRST. Never generate code from memory or documentation alone.
 
 ## Never-write-compiled (CRITICAL)
-FORBIDDEN: Write/Edit to .codex/, .codex/agents/, .codex/prompts/. These are compilation artifacts.
+FORBIDDEN: Write/Edit to .gemini/, .gemini/agents/, .gemini/commands/. These are compilation artifacts.
 - **why**: Compiled files are auto-generated. Direct edits are overwritten on next compile.
 - **on_violation**: ABORT. Edit ONLY .brain/node/*.php sources, then run brain compile.
 
@@ -420,12 +418,12 @@ MCP structure: Meta id, transport base class.
 
 # Compilation flow
 Source → Compile → Output flow.
-- .brain/node/*.php → brain compile → .codex/
+- .brain/node/*.php → brain compile → .gemini/
 
 # Directories
 Source (editable) vs Compiled (readonly) directories.
 - SOURCE: .brain/node/ - Edit here (Brain.php, Agents/*.php, Commands/*.php, etc.)
-- COMPILED: .codex/ - NEVER edit (auto-generated)
+- COMPILED: .gemini/ - NEVER edit (auto-generated)
 - Workflow: Edit source → Bash('brain compile') → auto-generates compiled
 
 # Builder rules

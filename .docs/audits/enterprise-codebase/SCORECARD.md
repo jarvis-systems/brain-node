@@ -167,6 +167,14 @@ No sources of non-determinism found. No `rand()`, `shuffle()`, `mt_rand()`, `arr
 - `audit-enterprise.sh` Check 9: constant filter — `self::UPPER_CASE` refs skipped (constants don't participate in LSB), only `self::lowercase` (method calls) flagged
 - Result: PASS:18, WARN:0, FAIL:0, Findings:0
 
+**Refactor Batch 11 — Doc Truth Phase 2 + Benchmark Flakiness Stabilization:**
+- `10-pre-publication.md`: stale expected values updated (48→233 tests, PASS:12→18, WARN:2→0)
+- `ENTERPRISE-DOD.md`: CI gate test threshold 232→233
+- Benchmark flakiness infrastructure: retry/FLAKY_PASS/FLAKY_FAIL protocol in runner
+- New docs: prompt-change-contract, flakiness protocol (VERIFICATION.md, runbooks, instruction-quality-contract)
+- Baselines metadata: stability window (3-run rule before baseline update)
+- Compiled outputs synchronized: AGENTS.md (codex), GEMINI.md (gemini)
+
 Remaining gaps: CLI runtime tests require Laravel framework.
 
 ### 7. Release Discipline (3/3)

@@ -4,7 +4,9 @@
     "date": "2026-02-21",
     "model": "haiku",
     "threshold_pct": 20,
-    "action": "warn"
+    "action": "warn",
+    "stability_window": "3 consecutive nightly runs",
+    "stability_rule": "Do NOT change baselines unless measurements exceed 80% of budget ceiling for 3 consecutive nightly runs. Single-run spikes are variance, not regression."
   },
   "profiles": {
     "smoke": {

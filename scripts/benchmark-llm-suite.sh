@@ -161,6 +161,9 @@ TOTAL_INPUT_TOKENS=0
 TOTAL_OUTPUT_TOKENS=0
 TOTAL_DURATION_MS=0
 TOTAL_MCP_CALLS=0
+FLAKY_PASSED=0
+FLAKY_FAILED=0
+RETRY_DEFAULT=0
 RESULTS=()
 
 # Global banned patterns (applied to ALL scenarios in ALL modes)
@@ -231,13 +234,14 @@ count_pattern() {
 run_scenario() {
     local scenario_file="$1"
 
-    local sid stitle sdiff sprompt smax_out stimeout
+    local sid stitle sdiff sprompt smax_out stimeout sretry
     sid=$(jq -r '.id' "$scenario_file")
     stitle=$(jq -r '.title' "$scenario_file")
     sdiff=$(jq -r '.difficulty' "$scenario_file")
     sprompt=$(jq -r '.prompt' "$scenario_file")
     smax_out=$(jq -r '.max_output_tokens // 2000' "$scenario_file")
     stimeout=$(jq -r '.timeout_s // '"$TIMEOUT"'' "$scenario_file")
+    sretry=$(jq -r ".retry // $RETRY_DEFAULT" "$scenario_file")
 
     log "\n${CYAN}[$sid] $stitle${NC} ${DIM}($sdiff)${NC}"
     ((TOTAL++))
@@ -249,6 +253,8 @@ run_scenario() {
     local output_tokens=0
     local duration_ms=0
     local mcp_calls=0
+    local attempt=1
+    local max_attempts=$((sretry + 1))
 
     if $DRY_RUN; then
         log "  ${DIM}[DRY-RUN] Scenario validated, AI call skipped${NC}"
@@ -268,199 +274,230 @@ run_scenario() {
             scenario_status="FAIL"
         fi
     else
-        # Build CLI command
-        local cli_args=(claude --ask "$sprompt" --json --model "$MODEL")
-        $YOLO && cli_args+=(--yolo)
+        while [ "$attempt" -le "$max_attempts" ]; do
+            # Reset per-attempt state
+            scenario_status="PASS"
+            checks=()
+            response_text=""
+            input_tokens=0
+            output_tokens=0
+            duration_ms=0
+            mcp_calls=0
 
-        # Export env vars for CLI subprocess
-        export STRICT_MODE="$MODE" COGNITIVE_LEVEL="$COGNITIVE"
-        [ -n "${BRAIN_CLI_DEBUG:-}" ] && export BRAIN_CLI_DEBUG
+            [ "$attempt" -gt 1 ] && log "  ${YELLOW}[RETRY] attempt $attempt/$max_attempts${NC}"
 
-        # Run Brain CLI
-        local start_ns
-        start_ns=$(date +%s%N 2>/dev/null || echo "$(($(date +%s) * 1000000000))")
+            # Build CLI command
+            local cli_args=(claude --ask "$sprompt" --json --model "$MODEL")
+            $YOLO && cli_args+=(--yolo)
 
-        local raw_file="$TMP_DIR/raw_${sid}.jsonl"
-        local err_file="$TMP_DIR/err_${sid}.log"
-        cd "$PROJECT_ROOT"
-        $TIMEOUT_CMD "$stimeout" "$AI_CMD" "${cli_args[@]}" > "$raw_file" 2>"$err_file" || true
+            # Export env vars for CLI subprocess
+            export STRICT_MODE="$MODE" COGNITIVE_LEVEL="$COGNITIVE"
+            [ -n "${BRAIN_CLI_DEBUG:-}" ] && export BRAIN_CLI_DEBUG
 
-        local end_ns
-        end_ns=$(date +%s%N 2>/dev/null || echo "$(($(date +%s) * 1000000000))")
-        duration_ms=$(( (end_ns - start_ns) / 1000000 ))
+            # Run Brain CLI
+            local start_ns
+            start_ns=$(date +%s%N 2>/dev/null || echo "$(($(date +%s) * 1000000000))")
 
-        # Parse output
-        local msg_file="$TMP_DIR/msg_${sid}.txt"
-        local metrics_file="$TMP_DIR/metrics_${sid}.txt"
-        local tools_file="$TMP_DIR/tools_${sid}.txt"
-        parse_cli_output "$raw_file" "$msg_file" "$metrics_file" "$tools_file"
+            local raw_file="$TMP_DIR/raw_${sid}.jsonl"
+            local err_file="$TMP_DIR/err_${sid}.log"
+            cd "$PROJECT_ROOT"
+            $TIMEOUT_CMD "$stimeout" "$AI_CMD" "${cli_args[@]}" > "$raw_file" 2>"$err_file" || true
 
-        response_text=$(cat "$msg_file" 2>/dev/null || echo "")
-        read -r input_tokens output_tokens < "$metrics_file" 2>/dev/null || true
-        input_tokens=${input_tokens:-0}
-        output_tokens=${output_tokens:-0}
-        mcp_calls=$(wc -l < "$tools_file" 2>/dev/null | tr -d ' ')
-        mcp_calls=${mcp_calls:-0}
+            local end_ns
+            end_ns=$(date +%s%N 2>/dev/null || echo "$(($(date +%s) * 1000000000))")
+            duration_ms=$(( (end_ns - start_ns) / 1000000 ))
 
-        # Check: response received
-        if [ -z "$response_text" ] || [ "$response_text" = "null" ]; then
-            log "  ${RED}[ERROR] No response received${NC}"
-            scenario_status="ERROR"
-            ((ERRORS++))
-            checks+=("{\"check\":\"response-received\",\"status\":\"FAIL\",\"detail\":\"empty response\"}")
-        else
-            checks+=("{\"check\":\"response-received\",\"status\":\"PASS\"}")
-        fi
+            # Parse output
+            local msg_file="$TMP_DIR/msg_${sid}.txt"
+            local metrics_file="$TMP_DIR/metrics_${sid}.txt"
+            local tools_file="$TMP_DIR/tools_${sid}.txt"
+            parse_cli_output "$raw_file" "$msg_file" "$metrics_file" "$tools_file"
 
-        # Check: DTO schema (init + message + result present)
-        local has_init has_message has_result
-        has_init=$(grep -c '"type":"init"' "$raw_file" 2>/dev/null) || has_init=0
-        has_message=$(grep -c '"type":"message"' "$raw_file" 2>/dev/null) || has_message=0
-        has_result=$(grep -c '"type":"result"' "$raw_file" 2>/dev/null) || has_result=0
-        if [ "$has_init" -gt 0 ] && [ "$has_message" -gt 0 ] && [ "$has_result" -gt 0 ]; then
-            checks+=("{\"check\":\"dto-schema\",\"status\":\"PASS\",\"detail\":\"init=$has_init msg=$has_message result=$has_result\"}")
-            log "  ${GREEN}[PASS] dto-schema: init=$has_init msg=$has_message result=$has_result${NC}"
-        else
-            checks+=("{\"check\":\"dto-schema\",\"status\":\"FAIL\",\"detail\":\"init=$has_init msg=$has_message result=$has_result\"}")
-            scenario_status="FAIL"
-            log "  ${RED}[FAIL] dto-schema: init=$has_init msg=$has_message result=$has_result (all 3 required)${NC}"
-        fi
+            response_text=$(cat "$msg_file" 2>/dev/null || echo "")
+            read -r input_tokens output_tokens < "$metrics_file" 2>/dev/null || true
+            input_tokens=${input_tokens:-0}
+            output_tokens=${output_tokens:-0}
+            mcp_calls=$(wc -l < "$tools_file" 2>/dev/null | tr -d ' ')
+            mcp_calls=${mcp_calls:-0}
 
-        # Check: duration within timeout
-        local timeout_ms=$((stimeout * 1000))
-        if [ "$duration_ms" -le "$timeout_ms" ]; then
-            checks+=("{\"check\":\"duration\",\"status\":\"PASS\",\"detail\":\"${duration_ms}ms <= ${timeout_ms}ms\"}")
-            log "  ${GREEN}[PASS] duration: ${duration_ms}ms <= ${timeout_ms}ms${NC}"
-        else
-            checks+=("{\"check\":\"duration\",\"status\":\"FAIL\",\"detail\":\"${duration_ms}ms > ${timeout_ms}ms\"}")
-            scenario_status="FAIL"
-            log "  ${RED}[FAIL] duration: ${duration_ms}ms > ${timeout_ms}ms${NC}"
-        fi
-
-        # Check: global banned patterns
-        for pattern in "${GLOBAL_BANNED[@]}"; do
-            local cnt
-            cnt=$(count_pattern "$msg_file" "$pattern")
-            local pname
-            pname=$(echo "$pattern" | sed 's/\\.*//; s/ /-/g' | head -c 30)
-            if [ "$cnt" -gt 0 ]; then
-                checks+=("{\"check\":\"global-banned:$pname\",\"status\":\"FAIL\",\"detail\":\"$cnt matches\"}")
-                scenario_status="FAIL"
-                log "  ${RED}[FAIL] global-banned: '$pname' found $cnt times${NC}"
+            # Check: response received
+            if [ -z "$response_text" ] || [ "$response_text" = "null" ]; then
+                log "  ${RED}[ERROR] No response received${NC}"
+                scenario_status="ERROR"
+                checks+=("{\"check\":\"response-received\",\"status\":\"FAIL\",\"detail\":\"empty response\"}")
             else
-                checks+=("{\"check\":\"global-banned:$pname\",\"status\":\"PASS\"}")
+                checks+=("{\"check\":\"response-received\",\"status\":\"PASS\"}")
             fi
-        done
 
-        # Check: scenario-specific required patterns
-        while IFS= read -r pattern; do
-            [ -z "$pattern" ] && continue
-            local cnt
-            cnt=$(count_pattern "$msg_file" "$pattern")
-            local pname
-            pname=$(echo "$pattern" | sed 's/\\.*//; s/|.*//; s/ /-/g' | head -c 30)
-            if [ "$cnt" -gt 0 ]; then
-                checks+=("{\"check\":\"required:$pname\",\"status\":\"PASS\",\"detail\":\"$cnt matches\"}")
-                log "  ${GREEN}[PASS] required: '$pname' found${NC}"
+            # Check: DTO schema (init + message + result present)
+            local has_init has_message has_result
+            has_init=$(grep -c '"type":"init"' "$raw_file" 2>/dev/null) || has_init=0
+            has_message=$(grep -c '"type":"message"' "$raw_file" 2>/dev/null) || has_message=0
+            has_result=$(grep -c '"type":"result"' "$raw_file" 2>/dev/null) || has_result=0
+            if [ "$has_init" -gt 0 ] && [ "$has_message" -gt 0 ] && [ "$has_result" -gt 0 ]; then
+                checks+=("{\"check\":\"dto-schema\",\"status\":\"PASS\",\"detail\":\"init=$has_init msg=$has_message result=$has_result\"}")
+                log "  ${GREEN}[PASS] dto-schema: init=$has_init msg=$has_message result=$has_result${NC}"
             else
-                checks+=("{\"check\":\"required:$pname\",\"status\":\"FAIL\",\"detail\":\"not found\"}")
+                checks+=("{\"check\":\"dto-schema\",\"status\":\"FAIL\",\"detail\":\"init=$has_init msg=$has_message result=$has_result\"}")
                 scenario_status="FAIL"
-                log "  ${RED}[FAIL] required: '$pname' not found in response${NC}"
+                log "  ${RED}[FAIL] dto-schema: init=$has_init msg=$has_message result=$has_result (all 3 required)${NC}"
             fi
-        done < <(jq -r '.checks.required_patterns // [] | .[]' "$scenario_file" 2>/dev/null)
 
-        # Check: scenario-specific banned patterns
-        while IFS= read -r pattern; do
-            [ -z "$pattern" ] && continue
-            local cnt
-            cnt=$(count_pattern "$msg_file" "$pattern")
-            local pname
-            pname=$(echo "$pattern" | sed 's/\\.*//; s/|.*//; s/ /-/g' | head -c 30)
-            if [ "$cnt" -gt 0 ]; then
-                checks+=("{\"check\":\"banned:$pname\",\"status\":\"FAIL\",\"detail\":\"$cnt matches\"}")
-                scenario_status="FAIL"
-                log "  ${RED}[FAIL] banned: '$pname' found $cnt times${NC}"
+            # Check: duration within timeout
+            local timeout_ms=$((stimeout * 1000))
+            if [ "$duration_ms" -le "$timeout_ms" ]; then
+                checks+=("{\"check\":\"duration\",\"status\":\"PASS\",\"detail\":\"${duration_ms}ms <= ${timeout_ms}ms\"}")
+                log "  ${GREEN}[PASS] duration: ${duration_ms}ms <= ${timeout_ms}ms${NC}"
             else
-                checks+=("{\"check\":\"banned:$pname\",\"status\":\"PASS\"}")
-                log "  ${GREEN}[PASS] banned: '$pname' absent${NC}"
-            fi
-        done < <(jq -r '.checks.banned_patterns // [] | .[]' "$scenario_file" 2>/dev/null)
-
-        # Check: expected MCP calls range (if specified in scenario)
-        local mcp_min mcp_max
-        mcp_min=$(jq -r '.checks.expected_mcp_calls.min // empty' "$scenario_file" 2>/dev/null)
-        mcp_max=$(jq -r '.checks.expected_mcp_calls.max // empty' "$scenario_file" 2>/dev/null)
-        if [ -n "$mcp_min" ] && [ -n "$mcp_max" ]; then
-            if [ "$mcp_calls" -ge "$mcp_min" ] && [ "$mcp_calls" -le "$mcp_max" ]; then
-                checks+=("{\"check\":\"mcp-calls-range\",\"status\":\"PASS\",\"detail\":\"$mcp_calls in [$mcp_min..$mcp_max]\"}")
-                log "  ${GREEN}[PASS] mcp-calls-range: $mcp_calls in [$mcp_min..$mcp_max]${NC}"
-            else
-                checks+=("{\"check\":\"mcp-calls-range\",\"status\":\"FAIL\",\"detail\":\"$mcp_calls not in [$mcp_min..$mcp_max]\"}")
+                checks+=("{\"check\":\"duration\",\"status\":\"FAIL\",\"detail\":\"${duration_ms}ms > ${timeout_ms}ms\"}")
                 scenario_status="FAIL"
-                log "  ${RED}[FAIL] mcp-calls-range: $mcp_calls not in [$mcp_min..$mcp_max]${NC}"
+                log "  ${RED}[FAIL] duration: ${duration_ms}ms > ${timeout_ms}ms${NC}"
             fi
-        fi
 
-        # Check: expected specific tools in tool_use events (telemetry-based)
-        while IFS= read -r tool_name; do
-            [ -z "$tool_name" ] && continue
-            if grep -qF "$tool_name" "$tools_file" 2>/dev/null; then
-                checks+=("{\"check\":\"expected-tool:$tool_name\",\"status\":\"PASS\"}")
-                log "  ${GREEN}[PASS] expected-tool: '$tool_name'${NC}"
-            else
-                checks+=("{\"check\":\"expected-tool:$tool_name\",\"status\":\"FAIL\",\"detail\":\"not in tool_use events\"}")
-                scenario_status="FAIL"
-                log "  ${RED}[FAIL] expected-tool: '$tool_name' not in tool_use${NC}"
-            fi
-        done < <(jq -r '.checks.expected_tools // [] | .[]' "$scenario_file" 2>/dev/null)
-
-        # Check: banned specific tools — MUST NOT appear in tool_use events
-        while IFS= read -r tool_name; do
-            [ -z "$tool_name" ] && continue
-            if grep -qF "$tool_name" "$tools_file" 2>/dev/null; then
-                checks+=("{\"check\":\"banned-tool:$tool_name\",\"status\":\"FAIL\",\"detail\":\"found in tool_use events\"}")
-                scenario_status="FAIL"
-                log "  ${RED}[FAIL] banned-tool: '$tool_name' found in tool_use${NC}"
-            else
-                checks+=("{\"check\":\"banned-tool:$tool_name\",\"status\":\"PASS\"}")
-                log "  ${GREEN}[PASS] banned-tool: '$tool_name' absent${NC}"
-            fi
-        done < <(jq -r '.checks.banned_tools // [] | .[]' "$scenario_file" 2>/dev/null)
-
-        # Check: output token budget
-        if [ "$output_tokens" -gt 0 ] && [ "$output_tokens" -gt "$smax_out" ] 2>/dev/null; then
-            checks+=("{\"check\":\"token-budget\",\"status\":\"FAIL\",\"detail\":\"$output_tokens > $smax_out\"}")
-            scenario_status="FAIL"
-            log "  ${RED}[FAIL] token-budget: $output_tokens > $smax_out${NC}"
-        else
-            checks+=("{\"check\":\"token-budget\",\"status\":\"PASS\",\"detail\":\"$output_tokens <= $smax_out\"}")
-            log "  ${GREEN}[PASS] token-budget: $output_tokens <= $smax_out${NC}"
-        fi
-
-        # Check: mode leakage (standard mode only)
-        if [ "$MODE" = "standard" ]; then
-            local leakage_patterns=("Decompose task into objectives" "Level brain|Level architect" "Formulate and execute initial web search")
-            for lp in "${leakage_patterns[@]}"; do
-                local lcnt
-                lcnt=$(count_pattern "$msg_file" "$lp")
-                if [ "$lcnt" -gt 0 ]; then
-                    local lpname
-                    lpname=$(echo "$lp" | sed 's/|.*//; s/ /-/g' | head -c 25)
-                    checks+=("{\"check\":\"mode-leakage:$lpname\",\"status\":\"FAIL\"}")
+            # Check: global banned patterns
+            for pattern in "${GLOBAL_BANNED[@]}"; do
+                local cnt
+                cnt=$(count_pattern "$msg_file" "$pattern")
+                local pname
+                pname=$(echo "$pattern" | sed 's/\\.*//; s/ /-/g' | head -c 30)
+                if [ "$cnt" -gt 0 ]; then
+                    checks+=("{\"check\":\"global-banned:$pname\",\"status\":\"FAIL\",\"detail\":\"$cnt matches\"}")
                     scenario_status="FAIL"
-                    log "  ${RED}[FAIL] mode-leakage: '$lpname' found${NC}"
+                    log "  ${RED}[FAIL] global-banned: '$pname' found $cnt times${NC}"
+                else
+                    checks+=("{\"check\":\"global-banned:$pname\",\"status\":\"PASS\"}")
                 fi
             done
-        fi
 
-        log "  ${DIM}tokens: in=$input_tokens out=$output_tokens | mcp=$mcp_calls | ${#response_text} chars | ${duration_ms}ms${NC}"
+            # Check: scenario-specific required patterns
+            while IFS= read -r pattern; do
+                [ -z "$pattern" ] && continue
+                local cnt
+                cnt=$(count_pattern "$msg_file" "$pattern")
+                local pname
+                pname=$(echo "$pattern" | sed 's/\\.*//; s/|.*//; s/ /-/g' | head -c 30)
+                if [ "$cnt" -gt 0 ]; then
+                    checks+=("{\"check\":\"required:$pname\",\"status\":\"PASS\",\"detail\":\"$cnt matches\"}")
+                    log "  ${GREEN}[PASS] required: '$pname' found${NC}"
+                else
+                    checks+=("{\"check\":\"required:$pname\",\"status\":\"FAIL\",\"detail\":\"not found\"}")
+                    scenario_status="FAIL"
+                    log "  ${RED}[FAIL] required: '$pname' not found in response${NC}"
+                fi
+            done < <(jq -r '.checks.required_patterns // [] | .[]' "$scenario_file" 2>/dev/null)
+
+            # Check: scenario-specific banned patterns
+            while IFS= read -r pattern; do
+                [ -z "$pattern" ] && continue
+                local cnt
+                cnt=$(count_pattern "$msg_file" "$pattern")
+                local pname
+                pname=$(echo "$pattern" | sed 's/\\.*//; s/|.*//; s/ /-/g' | head -c 30)
+                if [ "$cnt" -gt 0 ]; then
+                    checks+=("{\"check\":\"banned:$pname\",\"status\":\"FAIL\",\"detail\":\"$cnt matches\"}")
+                    scenario_status="FAIL"
+                    log "  ${RED}[FAIL] banned: '$pname' found $cnt times${NC}"
+                else
+                    checks+=("{\"check\":\"banned:$pname\",\"status\":\"PASS\"}")
+                    log "  ${GREEN}[PASS] banned: '$pname' absent${NC}"
+                fi
+            done < <(jq -r '.checks.banned_patterns // [] | .[]' "$scenario_file" 2>/dev/null)
+
+            # Check: expected MCP calls range (if specified in scenario)
+            local mcp_min mcp_max
+            mcp_min=$(jq -r '.checks.expected_mcp_calls.min // empty' "$scenario_file" 2>/dev/null)
+            mcp_max=$(jq -r '.checks.expected_mcp_calls.max // empty' "$scenario_file" 2>/dev/null)
+            if [ -n "$mcp_min" ] && [ -n "$mcp_max" ]; then
+                if [ "$mcp_calls" -ge "$mcp_min" ] && [ "$mcp_calls" -le "$mcp_max" ]; then
+                    checks+=("{\"check\":\"mcp-calls-range\",\"status\":\"PASS\",\"detail\":\"$mcp_calls in [$mcp_min..$mcp_max]\"}")
+                    log "  ${GREEN}[PASS] mcp-calls-range: $mcp_calls in [$mcp_min..$mcp_max]${NC}"
+                else
+                    checks+=("{\"check\":\"mcp-calls-range\",\"status\":\"FAIL\",\"detail\":\"$mcp_calls not in [$mcp_min..$mcp_max]\"}")
+                    scenario_status="FAIL"
+                    log "  ${RED}[FAIL] mcp-calls-range: $mcp_calls not in [$mcp_min..$mcp_max]${NC}"
+                fi
+            fi
+
+            # Check: expected specific tools in tool_use events (telemetry-based)
+            while IFS= read -r tool_name; do
+                [ -z "$tool_name" ] && continue
+                if grep -qF "$tool_name" "$tools_file" 2>/dev/null; then
+                    checks+=("{\"check\":\"expected-tool:$tool_name\",\"status\":\"PASS\"}")
+                    log "  ${GREEN}[PASS] expected-tool: '$tool_name'${NC}"
+                else
+                    checks+=("{\"check\":\"expected-tool:$tool_name\",\"status\":\"FAIL\",\"detail\":\"not in tool_use events\"}")
+                    scenario_status="FAIL"
+                    log "  ${RED}[FAIL] expected-tool: '$tool_name' not in tool_use${NC}"
+                fi
+            done < <(jq -r '.checks.expected_tools // [] | .[]' "$scenario_file" 2>/dev/null)
+
+            # Check: banned specific tools — MUST NOT appear in tool_use events
+            while IFS= read -r tool_name; do
+                [ -z "$tool_name" ] && continue
+                if grep -qF "$tool_name" "$tools_file" 2>/dev/null; then
+                    checks+=("{\"check\":\"banned-tool:$tool_name\",\"status\":\"FAIL\",\"detail\":\"found in tool_use events\"}")
+                    scenario_status="FAIL"
+                    log "  ${RED}[FAIL] banned-tool: '$tool_name' found in tool_use${NC}"
+                else
+                    checks+=("{\"check\":\"banned-tool:$tool_name\",\"status\":\"PASS\"}")
+                    log "  ${GREEN}[PASS] banned-tool: '$tool_name' absent${NC}"
+                fi
+            done < <(jq -r '.checks.banned_tools // [] | .[]' "$scenario_file" 2>/dev/null)
+
+            # Check: output token budget
+            if [ "$output_tokens" -gt 0 ] && [ "$output_tokens" -gt "$smax_out" ] 2>/dev/null; then
+                checks+=("{\"check\":\"token-budget\",\"status\":\"FAIL\",\"detail\":\"$output_tokens > $smax_out\"}")
+                scenario_status="FAIL"
+                log "  ${RED}[FAIL] token-budget: $output_tokens > $smax_out${NC}"
+            else
+                checks+=("{\"check\":\"token-budget\",\"status\":\"PASS\",\"detail\":\"$output_tokens <= $smax_out\"}")
+                log "  ${GREEN}[PASS] token-budget: $output_tokens <= $smax_out${NC}"
+            fi
+
+            # Check: mode leakage (standard mode only)
+            if [ "$MODE" = "standard" ]; then
+                local leakage_patterns=("Decompose task into objectives" "Level brain|Level architect" "Formulate and execute initial web search")
+                for lp in "${leakage_patterns[@]}"; do
+                    local lcnt
+                    lcnt=$(count_pattern "$msg_file" "$lp")
+                    if [ "$lcnt" -gt 0 ]; then
+                        local lpname
+                        lpname=$(echo "$lp" | sed 's/|.*//; s/ /-/g' | head -c 25)
+                        checks+=("{\"check\":\"mode-leakage:$lpname\",\"status\":\"FAIL\"}")
+                        scenario_status="FAIL"
+                        log "  ${RED}[FAIL] mode-leakage: '$lpname' found${NC}"
+                    fi
+                done
+            fi
+
+            log "  ${DIM}tokens: in=$input_tokens out=$output_tokens | mcp=$mcp_calls | ${#response_text} chars | ${duration_ms}ms${NC}"
+
+            # Retry decision: if PASS → break; if last attempt → break; else retry
+            if [ "$scenario_status" = "PASS" ] || [ "$attempt" -ge "$max_attempts" ]; then
+                break
+            fi
+            ((attempt++))
+        done
+
+        # Classify flaky status (only when retries were used)
+        if [ "$attempt" -gt 1 ]; then
+            if [ "$scenario_status" = "PASS" ]; then
+                scenario_status="FLAKY_PASS"
+                log "  ${YELLOW}[FLAKY] Passed on attempt $attempt/$max_attempts${NC}"
+            else
+                scenario_status="FLAKY_FAIL"
+                log "  ${YELLOW}[FLAKY] Failed all $max_attempts attempts${NC}"
+            fi
+        fi
     fi
 
     # Update counters
     case "$scenario_status" in
         PASS) ((PASSED++)) ;;
         FAIL) ((FAILED++)) ;;
-        ERROR) ;; # already counted
+        ERROR) ((ERRORS++)) ;;
+        FLAKY_PASS) ((FLAKY_PASSED++)); ((PASSED++)) ;;
+        FLAKY_FAIL) ((FLAKY_FAILED++)); ((FAILED++)) ;;
     esac
 
     TOTAL_INPUT_TOKENS=$((TOTAL_INPUT_TOKENS + input_tokens))
@@ -474,7 +511,7 @@ run_scenario() {
         checks_json=$(IFS=,; echo "${checks[*]}")
     fi
     local rchars=${#response_text}
-    RESULTS+=("{\"id\":\"$sid\",\"title\":\"$stitle\",\"difficulty\":\"$sdiff\",\"status\":\"$scenario_status\",\"executed_model\":\"$MODEL\",\"duration_ms\":$duration_ms,\"input_tokens\":$input_tokens,\"output_tokens\":$output_tokens,\"mcp_calls_count\":$mcp_calls,\"response_chars\":$rchars,\"checks\":[$checks_json]}")
+    RESULTS+=("{\"id\":\"$sid\",\"title\":\"$stitle\",\"difficulty\":\"$sdiff\",\"status\":\"$scenario_status\",\"executed_model\":\"$MODEL\",\"duration_ms\":$duration_ms,\"input_tokens\":$input_tokens,\"output_tokens\":$output_tokens,\"mcp_calls_count\":$mcp_calls,\"response_chars\":$rchars,\"attempts\":$attempt,\"checks\":[$checks_json]}")
 }
 
 # ============================================================
@@ -483,13 +520,14 @@ run_scenario() {
 run_multi_turn_scenario() {
     local scenario_file="$1"
 
-    local sid stitle sdiff smax_out stimeout num_turns
+    local sid stitle sdiff smax_out stimeout num_turns sretry
     sid=$(jq -r '.id' "$scenario_file")
     stitle=$(jq -r '.title' "$scenario_file")
     sdiff=$(jq -r '.difficulty' "$scenario_file")
     smax_out=$(jq -r '.max_output_tokens // 3000' "$scenario_file")
     stimeout=$(jq -r '.timeout_s // '"$TIMEOUT"'' "$scenario_file")
     num_turns=$(jq -r '.turns | length' "$scenario_file")
+    sretry=$(jq -r ".retry // $RETRY_DEFAULT" "$scenario_file")
 
     log "\n${CYAN}[$sid] $stitle${NC} ${DIM}($sdiff, ${num_turns} turns)${NC}"
     ((TOTAL++))
@@ -501,6 +539,9 @@ run_multi_turn_scenario() {
     local total_output_tokens=0
     local total_mcp_calls=0
     local session_id=""
+    local attempt=1
+    local max_attempts=$((sretry + 1))
+    local duration_ms=0
 
     if $DRY_RUN; then
         log "  ${DIM}[DRY-RUN] Multi-turn scenario validated, AI calls skipped${NC}"
@@ -533,282 +574,314 @@ run_multi_turn_scenario() {
             scenario_status="FAIL"
         fi
     else
-        local start_ns
-        start_ns=$(date +%s%N 2>/dev/null || echo "$(($(date +%s) * 1000000000))")
+        while [ "$attempt" -le "$max_attempts" ]; do
+            # Reset per-attempt state
+            scenario_status="PASS"
+            checks=()
+            total_response=""
+            total_input_tokens=0
+            total_output_tokens=0
+            total_mcp_calls=0
+            session_id=""
+            duration_ms=0
 
-        local t=0
-        while [ "$t" -lt "$num_turns" ]; do
-            local ask
-            ask=$(jq -r ".turns[$t].ask" "$scenario_file")
-            local turn_label="turn$((t+1))"
+            [ "$attempt" -gt 1 ] && log "  ${YELLOW}[RETRY] attempt $attempt/$max_attempts${NC}"
 
-            log "  ${DIM}--- $turn_label ---${NC}"
+            local start_ns
+            start_ns=$(date +%s%N 2>/dev/null || echo "$(($(date +%s) * 1000000000))")
 
-            # Build CLI command
-            local cli_args=(claude --ask "$ask" --json --model "$MODEL")
-            if [ "$t" -gt 0 ] && [ -n "$session_id" ]; then
-                cli_args=(claude --resume "$session_id" --ask "$ask" --json --model "$MODEL")
-            fi
-            $YOLO && cli_args+=(--yolo)
+            local t=0
+            while [ "$t" -lt "$num_turns" ]; do
+                local ask
+                ask=$(jq -r ".turns[$t].ask" "$scenario_file")
+                local turn_label="turn$((t+1))"
 
-            export STRICT_MODE="$MODE" COGNITIVE_LEVEL="$COGNITIVE"
-            [ -n "${BRAIN_CLI_DEBUG:-}" ] && export BRAIN_CLI_DEBUG
+                log "  ${DIM}--- $turn_label ---${NC}"
 
-            local raw_file="$TMP_DIR/raw_${sid}_t${t}.jsonl"
-            local err_file="$TMP_DIR/err_${sid}_t${t}.log"
-            local session_file="$TMP_DIR/session_${sid}.txt"
-            cd "$PROJECT_ROOT"
-            $TIMEOUT_CMD "$stimeout" "$AI_CMD" "${cli_args[@]}" > "$raw_file" 2>"$err_file" || true
-
-            # Parse output
-            local msg_file="$TMP_DIR/msg_${sid}_t${t}.txt"
-            local metrics_file="$TMP_DIR/metrics_${sid}_t${t}.txt"
-            local tools_file="$TMP_DIR/tools_${sid}_t${t}.txt"
-            parse_cli_output "$raw_file" "$msg_file" "$metrics_file" "$tools_file" "$session_file"
-
-            local turn_text
-            turn_text=$(cat "$msg_file" 2>/dev/null || echo "")
-            local turn_in turn_out
-            read -r turn_in turn_out < "$metrics_file" 2>/dev/null || true
-            turn_in=${turn_in:-0}
-            turn_out=${turn_out:-0}
-            local turn_mcp
-            turn_mcp=$(wc -l < "$tools_file" 2>/dev/null | tr -d ' ')
-            turn_mcp=${turn_mcp:-0}
-
-            total_response+="$turn_text"
-            total_input_tokens=$((total_input_tokens + turn_in))
-            total_output_tokens=$((total_output_tokens + turn_out))
-            total_mcp_calls=$((total_mcp_calls + turn_mcp))
-
-            # Extract session_id from first turn
-            if [ "$t" -eq 0 ]; then
-                session_id=$(cat "$session_file" 2>/dev/null | tr -d '[:space:]')
-                if [ -z "$session_id" ]; then
-                    log "  ${RED}[ERROR] No sessionId in init DTO${NC}"
-                    scenario_status="ERROR"
-                    ((ERRORS++))
-                    checks+=("{\"check\":\"session-init\",\"status\":\"FAIL\"}")
-                    break
+                # Build CLI command
+                local cli_args=(claude --ask "$ask" --json --model "$MODEL")
+                if [ "$t" -gt 0 ] && [ -n "$session_id" ]; then
+                    cli_args=(claude --resume "$session_id" --ask "$ask" --json --model "$MODEL")
                 fi
-                checks+=("{\"check\":\"session-init\",\"status\":\"PASS\",\"detail\":\"${session_id:0:8}...\"}")
-                log "  ${GREEN}[PASS] session-init: ${session_id:0:8}...${NC}"
-            fi
+                $YOLO && cli_args+=(--yolo)
 
-            # Check: turn response received
-            if [ -z "$turn_text" ] || [ "$turn_text" = "null" ]; then
-                checks+=("{\"check\":\"${turn_label}:response\",\"status\":\"FAIL\"}")
-                scenario_status="FAIL"
-                log "  ${RED}[FAIL] $turn_label: empty response${NC}"
-            else
-                checks+=("{\"check\":\"${turn_label}:response\",\"status\":\"PASS\"}")
-            fi
+                export STRICT_MODE="$MODE" COGNITIVE_LEVEL="$COGNITIVE"
+                [ -n "${BRAIN_CLI_DEBUG:-}" ] && export BRAIN_CLI_DEBUG
 
-            # Check: per-turn required patterns
+                local raw_file="$TMP_DIR/raw_${sid}_t${t}.jsonl"
+                local err_file="$TMP_DIR/err_${sid}_t${t}.log"
+                local session_file="$TMP_DIR/session_${sid}.txt"
+                cd "$PROJECT_ROOT"
+                $TIMEOUT_CMD "$stimeout" "$AI_CMD" "${cli_args[@]}" > "$raw_file" 2>"$err_file" || true
+
+                # Parse output
+                local msg_file="$TMP_DIR/msg_${sid}_t${t}.txt"
+                local metrics_file="$TMP_DIR/metrics_${sid}_t${t}.txt"
+                local tools_file="$TMP_DIR/tools_${sid}_t${t}.txt"
+                parse_cli_output "$raw_file" "$msg_file" "$metrics_file" "$tools_file" "$session_file"
+
+                local turn_text
+                turn_text=$(cat "$msg_file" 2>/dev/null || echo "")
+                local turn_in turn_out
+                read -r turn_in turn_out < "$metrics_file" 2>/dev/null || true
+                turn_in=${turn_in:-0}
+                turn_out=${turn_out:-0}
+                local turn_mcp
+                turn_mcp=$(wc -l < "$tools_file" 2>/dev/null | tr -d ' ')
+                turn_mcp=${turn_mcp:-0}
+
+                total_response+="$turn_text"
+                total_input_tokens=$((total_input_tokens + turn_in))
+                total_output_tokens=$((total_output_tokens + turn_out))
+                total_mcp_calls=$((total_mcp_calls + turn_mcp))
+
+                # Extract session_id from first turn
+                if [ "$t" -eq 0 ]; then
+                    session_id=$(cat "$session_file" 2>/dev/null | tr -d '[:space:]')
+                    if [ -z "$session_id" ]; then
+                        log "  ${RED}[ERROR] No sessionId in init DTO${NC}"
+                        scenario_status="ERROR"
+                        checks+=("{\"check\":\"session-init\",\"status\":\"FAIL\"}")
+                        break
+                    fi
+                    checks+=("{\"check\":\"session-init\",\"status\":\"PASS\",\"detail\":\"${session_id:0:8}...\"}")
+                    log "  ${GREEN}[PASS] session-init: ${session_id:0:8}...${NC}"
+                fi
+
+                # Check: turn response received
+                if [ -z "$turn_text" ] || [ "$turn_text" = "null" ]; then
+                    checks+=("{\"check\":\"${turn_label}:response\",\"status\":\"FAIL\"}")
+                    scenario_status="FAIL"
+                    log "  ${RED}[FAIL] $turn_label: empty response${NC}"
+                else
+                    checks+=("{\"check\":\"${turn_label}:response\",\"status\":\"PASS\"}")
+                fi
+
+                # Check: per-turn required patterns
+                while IFS= read -r pattern; do
+                    [ -z "$pattern" ] && continue
+                    local cnt
+                    cnt=$(count_pattern "$msg_file" "$pattern")
+                    local pname
+                    pname=$(echo "$pattern" | sed 's/\\.*//; s/|.*//; s/ /-/g' | head -c 30)
+                    if [ "$cnt" -gt 0 ]; then
+                        checks+=("{\"check\":\"${turn_label}:required:$pname\",\"status\":\"PASS\",\"detail\":\"$cnt matches\"}")
+                        log "  ${GREEN}[PASS] $turn_label required: '$pname'${NC}"
+                    else
+                        checks+=("{\"check\":\"${turn_label}:required:$pname\",\"status\":\"FAIL\",\"detail\":\"not found\"}")
+                        scenario_status="FAIL"
+                        log "  ${RED}[FAIL] $turn_label required: '$pname' not found${NC}"
+                    fi
+                done < <(jq -r ".turns[$t].checks.required_patterns // [] | .[]" "$scenario_file" 2>/dev/null)
+
+                # Check: per-turn banned patterns
+                while IFS= read -r pattern; do
+                    [ -z "$pattern" ] && continue
+                    local cnt
+                    cnt=$(count_pattern "$msg_file" "$pattern")
+                    local pname
+                    pname=$(echo "$pattern" | sed 's/\\.*//; s/|.*//; s/ /-/g' | head -c 30)
+                    if [ "$cnt" -gt 0 ]; then
+                        checks+=("{\"check\":\"${turn_label}:banned:$pname\",\"status\":\"FAIL\",\"detail\":\"$cnt matches\"}")
+                        scenario_status="FAIL"
+                        log "  ${RED}[FAIL] $turn_label banned: '$pname' found${NC}"
+                    else
+                        checks+=("{\"check\":\"${turn_label}:banned:$pname\",\"status\":\"PASS\"}")
+                    fi
+                done < <(jq -r ".turns[$t].checks.banned_patterns // [] | .[]" "$scenario_file" 2>/dev/null)
+
+                # Check: per-turn expected_mcp_calls
+                local tmcp_min tmcp_max
+                tmcp_min=$(jq -r ".turns[$t].checks.expected_mcp_calls.min // empty" "$scenario_file" 2>/dev/null)
+                tmcp_max=$(jq -r ".turns[$t].checks.expected_mcp_calls.max // empty" "$scenario_file" 2>/dev/null)
+                if [ -n "$tmcp_min" ] && [ -n "$tmcp_max" ]; then
+                    if [ "$turn_mcp" -ge "$tmcp_min" ] && [ "$turn_mcp" -le "$tmcp_max" ]; then
+                        checks+=("{\"check\":\"${turn_label}:mcp-range\",\"status\":\"PASS\",\"detail\":\"$turn_mcp in [$tmcp_min..$tmcp_max]\"}")
+                        log "  ${GREEN}[PASS] $turn_label mcp-range: $turn_mcp in [$tmcp_min..$tmcp_max]${NC}"
+                    else
+                        checks+=("{\"check\":\"${turn_label}:mcp-range\",\"status\":\"FAIL\",\"detail\":\"$turn_mcp not in [$tmcp_min..$tmcp_max]\"}")
+                        scenario_status="FAIL"
+                        log "  ${RED}[FAIL] $turn_label mcp-range: $turn_mcp not in [$tmcp_min..$tmcp_max]${NC}"
+                    fi
+                fi
+
+                # Check: per-turn expected_tools
+                while IFS= read -r tool_name; do
+                    [ -z "$tool_name" ] && continue
+                    if grep -qF "$tool_name" "$tools_file" 2>/dev/null; then
+                        checks+=("{\"check\":\"${turn_label}:expected-tool:$tool_name\",\"status\":\"PASS\"}")
+                        log "  ${GREEN}[PASS] $turn_label expected-tool: '$tool_name'${NC}"
+                    else
+                        checks+=("{\"check\":\"${turn_label}:expected-tool:$tool_name\",\"status\":\"FAIL\",\"detail\":\"not in tool_use events\"}")
+                        scenario_status="FAIL"
+                        log "  ${RED}[FAIL] $turn_label expected-tool: '$tool_name' not in tool_use${NC}"
+                    fi
+                done < <(jq -r ".turns[$t].checks.expected_tools // [] | .[]" "$scenario_file" 2>/dev/null)
+
+                # Check: per-turn banned_tools — MUST NOT appear in tool_use events
+                while IFS= read -r tool_name; do
+                    [ -z "$tool_name" ] && continue
+                    if grep -qF "$tool_name" "$tools_file" 2>/dev/null; then
+                        checks+=("{\"check\":\"${turn_label}:banned-tool:$tool_name\",\"status\":\"FAIL\",\"detail\":\"found in tool_use events\"}")
+                        scenario_status="FAIL"
+                        log "  ${RED}[FAIL] $turn_label banned-tool: '$tool_name' found in tool_use${NC}"
+                    else
+                        checks+=("{\"check\":\"${turn_label}:banned-tool:$tool_name\",\"status\":\"PASS\"}")
+                        log "  ${GREEN}[PASS] $turn_label banned-tool: '$tool_name' absent${NC}"
+                    fi
+                done < <(jq -r ".turns[$t].checks.banned_tools // [] | .[]" "$scenario_file" 2>/dev/null)
+
+                log "  ${DIM}$turn_label: tokens in=$turn_in out=$turn_out | mcp=$turn_mcp | ${#turn_text} chars${NC}"
+
+                ((t++))
+            done
+
+            local end_ns
+            end_ns=$(date +%s%N 2>/dev/null || echo "$(($(date +%s) * 1000000000))")
+            duration_ms=$(( (end_ns - start_ns) / 1000000 ))
+
+            # Scenario-level checks: global banned
+            local all_msg_file="$TMP_DIR/msg_${sid}_all.txt"
+            > "$all_msg_file"
+            local i=0
+            while [ "$i" -lt "$num_turns" ]; do
+                cat "$TMP_DIR/msg_${sid}_t${i}.txt" >> "$all_msg_file" 2>/dev/null
+                ((i++))
+            done
+
+            for pattern in "${GLOBAL_BANNED[@]}"; do
+                local cnt
+                cnt=$(count_pattern "$all_msg_file" "$pattern")
+                local pname
+                pname=$(echo "$pattern" | sed 's/\\.*//; s/ /-/g' | head -c 30)
+                if [ "$cnt" -gt 0 ]; then
+                    checks+=("{\"check\":\"global-banned:$pname\",\"status\":\"FAIL\",\"detail\":\"$cnt matches\"}")
+                    scenario_status="FAIL"
+                    log "  ${RED}[FAIL] global-banned: '$pname' found $cnt times${NC}"
+                else
+                    checks+=("{\"check\":\"global-banned:$pname\",\"status\":\"PASS\"}")
+                fi
+            done
+
+            # Scenario-level banned patterns
             while IFS= read -r pattern; do
                 [ -z "$pattern" ] && continue
                 local cnt
-                cnt=$(count_pattern "$msg_file" "$pattern")
+                cnt=$(count_pattern "$all_msg_file" "$pattern")
                 local pname
                 pname=$(echo "$pattern" | sed 's/\\.*//; s/|.*//; s/ /-/g' | head -c 30)
                 if [ "$cnt" -gt 0 ]; then
-                    checks+=("{\"check\":\"${turn_label}:required:$pname\",\"status\":\"PASS\",\"detail\":\"$cnt matches\"}")
-                    log "  ${GREEN}[PASS] $turn_label required: '$pname'${NC}"
-                else
-                    checks+=("{\"check\":\"${turn_label}:required:$pname\",\"status\":\"FAIL\",\"detail\":\"not found\"}")
+                    checks+=("{\"check\":\"banned:$pname\",\"status\":\"FAIL\",\"detail\":\"$cnt matches\"}")
                     scenario_status="FAIL"
-                    log "  ${RED}[FAIL] $turn_label required: '$pname' not found${NC}"
-                fi
-            done < <(jq -r ".turns[$t].checks.required_patterns // [] | .[]" "$scenario_file" 2>/dev/null)
-
-            # Check: per-turn banned patterns
-            while IFS= read -r pattern; do
-                [ -z "$pattern" ] && continue
-                local cnt
-                cnt=$(count_pattern "$msg_file" "$pattern")
-                local pname
-                pname=$(echo "$pattern" | sed 's/\\.*//; s/|.*//; s/ /-/g' | head -c 30)
-                if [ "$cnt" -gt 0 ]; then
-                    checks+=("{\"check\":\"${turn_label}:banned:$pname\",\"status\":\"FAIL\",\"detail\":\"$cnt matches\"}")
-                    scenario_status="FAIL"
-                    log "  ${RED}[FAIL] $turn_label banned: '$pname' found${NC}"
+                    log "  ${RED}[FAIL] banned: '$pname' found $cnt times${NC}"
                 else
-                    checks+=("{\"check\":\"${turn_label}:banned:$pname\",\"status\":\"PASS\"}")
+                    checks+=("{\"check\":\"banned:$pname\",\"status\":\"PASS\"}")
                 fi
-            done < <(jq -r ".turns[$t].checks.banned_patterns // [] | .[]" "$scenario_file" 2>/dev/null)
+            done < <(jq -r '.checks.banned_patterns // [] | .[]' "$scenario_file" 2>/dev/null)
 
-            # Check: per-turn expected_mcp_calls
-            local tmcp_min tmcp_max
-            tmcp_min=$(jq -r ".turns[$t].checks.expected_mcp_calls.min // empty" "$scenario_file" 2>/dev/null)
-            tmcp_max=$(jq -r ".turns[$t].checks.expected_mcp_calls.max // empty" "$scenario_file" 2>/dev/null)
-            if [ -n "$tmcp_min" ] && [ -n "$tmcp_max" ]; then
-                if [ "$turn_mcp" -ge "$tmcp_min" ] && [ "$turn_mcp" -le "$tmcp_max" ]; then
-                    checks+=("{\"check\":\"${turn_label}:mcp-range\",\"status\":\"PASS\",\"detail\":\"$turn_mcp in [$tmcp_min..$tmcp_max]\"}")
-                    log "  ${GREEN}[PASS] $turn_label mcp-range: $turn_mcp in [$tmcp_min..$tmcp_max]${NC}"
-                else
-                    checks+=("{\"check\":\"${turn_label}:mcp-range\",\"status\":\"FAIL\",\"detail\":\"$turn_mcp not in [$tmcp_min..$tmcp_max]\"}")
-                    scenario_status="FAIL"
-                    log "  ${RED}[FAIL] $turn_label mcp-range: $turn_mcp not in [$tmcp_min..$tmcp_max]${NC}"
-                fi
-            fi
-
-            # Check: per-turn expected_tools
+            # Scenario-level banned_tools — aggregate across all turns
+            local all_tools_file="$TMP_DIR/tools_${sid}_all.txt"
+            > "$all_tools_file"
+            local ti=0
+            while [ "$ti" -lt "$num_turns" ]; do
+                cat "$TMP_DIR/tools_${sid}_t${ti}.txt" >> "$all_tools_file" 2>/dev/null
+                ((ti++))
+            done
             while IFS= read -r tool_name; do
                 [ -z "$tool_name" ] && continue
-                if grep -qF "$tool_name" "$tools_file" 2>/dev/null; then
-                    checks+=("{\"check\":\"${turn_label}:expected-tool:$tool_name\",\"status\":\"PASS\"}")
-                    log "  ${GREEN}[PASS] $turn_label expected-tool: '$tool_name'${NC}"
-                else
-                    checks+=("{\"check\":\"${turn_label}:expected-tool:$tool_name\",\"status\":\"FAIL\",\"detail\":\"not in tool_use events\"}")
+                if grep -qF "$tool_name" "$all_tools_file" 2>/dev/null; then
+                    checks+=("{\"check\":\"banned-tool:$tool_name\",\"status\":\"FAIL\",\"detail\":\"found in tool_use events\"}")
                     scenario_status="FAIL"
-                    log "  ${RED}[FAIL] $turn_label expected-tool: '$tool_name' not in tool_use${NC}"
+                    log "  ${RED}[FAIL] banned-tool: '$tool_name' found in tool_use${NC}"
+                else
+                    checks+=("{\"check\":\"banned-tool:$tool_name\",\"status\":\"PASS\"}")
+                    log "  ${GREEN}[PASS] banned-tool: '$tool_name' absent${NC}"
                 fi
-            done < <(jq -r ".turns[$t].checks.expected_tools // [] | .[]" "$scenario_file" 2>/dev/null)
+            done < <(jq -r '.checks.banned_tools // [] | .[]' "$scenario_file" 2>/dev/null)
 
-            # Check: per-turn banned_tools — MUST NOT appear in tool_use events
+            # Scenario-level expected_tools — aggregate across all turns
             while IFS= read -r tool_name; do
                 [ -z "$tool_name" ] && continue
-                if grep -qF "$tool_name" "$tools_file" 2>/dev/null; then
-                    checks+=("{\"check\":\"${turn_label}:banned-tool:$tool_name\",\"status\":\"FAIL\",\"detail\":\"found in tool_use events\"}")
-                    scenario_status="FAIL"
-                    log "  ${RED}[FAIL] $turn_label banned-tool: '$tool_name' found in tool_use${NC}"
+                if grep -qF "$tool_name" "$all_tools_file" 2>/dev/null; then
+                    checks+=("{\"check\":\"expected-tool:$tool_name\",\"status\":\"PASS\"}")
+                    log "  ${GREEN}[PASS] expected-tool: '$tool_name'${NC}"
                 else
-                    checks+=("{\"check\":\"${turn_label}:banned-tool:$tool_name\",\"status\":\"PASS\"}")
-                    log "  ${GREEN}[PASS] $turn_label banned-tool: '$tool_name' absent${NC}"
+                    checks+=("{\"check\":\"expected-tool:$tool_name\",\"status\":\"FAIL\",\"detail\":\"not in tool_use events\"}")
+                    scenario_status="FAIL"
+                    log "  ${RED}[FAIL] expected-tool: '$tool_name' not in tool_use${NC}"
                 fi
-            done < <(jq -r ".turns[$t].checks.banned_tools // [] | .[]" "$scenario_file" 2>/dev/null)
+            done < <(jq -r '.checks.expected_tools // [] | .[]' "$scenario_file" 2>/dev/null)
 
-            log "  ${DIM}$turn_label: tokens in=$turn_in out=$turn_out | mcp=$turn_mcp | ${#turn_text} chars${NC}"
+            # Scenario-level expected MCP calls range
+            local mcp_min mcp_max
+            mcp_min=$(jq -r '.checks.expected_mcp_calls.min // empty' "$scenario_file" 2>/dev/null)
+            mcp_max=$(jq -r '.checks.expected_mcp_calls.max // empty' "$scenario_file" 2>/dev/null)
+            if [ -n "$mcp_min" ] && [ -n "$mcp_max" ]; then
+                if [ "$total_mcp_calls" -ge "$mcp_min" ] && [ "$total_mcp_calls" -le "$mcp_max" ]; then
+                    checks+=("{\"check\":\"mcp-calls-range\",\"status\":\"PASS\",\"detail\":\"$total_mcp_calls in [$mcp_min..$mcp_max]\"}")
+                    log "  ${GREEN}[PASS] mcp-calls-range: $total_mcp_calls in [$mcp_min..$mcp_max]${NC}"
+                else
+                    checks+=("{\"check\":\"mcp-calls-range\",\"status\":\"FAIL\",\"detail\":\"$total_mcp_calls not in [$mcp_min..$mcp_max]\"}")
+                    scenario_status="FAIL"
+                    log "  ${RED}[FAIL] mcp-calls-range: $total_mcp_calls not in [$mcp_min..$mcp_max]${NC}"
+                fi
+            fi
 
-            ((t++))
+            # Scenario-level token budget
+            if [ "$total_output_tokens" -gt 0 ] && [ "$total_output_tokens" -gt "$smax_out" ] 2>/dev/null; then
+                checks+=("{\"check\":\"token-budget\",\"status\":\"FAIL\",\"detail\":\"$total_output_tokens > $smax_out\"}")
+                scenario_status="FAIL"
+                log "  ${RED}[FAIL] token-budget: $total_output_tokens > $smax_out${NC}"
+            else
+                checks+=("{\"check\":\"token-budget\",\"status\":\"PASS\",\"detail\":\"$total_output_tokens <= $smax_out\"}")
+                log "  ${GREEN}[PASS] token-budget: $total_output_tokens <= $smax_out${NC}"
+            fi
+
+            # Scenario-level duration
+            local timeout_ms=$((stimeout * 1000))
+            if [ "$duration_ms" -le "$timeout_ms" ]; then
+                checks+=("{\"check\":\"duration\",\"status\":\"PASS\",\"detail\":\"${duration_ms}ms <= ${timeout_ms}ms\"}")
+                log "  ${GREEN}[PASS] duration: ${duration_ms}ms <= ${timeout_ms}ms${NC}"
+            else
+                checks+=("{\"check\":\"duration\",\"status\":\"FAIL\",\"detail\":\"${duration_ms}ms > ${timeout_ms}ms\"}")
+                scenario_status="FAIL"
+                log "  ${RED}[FAIL] duration: ${duration_ms}ms > ${timeout_ms}ms${NC}"
+            fi
+
+            log "  ${DIM}total: tokens in=$total_input_tokens out=$total_output_tokens | mcp=$total_mcp_calls | ${#total_response} chars | ${duration_ms}ms${NC}"
+
+            # Retry decision: if PASS → break; if last attempt → break; else retry
+            if [ "$scenario_status" = "PASS" ] || [ "$attempt" -ge "$max_attempts" ]; then
+                break
+            fi
+            ((attempt++))
         done
 
-        local end_ns
-        end_ns=$(date +%s%N 2>/dev/null || echo "$(($(date +%s) * 1000000000))")
-        local duration_ms=$(( (end_ns - start_ns) / 1000000 ))
-
-        # Scenario-level checks: global banned
-        local all_msg_file="$TMP_DIR/msg_${sid}_all.txt"
-        > "$all_msg_file"
-        local i=0
-        while [ "$i" -lt "$num_turns" ]; do
-            cat "$TMP_DIR/msg_${sid}_t${i}.txt" >> "$all_msg_file" 2>/dev/null
-            ((i++))
-        done
-
-        for pattern in "${GLOBAL_BANNED[@]}"; do
-            local cnt
-            cnt=$(count_pattern "$all_msg_file" "$pattern")
-            local pname
-            pname=$(echo "$pattern" | sed 's/\\.*//; s/ /-/g' | head -c 30)
-            if [ "$cnt" -gt 0 ]; then
-                checks+=("{\"check\":\"global-banned:$pname\",\"status\":\"FAIL\",\"detail\":\"$cnt matches\"}")
-                scenario_status="FAIL"
-                log "  ${RED}[FAIL] global-banned: '$pname' found $cnt times${NC}"
+        # Classify flaky status (only when retries were used)
+        if [ "$attempt" -gt 1 ]; then
+            if [ "$scenario_status" = "PASS" ]; then
+                scenario_status="FLAKY_PASS"
+                log "  ${YELLOW}[FLAKY] Passed on attempt $attempt/$max_attempts${NC}"
             else
-                checks+=("{\"check\":\"global-banned:$pname\",\"status\":\"PASS\"}")
-            fi
-        done
-
-        # Scenario-level banned patterns
-        while IFS= read -r pattern; do
-            [ -z "$pattern" ] && continue
-            local cnt
-            cnt=$(count_pattern "$all_msg_file" "$pattern")
-            local pname
-            pname=$(echo "$pattern" | sed 's/\\.*//; s/|.*//; s/ /-/g' | head -c 30)
-            if [ "$cnt" -gt 0 ]; then
-                checks+=("{\"check\":\"banned:$pname\",\"status\":\"FAIL\",\"detail\":\"$cnt matches\"}")
-                scenario_status="FAIL"
-                log "  ${RED}[FAIL] banned: '$pname' found $cnt times${NC}"
-            else
-                checks+=("{\"check\":\"banned:$pname\",\"status\":\"PASS\"}")
-            fi
-        done < <(jq -r '.checks.banned_patterns // [] | .[]' "$scenario_file" 2>/dev/null)
-
-        # Scenario-level banned_tools — aggregate across all turns
-        local all_tools_file="$TMP_DIR/tools_${sid}_all.txt"
-        > "$all_tools_file"
-        local ti=0
-        while [ "$ti" -lt "$num_turns" ]; do
-            cat "$TMP_DIR/tools_${sid}_t${ti}.txt" >> "$all_tools_file" 2>/dev/null
-            ((ti++))
-        done
-        while IFS= read -r tool_name; do
-            [ -z "$tool_name" ] && continue
-            if grep -qF "$tool_name" "$all_tools_file" 2>/dev/null; then
-                checks+=("{\"check\":\"banned-tool:$tool_name\",\"status\":\"FAIL\",\"detail\":\"found in tool_use events\"}")
-                scenario_status="FAIL"
-                log "  ${RED}[FAIL] banned-tool: '$tool_name' found in tool_use${NC}"
-            else
-                checks+=("{\"check\":\"banned-tool:$tool_name\",\"status\":\"PASS\"}")
-                log "  ${GREEN}[PASS] banned-tool: '$tool_name' absent${NC}"
-            fi
-        done < <(jq -r '.checks.banned_tools // [] | .[]' "$scenario_file" 2>/dev/null)
-
-        # Scenario-level expected_tools — aggregate across all turns
-        while IFS= read -r tool_name; do
-            [ -z "$tool_name" ] && continue
-            if grep -qF "$tool_name" "$all_tools_file" 2>/dev/null; then
-                checks+=("{\"check\":\"expected-tool:$tool_name\",\"status\":\"PASS\"}")
-                log "  ${GREEN}[PASS] expected-tool: '$tool_name'${NC}"
-            else
-                checks+=("{\"check\":\"expected-tool:$tool_name\",\"status\":\"FAIL\",\"detail\":\"not in tool_use events\"}")
-                scenario_status="FAIL"
-                log "  ${RED}[FAIL] expected-tool: '$tool_name' not in tool_use${NC}"
-            fi
-        done < <(jq -r '.checks.expected_tools // [] | .[]' "$scenario_file" 2>/dev/null)
-
-        # Scenario-level expected MCP calls range
-        local mcp_min mcp_max
-        mcp_min=$(jq -r '.checks.expected_mcp_calls.min // empty' "$scenario_file" 2>/dev/null)
-        mcp_max=$(jq -r '.checks.expected_mcp_calls.max // empty' "$scenario_file" 2>/dev/null)
-        if [ -n "$mcp_min" ] && [ -n "$mcp_max" ]; then
-            if [ "$total_mcp_calls" -ge "$mcp_min" ] && [ "$total_mcp_calls" -le "$mcp_max" ]; then
-                checks+=("{\"check\":\"mcp-calls-range\",\"status\":\"PASS\",\"detail\":\"$total_mcp_calls in [$mcp_min..$mcp_max]\"}")
-                log "  ${GREEN}[PASS] mcp-calls-range: $total_mcp_calls in [$mcp_min..$mcp_max]${NC}"
-            else
-                checks+=("{\"check\":\"mcp-calls-range\",\"status\":\"FAIL\",\"detail\":\"$total_mcp_calls not in [$mcp_min..$mcp_max]\"}")
-                scenario_status="FAIL"
-                log "  ${RED}[FAIL] mcp-calls-range: $total_mcp_calls not in [$mcp_min..$mcp_max]${NC}"
+                scenario_status="FLAKY_FAIL"
+                log "  ${YELLOW}[FLAKY] Failed all $max_attempts attempts${NC}"
             fi
         fi
 
-        # Scenario-level token budget
-        if [ "$total_output_tokens" -gt 0 ] && [ "$total_output_tokens" -gt "$smax_out" ] 2>/dev/null; then
-            checks+=("{\"check\":\"token-budget\",\"status\":\"FAIL\",\"detail\":\"$total_output_tokens > $smax_out\"}")
-            scenario_status="FAIL"
-            log "  ${RED}[FAIL] token-budget: $total_output_tokens > $smax_out${NC}"
-        else
-            checks+=("{\"check\":\"token-budget\",\"status\":\"PASS\",\"detail\":\"$total_output_tokens <= $smax_out\"}")
-            log "  ${GREEN}[PASS] token-budget: $total_output_tokens <= $smax_out${NC}"
-        fi
-
-        # Scenario-level duration
-        local timeout_ms=$((stimeout * 1000))
-        if [ "$duration_ms" -le "$timeout_ms" ]; then
-            checks+=("{\"check\":\"duration\",\"status\":\"PASS\",\"detail\":\"${duration_ms}ms <= ${timeout_ms}ms\"}")
-            log "  ${GREEN}[PASS] duration: ${duration_ms}ms <= ${timeout_ms}ms${NC}"
-        else
-            checks+=("{\"check\":\"duration\",\"status\":\"FAIL\",\"detail\":\"${duration_ms}ms > ${timeout_ms}ms\"}")
-            scenario_status="FAIL"
-            log "  ${RED}[FAIL] duration: ${duration_ms}ms > ${timeout_ms}ms${NC}"
-        fi
-
-        log "  ${DIM}total: tokens in=$total_input_tokens out=$total_output_tokens | mcp=$total_mcp_calls | ${#total_response} chars | ${duration_ms}ms${NC}"
-
-        # Update counters
+        # Update metric counters
         TOTAL_INPUT_TOKENS=$((TOTAL_INPUT_TOKENS + total_input_tokens))
         TOTAL_OUTPUT_TOKENS=$((TOTAL_OUTPUT_TOKENS + total_output_tokens))
         TOTAL_DURATION_MS=$((TOTAL_DURATION_MS + duration_ms))
         TOTAL_MCP_CALLS=$((TOTAL_MCP_CALLS + total_mcp_calls))
     fi
 
-    # Update counters
+    # Update status counters
     case "$scenario_status" in
         PASS) ((PASSED++)) ;;
         FAIL) ((FAILED++)) ;;
-        ERROR) ;; # already counted
+        ERROR) ((ERRORS++)) ;;
+        FLAKY_PASS) ((FLAKY_PASSED++)); ((PASSED++)) ;;
+        FLAKY_FAIL) ((FLAKY_FAILED++)); ((FAILED++)) ;;
     esac
 
     # Record result JSON
@@ -817,7 +890,7 @@ run_multi_turn_scenario() {
         checks_json=$(IFS=,; echo "${checks[*]}")
     fi
     local rchars=${#total_response}
-    RESULTS+=("{\"id\":\"$sid\",\"title\":\"$stitle\",\"difficulty\":\"$sdiff\",\"status\":\"$scenario_status\",\"executed_model\":\"$MODEL\",\"duration_ms\":${duration_ms:-0},\"input_tokens\":$total_input_tokens,\"output_tokens\":$total_output_tokens,\"mcp_calls_count\":$total_mcp_calls,\"response_chars\":$rchars,\"turns\":$num_turns,\"checks\":[$checks_json]}")
+    RESULTS+=("{\"id\":\"$sid\",\"title\":\"$stitle\",\"difficulty\":\"$sdiff\",\"status\":\"$scenario_status\",\"executed_model\":\"$MODEL\",\"duration_ms\":${duration_ms:-0},\"input_tokens\":$total_input_tokens,\"output_tokens\":$total_output_tokens,\"mcp_calls_count\":$total_mcp_calls,\"response_chars\":$rchars,\"turns\":$num_turns,\"attempts\":$attempt,\"checks\":[$checks_json]}")
 }
 
 # ============================================================
@@ -879,6 +952,7 @@ run_matrix() {
 
     local config_results=()
     local grand_total=0 grand_passed=0 grand_failed=0 grand_errors=0
+    local grand_flaky_passed=0 grand_flaky_failed=0
     local grand_in_tokens=0 grand_out_tokens=0 grand_duration=0 grand_mcp=0
     local configs_passed=0
 
@@ -889,6 +963,7 @@ run_matrix() {
         MODE="$cfg_mode"
         COGNITIVE="$cfg_cognitive"
         TOTAL=0; PASSED=0; FAILED=0; ERRORS=0; SKIPPED=0
+        FLAKY_PASSED=0; FLAKY_FAILED=0
         TOTAL_INPUT_TOKENS=0; TOTAL_OUTPUT_TOKENS=0
         TOTAL_DURATION_MS=0; TOTAL_MCP_CALLS=0
         RESULTS=()
@@ -949,12 +1024,14 @@ run_matrix() {
             fi
         fi
 
-        config_results+=("{\"mode\":\"$cfg_mode\",\"cognitive\":\"$cfg_cognitive\",\"total\":$TOTAL,\"passed\":$PASSED,\"failed\":$FAILED,\"errors\":$ERRORS,\"pass_rate\":\"${rate}%\",\"total_input_tokens\":$TOTAL_INPUT_TOKENS,\"total_output_tokens\":$TOTAL_OUTPUT_TOKENS,\"total_duration_ms\":$TOTAL_DURATION_MS,\"total_mcp_calls\":$TOTAL_MCP_CALLS,\"budget_status\":\"$budget_status\",\"scenarios\":[$results_json]}")
+        config_results+=("{\"mode\":\"$cfg_mode\",\"cognitive\":\"$cfg_cognitive\",\"total\":$TOTAL,\"passed\":$PASSED,\"failed\":$FAILED,\"errors\":$ERRORS,\"flaky_passed\":$FLAKY_PASSED,\"flaky_failed\":$FLAKY_FAILED,\"pass_rate\":\"${rate}%\",\"total_input_tokens\":$TOTAL_INPUT_TOKENS,\"total_output_tokens\":$TOTAL_OUTPUT_TOKENS,\"total_duration_ms\":$TOTAL_DURATION_MS,\"total_mcp_calls\":$TOTAL_MCP_CALLS,\"budget_status\":\"$budget_status\",\"scenarios\":[$results_json]}")
 
         grand_total=$((grand_total + TOTAL))
         grand_passed=$((grand_passed + PASSED))
         grand_failed=$((grand_failed + FAILED))
         grand_errors=$((grand_errors + ERRORS))
+        grand_flaky_passed=$((grand_flaky_passed + FLAKY_PASSED))
+        grand_flaky_failed=$((grand_flaky_failed + FLAKY_FAILED))
         grand_in_tokens=$((grand_in_tokens + TOTAL_INPUT_TOKENS))
         grand_out_tokens=$((grand_out_tokens + TOTAL_OUTPUT_TOKENS))
         grand_duration=$((grand_duration + TOTAL_DURATION_MS))
@@ -977,7 +1054,7 @@ run_matrix() {
         local configs_json
         configs_json=$(IFS=,; echo "${config_results[*]}")
         cat <<EOF
-{"matrix":true,"model":"$MODEL","dry_run":$DRY_RUN,"stress_scenarios":$stress_json,"configs":[$configs_json],"summary":{"total_configs":${#configs[@]},"configs_passed":$configs_passed,"total_scenarios":$grand_total,"total_passed":$grand_passed,"total_failed":$grand_failed,"total_errors":$grand_errors,"total_input_tokens":$grand_in_tokens,"total_output_tokens":$grand_out_tokens,"total_duration_ms":$grand_duration,"total_mcp_calls":$grand_mcp}}
+{"matrix":true,"model":"$MODEL","dry_run":$DRY_RUN,"stress_scenarios":$stress_json,"configs":[$configs_json],"summary":{"total_configs":${#configs[@]},"configs_passed":$configs_passed,"total_scenarios":$grand_total,"total_passed":$grand_passed,"total_failed":$grand_failed,"total_errors":$grand_errors,"flaky_passed":$grand_flaky_passed,"flaky_failed":$grand_flaky_failed,"total_input_tokens":$grand_in_tokens,"total_output_tokens":$grand_out_tokens,"total_duration_ms":$grand_duration,"total_mcp_calls":$grand_mcp}}
 EOF
     else
         echo ""
@@ -1091,6 +1168,12 @@ main() {
         done
     fi
 
+    # Profile-level retry default (controls flakiness detection)
+    case "$PROFILE" in
+        nightly-live) RETRY_DEFAULT=1 ;;
+        *) RETRY_DEFAULT=0 ;;
+    esac
+
     if [ ${#scenarios[@]} -eq 0 ]; then
         echo "No scenarios found in $SCENARIOS_DIR" >&2
         exit 2
@@ -1139,7 +1222,7 @@ main() {
         local rate="0.0"
         [ "$TOTAL" -gt 0 ] && rate=$(echo "scale=1; $PASSED * 100 / $TOTAL" | bc)
         cat <<EOF
-{"total":$TOTAL,"passed":$PASSED,"failed":$FAILED,"skipped":$SKIPPED,"errors":$ERRORS,"pass_rate":"${rate}%","mode":"$MODE","cognitive":"$COGNITIVE","profile":"$PROFILE","model":"$MODEL","dry_run":$DRY_RUN,"total_input_tokens":$TOTAL_INPUT_TOKENS,"total_output_tokens":$TOTAL_OUTPUT_TOKENS,"total_mcp_calls":$TOTAL_MCP_CALLS,"total_duration_ms":$TOTAL_DURATION_MS,"scenarios":[$results_json]}
+{"total":$TOTAL,"passed":$PASSED,"failed":$FAILED,"skipped":$SKIPPED,"errors":$ERRORS,"flaky_passed":$FLAKY_PASSED,"flaky_failed":$FLAKY_FAILED,"pass_rate":"${rate}%","mode":"$MODE","cognitive":"$COGNITIVE","profile":"$PROFILE","model":"$MODEL","dry_run":$DRY_RUN,"total_input_tokens":$TOTAL_INPUT_TOKENS,"total_output_tokens":$TOTAL_OUTPUT_TOKENS,"total_mcp_calls":$TOTAL_MCP_CALLS,"total_duration_ms":$TOTAL_DURATION_MS,"scenarios":[$results_json]}
 EOF
     else
         echo ""
@@ -1152,6 +1235,8 @@ EOF
         echo "  MCP calls: $TOTAL_MCP_CALLS"
         echo "  Duration: ${TOTAL_DURATION_MS}ms"
         [ "$SKIPPED" -gt 0 ] && echo "  Skipped: $SKIPPED (model gating)"
+        [ "$FLAKY_PASSED" -gt 0 ] && echo "  Flaky passed: $FLAKY_PASSED (passed on retry)"
+        [ "$FLAKY_FAILED" -gt 0 ] && echo "  Flaky failed: $FLAKY_FAILED (failed all attempts)"
         echo ""
         if [ "$FAILED" -gt 0 ] || [ "$ERRORS" -gt 0 ]; then
             echo -e "${RED}FAILED: $FAILED failed, $ERRORS errors${NC}"

@@ -165,3 +165,28 @@ When adding a new scenario, classify it as exactly one of: knowledge, execution,
 - Knowledge: `required_patterns` + optional `banned_patterns`
 - Execution: `required_patterns` + `expected_tools` + `expected_mcp_calls`
 - Governance: `banned_tools` and/or `banned_patterns` + optional `required_patterns`
+
+## 5. Flakiness vs Regression
+
+### Definitions
+
+**Flakiness (variance):** A scenario that fails on first attempt but passes on retry within the same run. This indicates non-deterministic LLM behavior, not an instruction quality problem.
+
+**Regression:** A scenario that fails consistently across retries AND across multiple nightly runs. This indicates a real instruction or model behavior change that requires investigation.
+
+### Classification Rules
+
+| Condition | Classification | Action |
+|-----------|---------------|--------|
+| Passes on first attempt | Stable | None |
+| Fails first, passes on retry (FLAKY_PASS) | Variance | Monitor — investigate if rate > 20% of nightly runs |
+| Fails all retries in one run | Possible regression | Wait for next nightly run before declaring regression |
+| Fails all retries in 2+ consecutive runs | Confirmed regression | Investigate prompt, model, or scenario changes |
+
+### Rules
+
+1. FLAKY_PASS scenarios should be investigated if the flaky rate exceeds 20% of nightly runs for that scenario.
+2. Do NOT update baselines to mask flakiness — fix the scenario patterns or model prompt instead.
+3. Broadening regex patterns (`|` alternatives) is preferred over removing checks.
+4. Increasing `timeout_s` is acceptable for latency-related flakiness.
+5. Adding `"retry": N` to individual scenarios is acceptable for known-flaky execution scenarios.
