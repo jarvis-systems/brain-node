@@ -1,3 +1,12 @@
+> **DEPRECATED — NOT CANONICAL**
+>
+> Canonical instructions: `.claude/CLAUDE.md` (compiled by `brain compile`).
+> This file is a static developer reference only. Do not rely on it for operational rules.
+> To update Brain instructions, edit `.brain/node/*.php` sources and run `brain compile`.
+>
+> Deprecated: 2026-02-21. Reason: self-dev compilation mode produces `.claude/CLAUDE.md`
+> with full Iron Rules, delegation protocols, and security policies not present here.
+
 # Jarvis Brain Node/Core
 
 ## Purpose
