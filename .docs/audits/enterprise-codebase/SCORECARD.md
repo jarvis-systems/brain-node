@@ -25,7 +25,7 @@ status: active
 | 1 | Determinism | 3 | 3 | -- | 3.0 | No rand/shuffle; compile is idempotent (verified S12) |
 | 2 | Error Handling | 2 | 2 | -- | 2.0 | Catch blocks have fallback code (not silent); P1-004 reclassified to P2 (same VarExporter pattern) |
 | 3 | Input Validation | 2 | 2 | -- | 2.0 | MCP schema validator exists (3 modes) but not all methods use it |
-| 4 | Security | 2 | 3 | 2 | 2.3 | ~~No static analysis~~ **FIXED** (phpstan level 0); ~~API keys in MCP files~~ **FIXED** (getenv()); **NEW**: Secret scanning CI gate, release bundle .mcp.json exclusion, upload.sh/settings.json untracked, threat model doc |
+| 4 | Security | 2 | 3 | 2 | 2.3 | ~~No static analysis~~ **FIXED** (phpstan level 0); ~~API keys in MCP files~~ **FIXED** (getenv()); ~~CI actions tag-pinned~~ **FIXED** (SHA-pinned); **NEW**: Secret scanning CI gate, release bundle .mcp.json exclusion, upload.sh/settings.json untracked, threat model doc, CI concurrency guards, pre-publication kill-switch |
 | 5 | Docs Parity | 3 | 2 | -- | 2.5 | ~~`composer test`/`analyse` missing at root~~ **FIXED** — scripts added, both pass |
 | 6 | Testability | 2 | 1 | 1 | 1.5 | ~~MergerTest/TomlBuilderTest broken~~ **FIXED** — 48/48 pass (117 assertions); Proof Pack: builder determinism, merger invariants, compilation output; **NEW**: NodeIntegrityTest (8 tests: strict_types, attributes, MCP contracts, secrets, pins.json); CLI phpstan level 0 |
 | 7 | Release Discipline | 3 | 3 | -- | 3.0 | Pinning, manifest, bundle, release CI -- all good |
@@ -55,7 +55,7 @@ No sources of non-determinism found. No `rand()`, `shuffle()`, `mt_rand()`, `arr
 
 - ~~No static analysis tool~~ **FIXED** — phpstan 2.x installed in core (level 0, 4 documented suppressions), `composer analyse` in CI
 - ~~API keys hardcoded in `GithubMcp.php:21` and `Context7Mcp.php:24`~~ **FIXED** — migrated to `getenv()`, credentials in `.brain/.env` (gitignored), `.brain/.env.example` documented
-- CI actions pinned by tag (`@v4`) not SHA -- supply chain risk
+- ~~CI actions pinned by tag (`@v4`) not SHA~~ **FIXED** — all 4 actions SHA-pinned across 3 workflows (verified via GitHub API)
 - ~~`fakerphp/faker` in CLI production `require`~~ **FIXED** — moved to `require-dev`, dead `fake()` function removed
 - ADV-007 benchmark scenario added for MCP credential extraction attempts
 - **NEW**: `scripts/scan-secrets.sh` — standalone secret scanner (CI gate, blocking)
@@ -63,6 +63,8 @@ No sources of non-determinism found. No `rand()`, `shuffle()`, `mt_rand()`, `arr
 - **NEW**: `upload.sh` and `settings.json` untracked from git (contained live API keys)
 - **NEW**: `build-release-bundle.sh` — `.mcp.json` excluded from release bundles (contained resolved secrets)
 - **NEW**: `.docs/product/09-secrets.md` — threat model, do/don't, key rotation, roadmap
+- **NEW**: CI concurrency guards — all 3 workflows have `concurrency:` blocks (cancel-in-progress for lint/benchmark, safe for release)
+- **NEW**: `.docs/product/10-pre-publication.md` — pre-publication kill-switch checklist (credential rotation + history cleanup)
 
 ### 5. Docs Parity (2.5/3)
 
@@ -133,7 +135,7 @@ Comprehensive: benchmark suite (standard + LLM), ops evidence collection, failur
 |------------|-------|-------|--------------|------|--------|
 | P0 (Critical) | 15 | 13 | 2 (→P2) | 0 | **ALL CLOSED** — audit gate is blocking + secret scanning |
 | P1 (Important) | 8 | 7 | 1 (→P2) | 0 | P1-001 **FIXED**, P1-002 **FIXED**, P1-003 substantially improved (48/48), P1-005 done, P1-006 secrets **FIXED** |
-| P2 (Nice to have) | 6+1 | 0 | 0 | 7 | Backlog (includes P1-004 reclassified, git history cleanup) |
+| P2 (Nice to have) | 6+1 | 2 | 0 | 5 | P2-001 (SHA pinning) **FIXED**, P2-002 (concurrency) **FIXED**; remaining: P2-003 (error_log), git history, hardcoded paths |
 
 ## Audit Methodology
 

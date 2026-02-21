@@ -230,15 +230,19 @@ status: active
 |-------|-------|
 | Files | All `.github/workflows/*.yml` |
 | Issue | `@v4` tags instead of SHA-pinned actions — supply chain risk |
-| Fix | Pin to full SHA hashes |
+| Fix | All 4 actions SHA-pinned across 3 workflows: `checkout@34e1148`, `setup-php@44454db`, `setup-node@49933ea`, `upload-artifact@ea165f8` (verified via GitHub API) |
+| Status | **FIXED** |
+| Validate | `grep -c '@v[0-9]' .github/workflows/*.yml` = 0 |
 
 ### P2-002: Missing CI concurrency guards
 
 | Field | Value |
 |-------|-------|
-| Files | `brain-lint.yml`, `brain-benchmark.yml` |
+| Files | `brain-lint.yml`, `brain-benchmark.yml`, `brain-release.yml` |
 | Issue | No `concurrency:` blocks — parallel runs waste resources |
-| Fix | Add concurrency groups |
+| Fix | Added `concurrency: { group: workflow-ref, cancel-in-progress: true }` to lint + benchmark; `cancel-in-progress: false` for release (never cancel mid-flight) |
+| Status | **FIXED** |
+| Validate | `grep -c 'concurrency:' .github/workflows/*.yml` = 3 |
 
 ### P2-003: error_log in ConvertCommand
 
@@ -294,8 +298,8 @@ status: active
 |----------|-------|-------|--------------|------|
 | P0 | 15 | 13 | 2 (to P2) | 0 |
 | P1 | 8 | 7 | 1 (to P2) | 0 |
-| P2 | 3+2+1 | 0 | 0 | 7 |
-| **Total** | **26** | **20** | **3** | **7** |
+| P2 | 3+2+1 | 2 | 0 | 5 |
+| **Total** | **26** | **22** | **3** | **5** |
 
 ### Audit Check Coverage
 
@@ -329,3 +333,6 @@ status: active
 | NEW (CLI phpstan) | `composer analyse` — covers core + CLI (level 0) |
 | NEW (secret scanning) | `scan-secrets.sh` CI gate + `audit-enterprise.sh` Check 14 |
 | NEW (secrets doc) | `.docs/product/09-secrets.md` — threat model, rotation, roadmap |
+| P2-001 (SHA pinning) | `grep -c '@v[0-9]' .github/workflows/*.yml` = 0 (manual/PR review) |
+| P2-002 (concurrency) | `grep -c 'concurrency:' .github/workflows/*.yml` = 3 (manual/PR review) |
+| NEW (pre-pub checklist) | `.docs/product/10-pre-publication.md` — kill-switch before any public release |
