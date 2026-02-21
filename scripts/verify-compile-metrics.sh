@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Compile Metrics Verification — Validates compiled artifact sizes and gating
 # Usage: scripts/verify-compile-metrics.sh

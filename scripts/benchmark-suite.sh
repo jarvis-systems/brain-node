@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Brain Benchmark Suite — Formal metrics for compiled artifacts
 # Usage: scripts/benchmark-suite.sh [--json]
@@ -205,9 +205,22 @@ check "S11" "MCP lint passes" 0 "$LINT_OK" "gt"
 # SCENARIO 12: Compile idempotency
 # ============================================================
 $JSON_MODE || echo -e "\n${CYAN}Scenario 12: Compile idempotency${NC}"
-HASH_BEFORE=$(md5 -q "$CLAUDE_MD")
+# Portable hash: md5 (macOS) or md5sum (Linux)
+if command -v md5sum &>/dev/null; then
+    HASH_BEFORE=$(md5sum "$CLAUDE_MD" | cut -d' ' -f1)
+elif command -v md5 &>/dev/null; then
+    HASH_BEFORE=$(md5 -q "$CLAUDE_MD")
+else
+    HASH_BEFORE="no-hash-tool"
+fi
 STRICT_MODE=standard COGNITIVE_LEVEL=standard brain compile >/dev/null 2>&1
-HASH_AFTER=$(md5 -q "$CLAUDE_MD")
+if command -v md5sum &>/dev/null; then
+    HASH_AFTER=$(md5sum "$CLAUDE_MD" | cut -d' ' -f1)
+elif command -v md5 &>/dev/null; then
+    HASH_AFTER=$(md5 -q "$CLAUDE_MD")
+else
+    HASH_AFTER="no-hash-tool"
+fi
 IDEM=$( [ "$HASH_BEFORE" = "$HASH_AFTER" ] && echo 1 || echo 0 )
 check "S12" "compile is idempotent" 1 "$IDEM"
 

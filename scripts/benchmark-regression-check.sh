@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Benchmark regression check — compare run report against baseline budgets
 #

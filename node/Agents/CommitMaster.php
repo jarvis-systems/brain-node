@@ -12,6 +12,7 @@ use BrainCore\Variations\Agents\Master;
 use BrainCore\Variations\Masters\CommitMasterInclude;
 
 #[Meta('id', 'commit-master')]
+#[Meta('model', 'sonnet')]
 #[Meta('color', 'green')]
 #[Meta('description', 'Git workflow expert: conventional commits, WHY context from memory, pre-commit hooks')]
 #[Purpose('Enforces Conventional Commits with vector memory WHY context. 4-phase execution: Knowledge → Reasoning → Research → Synthesis.')]

@@ -12,6 +12,7 @@ use BrainCore\Variations\Agents\Master;
 use BrainCore\Variations\Masters\DocumentationMasterInclude;
 
 #[Meta('id', 'documentation-master')]
+#[Meta('model', 'haiku')]
 #[Meta('color', 'purple')]
 #[Meta('description', 'Third-party package documentation research (Composer, NPM, PyPI). Searches official docs, GitHub, registries. Excludes Laravel/React/Vue core.')]
 #[Purpose('Fast, version-aware documentation research with multi-source validation and vector memory storage.')]

@@ -12,6 +12,7 @@ use BrainCore\Variations\Agents\Master;
 use BrainCore\Variations\Masters\WebResearchMasterInclude;
 
 #[Meta('id', 'web-research-master')]
+#[Meta('model', 'sonnet')]
 #[Meta('color', 'purple')]
 #[Meta('description', 'Web research agent with tools-first execution, multi-source validation, and temporal context awareness')]
 #[Purpose('Web research specialist enforcing evidence-based findings through mandatory tool execution. Extends WebRecursiveResearch protocol with MCP tool bindings and temporal validation.')]

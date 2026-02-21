@@ -12,6 +12,7 @@ use BrainCore\Variations\Agents\Master;
 use BrainCore\Variations\Masters\VectorMasterInclude;
 
 #[Meta('id', 'vector-master')]
+#[Meta('model', 'sonnet')]
 #[Meta('color', 'orange')]
 #[Meta('description', 'Deep vector memory research via recursive semantic search')]
 #[Purpose('Vector Memory Executor responsible for direct execution of memory tools (search_memories, store_memory, list_recent_memories). This agent performs evidence-based memory research and storage with strict tools-only compliance (no delegation).')]

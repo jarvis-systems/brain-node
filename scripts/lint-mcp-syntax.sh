@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # MCP Syntax Lint — Detects legacy pseudo-JSON syntax in MCP calls
 # Usage: scripts/lint-mcp-syntax.sh [--strict]

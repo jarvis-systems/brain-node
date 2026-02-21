@@ -12,6 +12,7 @@ use BrainCore\Variations\Agents\SystemMaster;
 use BrainCore\Variations\Masters\AgentMasterInclude;
 
 #[Meta('id', 'agent-master')]
+#[Meta('model', 'sonnet')]
 #[Meta('color', 'orange')]
 #[Meta('description', <<<'DESC'
 Universal AI agent designer and orchestrator. Use this agent when you need to create, improve, optimize, or manage other AI agents. Core capabilities include designing new agent configurations, refactoring existing agents for better performance, orchestrating multi-agent workflows, analyzing agent effectiveness, and maintaining agent ecosystems.

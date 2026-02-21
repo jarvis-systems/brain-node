@@ -12,6 +12,7 @@ use BrainCore\Variations\Agents\SystemMaster;
 use BrainCore\Variations\Masters\ScriptMasterInclude;
 
 #[Meta('id', 'script-master')]
+#[Meta('model', 'sonnet')]
 #[Meta('color', 'cyan')]
 #[Meta('description', 'Expert at creating and managing Brain scripts using Laravel Console v12.0')]
 #[Purpose(<<<'PURPOSE'

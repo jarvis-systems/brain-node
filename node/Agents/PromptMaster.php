@@ -12,6 +12,7 @@ use BrainCore\Variations\Agents\SystemMaster;
 use BrainCore\Variations\Masters\PromptMasterInclude;
 
 #[Meta('id', 'prompt-master')]
+#[Meta('model', 'sonnet')]
 #[Meta('color', 'orange')]
 #[Meta('description', 'Creates and optimizes Brain.php, commands, and includes with quality prompts using PHP API. Applies prompt engineering principles for clarity, structure, and effectiveness.')]
 #[Purpose(<<<'PURPOSE'

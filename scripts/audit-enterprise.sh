@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Enterprise Codebase Audit — Automated static checks
 # Usage: scripts/audit-enterprise.sh [--json-only]
@@ -20,6 +20,7 @@
 #   - Missing declare(strict_types=1)
 #   - Secret patterns in tracked files
 #   - Hardcoded user paths in tracked source files
+#   - Version consistency (core vs root composer.json)
 #
 # Output: dist/audit-report.json + stdout summary
 #
@@ -96,7 +97,7 @@ add_category() {
 
 # ── Check 1: PHP syntax ──────────────────────────────────────────────────
 
-log "${BOLD}[1/16] PHP syntax check${NC}"
+log "${BOLD}[1/17] PHP syntax check${NC}"
 
 PHP_ERRORS=0
 PHP_FINDINGS="[]"
@@ -133,7 +134,7 @@ add_category "php-syntax" "$([ $PHP_ERRORS -eq 0 ] && echo pass || echo fail)" "
 
 # ── Check 2: PHPUnit (if available) ─────────────────────────────────────
 
-log "${BOLD}[2/16] PHPUnit tests${NC}"
+log "${BOLD}[2/17] PHPUnit tests${NC}"
 
 TEST_FINDINGS="[]"
 TEST_COUNT=0
@@ -152,7 +153,7 @@ add_category "phpunit" "$([ $TEST_COUNT -eq 0 ] && echo pass || echo fail)" "$TE
 
 # ── Check 3: Silent catch blocks ────────────────────────────────────────
 
-log "${BOLD}[3/16] Silent catch blocks${NC}"
+log "${BOLD}[3/17] Silent catch blocks${NC}"
 
 CATCH_FINDINGS="[]"
 CATCH_COUNT=0
@@ -212,7 +213,7 @@ add_category "silent-catches" "$([ $CATCH_COUNT -eq 0 ] && echo pass || echo war
 
 # ── Check 4: Debug artifacts ────────────────────────────────────────────
 
-log "${BOLD}[4/16] Debug artifacts${NC}"
+log "${BOLD}[4/17] Debug artifacts${NC}"
 
 DEBUG_FINDINGS="[]"
 DEBUG_COUNT=0
@@ -248,7 +249,7 @@ add_category "debug-artifacts" "$([ $DEBUG_COUNT -eq 0 ] && echo pass || echo wa
 
 # ── Check 5: TODO/FIXME markers ────────────────────────────────────────
 
-log "${BOLD}[5/16] TODO/FIXME markers${NC}"
+log "${BOLD}[5/17] TODO/FIXME markers${NC}"
 
 TODO_FINDINGS="[]"
 TODO_COUNT=0
@@ -280,7 +281,7 @@ add_category "todo-fixme" "$([ $TODO_COUNT -eq 0 ] && echo pass || echo info)" "
 
 # ── Check 6: Unsafe patterns ───────────────────────────────────────────
 
-log "${BOLD}[6/16] Unsafe patterns (eval/shell_exec/die/exit)${NC}"
+log "${BOLD}[6/17] Unsafe patterns (eval/shell_exec/die/exit)${NC}"
 
 UNSAFE_FINDINGS="[]"
 UNSAFE_COUNT=0
@@ -327,7 +328,7 @@ add_category "unsafe-patterns" "$([ $UNSAFE_COUNT -eq 0 ] && echo pass || echo w
 
 # ── Check 7: Shell script safety ────────────────────────────────────────
 
-log "${BOLD}[7/16] Shell script safety headers${NC}"
+log "${BOLD}[7/17] Shell script safety headers${NC}"
 
 SHELL_FINDINGS="[]"
 SHELL_COUNT=0
@@ -355,7 +356,7 @@ add_category "shell-safety" "$([ $SHELL_COUNT -eq 0 ] && echo pass || echo warn)
 
 # ── Check 8: No-op escape methods ───────────────────────────────────────
 
-log "${BOLD}[8/16] No-op escape method detection${NC}"
+log "${BOLD}[8/17] No-op escape method detection${NC}"
 
 NOOP_FINDINGS="[]"
 NOOP_COUNT=0
@@ -393,7 +394,7 @@ add_category "noop-escape" "$([ $NOOP_COUNT -eq 0 ] && echo pass || echo warn)" 
 
 # ── Check 9: self:: in trait files ─────────────────────────────────────
 
-log "${BOLD}[9/16] Late static binding in traits${NC}"
+log "${BOLD}[9/17] Late static binding in traits${NC}"
 
 LSB_FINDINGS="[]"
 LSB_COUNT=0
@@ -420,7 +421,7 @@ add_category "trait-lsb" "$([ $LSB_COUNT -eq 0 ] && echo pass || echo warn)" "$L
 
 # ── Check 10: Known typos ──────────────────────────────────────────────
 
-log "${BOLD}[10/16] Known typos in codebase${NC}"
+log "${BOLD}[10/17] Known typos in codebase${NC}"
 
 TYPO_FINDINGS="[]"
 TYPO_COUNT=0
@@ -450,7 +451,7 @@ add_category "known-typos" "$([ $TYPO_COUNT -eq 0 ] && echo pass || echo fail)" 
 
 # ── Check 11: Dev deps in production require ───────────────────────────
 
-log "${BOLD}[11/16] Dev dependencies in production require${NC}"
+log "${BOLD}[11/17] Dev dependencies in production require${NC}"
 
 DEVDEP_FINDINGS="[]"
 DEVDEP_COUNT=0
@@ -481,7 +482,7 @@ add_category "dev-deps-prod" "$([ $DEVDEP_COUNT -eq 0 ] && echo pass || echo fai
 
 # ── Check 12: PHPStan (static analysis) ───────────────────────────────
 
-log "${BOLD}[12/16] PHPStan static analysis${NC}"
+log "${BOLD}[12/17] PHPStan static analysis${NC}"
 
 PHPSTAN_FINDINGS="[]"
 PHPSTAN_COUNT=0
@@ -500,7 +501,7 @@ add_category "phpstan" "$([ $PHPSTAN_COUNT -eq 0 ] && echo pass || echo fail)" "
 
 # ── Check 13: strict_types declaration ─────────────────────────────────
 
-log "${BOLD}[13/16] Missing declare(strict_types=1)${NC}"
+log "${BOLD}[13/17] Missing declare(strict_types=1)${NC}"
 
 STRICT_FINDINGS="[]"
 STRICT_COUNT=0
@@ -539,7 +540,7 @@ add_category "strict-types" "$([ $STRICT_COUNT -eq 0 ] && echo pass || echo fail
 
 # ── Check 14: Secret patterns in tracked files ─────────────────────────
 
-log "${BOLD}[14/16] Secret patterns in tracked files${NC}"
+log "${BOLD}[14/17] Secret patterns in tracked files${NC}"
 
 SECRET_FINDINGS="[]"
 SECRET_COUNT=0
@@ -579,7 +580,7 @@ add_category "secrets" "$([ $SECRET_COUNT -eq 0 ] && echo pass || echo fail)" "$
 
 # ── Check 15: Hardcoded user paths ────────────────────────────────────
 
-log "${BOLD}[15/16] Hardcoded user paths in tracked source files${NC}"
+log "${BOLD}[15/17] Hardcoded user paths in tracked source files${NC}"
 
 HPATH_FINDINGS="[]"
 HPATH_COUNT=0
@@ -620,7 +621,7 @@ add_category "hardcoded-paths" "$([ $HPATH_COUNT -eq 0 ] && echo pass || echo wa
 
 # ── Check 16: Degradation observability ────────────────────────────────
 
-log "${BOLD}[16/16] Degradation observability in catch blocks${NC}"
+log "${BOLD}[16/17] Degradation observability in catch blocks${NC}"
 
 DEGRAD_COUNT=0
 DEGRAD_FINDINGS="[]"
@@ -659,6 +660,28 @@ elif [[ $DEGRAD_COUNT -eq 0 && $HAS_LOGGING -eq 0 ]]; then
     log "  ${GREEN}PASS${NC} No degradation catch blocks found"
 fi
 add_category "degradation-observability" "$([ $DEGRAD_COUNT -eq 0 ] && echo pass || echo warn)" "$DEGRAD_COUNT" "$DEGRAD_FINDINGS"
+
+# ── Check 17: Version consistency ─────────────────────────────────────
+
+log "${BOLD}[17/17] Version consistency${NC}"
+
+VER_FINDINGS="[]"
+VER_COUNT=0
+
+ROOT_VERSION=$(jq -r '.version // "missing"' "$PROJECT_ROOT/composer.json" 2>/dev/null || echo "missing")
+CORE_VERSION=$(jq -r '.version // "missing"' "$PROJECT_ROOT/core/composer.json" 2>/dev/null || echo "missing")
+
+if [[ "$ROOT_VERSION" != "$CORE_VERSION" ]]; then
+    VER_COUNT=1
+    VER_FINDINGS=$(echo "$VER_FINDINGS" | jq \
+        --arg root "$ROOT_VERSION" \
+        --arg core "$CORE_VERSION" \
+        '. + [{"root_version": $root, "core_version": $core, "message": "Version mismatch between root and core"}]')
+    log "  ${RED}FAIL${NC} root=$ROOT_VERSION, core=$CORE_VERSION — mismatch"
+else
+    log "  ${GREEN}PASS${NC} root=$ROOT_VERSION, core=$CORE_VERSION — consistent"
+fi
+add_category "version-consistency" "$([ $VER_COUNT -eq 0 ] && echo pass || echo fail)" "$VER_COUNT" "$VER_FINDINGS"
 
 # ── Output JSON report ──────────────────────────────────────────────────
 

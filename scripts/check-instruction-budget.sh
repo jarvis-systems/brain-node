@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Instruction Budget Check — Enforce compiled artifact size budgets
 #
@@ -139,7 +139,7 @@ if $UPDATE; then
                 "description": "Instruction budget baselines — compiled artifact line counts. Budget = baseline + threshold_pct headroom.",
                 "date": $date,
                 "threshold_pct": 10,
-                "action": "warn"
+                "action": "strict"
             },
             "budgets": {
                 "commands_total": { "max_lines": (($commands_total * 110 / 100) | floor), "baseline": $commands_total },
