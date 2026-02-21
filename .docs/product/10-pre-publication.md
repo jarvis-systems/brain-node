@@ -80,6 +80,12 @@ composer analyse        # Expected: 0 errors (core + CLI)
 bash scripts/scan-secrets.sh          # Expected: 0 secrets found
 bash scripts/audit-enterprise.sh      # Expected: PASS:18, WARN:0, FAIL:0
 
+# History secrets scan (redacted, low-noise)
+bash scripts/scan-secrets-history.sh  # Expected: exit 0 (no matches)
+                                      # Exit 2 = matches found → requires
+                                      # rotation/archive plan before publication
+                                      # See: .docs/product/16-security-3.0-playbook.md
+
 # Documentation gate
 brain docs --validate                 # Expected: 0 errors, 0 warnings
 

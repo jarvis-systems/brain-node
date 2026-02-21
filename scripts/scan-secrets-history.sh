@@ -1,10 +1,14 @@
 #!/usr/bin/env bash
 # scan-secrets-history.sh — Scan git history for leaked secrets (redacted, low-noise)
 #
-# Usage: scripts/scan-secrets-history.sh [--json]
+# Usage: scripts/scan-secrets-history.sh [--json] [--quiet]
 #
 # Scans entire git history for secret patterns, excluding documentation
 # and pattern-definition files that create false positives in Tier-1 grep.
+#
+# Flags:
+#   --json    Machine-readable JSON output
+#   --quiet   Print only TOTAL_MATCHES=<n> line and exit code (for gate scripts)
 #
 # Output (redacted — NEVER prints actual secret values):
 #   - TOTAL_MATCHES: count of matching diff lines in affected commits
@@ -13,6 +17,7 @@
 #
 # Exit codes:
 #   0 — No matches in history (clean)
+#   1 — Script/runtime error (cannot extract patterns, git unavailable)
 #   2 — Matches found in history (leaked secrets exist in non-docs files)
 #
 # Patterns sourced from: scripts/scan-secrets.sh (SECRET_PATTERNS variable)
@@ -32,12 +37,17 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
 JSON_MODE=false
-if [[ "${1:-}" == "--json" ]]; then
-    JSON_MODE=true
-fi
+QUIET_MODE=false
 
-# Colors (disabled when not a terminal or json mode)
-if [[ -t 1 ]] && [[ "$JSON_MODE" == false ]]; then
+for arg in "$@"; do
+    case "$arg" in
+        --json)  JSON_MODE=true ;;
+        --quiet) QUIET_MODE=true ;;
+    esac
+done
+
+# Colors (disabled when not a terminal, json mode, or quiet mode)
+if [[ -t 1 ]] && [[ "$JSON_MODE" == false ]] && [[ "$QUIET_MODE" == false ]]; then
     RED='\033[0;31m'
     GREEN='\033[0;32m'
     YELLOW='\033[0;33m'
@@ -48,7 +58,7 @@ else
 fi
 
 log() {
-    if [[ "$JSON_MODE" == false ]]; then
+    if [[ "$JSON_MODE" == false ]] && [[ "$QUIET_MODE" == false ]]; then
         echo -e "$@"
     fi
 }
@@ -182,6 +192,12 @@ if [[ $COMMIT_COUNT -gt 0 ]]; then
         log "  $f"
     done <<< "$AFFECTED_FILES"
     log ""
+fi
+
+# ── Quiet mode: single-line output for gate scripts ──────────────────────
+
+if [[ "$QUIET_MODE" == true ]]; then
+    echo "TOTAL_MATCHES=$TOTAL_MATCHES"
 fi
 
 if [[ $TOTAL_MATCHES -eq 0 ]]; then

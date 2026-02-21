@@ -64,6 +64,7 @@ All 18 checks in `audit-enterprise.sh` must PASS or WARN (no FAIL):
 - [ ] Release bundle builds without error (`build-release-bundle.sh`)
 - [ ] No `FAIL` category in audit report
 - [ ] Pre-publication checklist completed (see `.docs/product/10-pre-publication.md`)
+- [ ] History secret scan recorded: `bash scripts/scan-secrets-history.sh` — **Manual Gate (not CI)**. Must be run and exit 0 for any release/publication. Exit 2 = history contains leaked patterns, requires mitigation per Security 3.0 Playbook.
 
 ## Code Quality
 
