@@ -83,9 +83,9 @@ No sources of non-determinism found. No `rand()`, `shuffle()`, `mt_rand()`, `arr
 
 | Package | Test Files | Source Files | Tests | Assertions | Status |
 |---------|-----------|--------------|-------|------------|--------|
-| Core | 18 | 167+ | 233 | 518 | 233/233 PASS |
+| Core | 17 | 167+ | 233 | 518 | 233/233 PASS |
 | Node | 0 (tested via Core) | 43 | 13 | 33 | via NodeIntegrityTest |
-| CLI | 7 | ~30+ | ~20 | ~50 | Separate repo + PHPStan level 0 |
+| CLI | 8 | ~30+ | ~20 | ~50 | Separate repo + PHPStan level 0 |
 
 **Fixes applied:**
 - ~~MergerTest: protected `handle()` call from test~~ **FIXED** — Reflection-based invocation
@@ -216,7 +216,7 @@ Comprehensive: benchmark suite (standard + LLM), ops evidence collection, failur
 | Risk Level | Total | Fixed | Reclassified | Open | Action |
 |------------|-------|-------|--------------|------|--------|
 | P0 (Critical) | 15 | 13 | 2 (→P2) | 0 | **ALL CLOSED** — audit gate is blocking + secret scanning |
-| P1 (Important) | 8 | 7 | 1 (→P2) | 0 | P1-001 **FIXED**, P1-002 **FIXED**, P1-003 substantially improved (74/74), P1-005 done, P1-006 secrets **FIXED** |
+| P1 (Important) | 8 | 7 | 1 (→P2) | 0 | P1-001 **FIXED**, P1-002 **FIXED**, P1-003 **FIXED** (17 test files, 233 tests), P1-005 done, P1-006 secrets **FIXED** |
 | P2 (Nice to have) | 6+1+1+1 | 6 | 0 | 3 | P2-001 (SHA pinning) **FIXED**, P2-002 (concurrency) **FIXED**, P2-004 (hardcoded paths) **FIXED**, P2-005 (observability) **FIXED**, P2-006 (LegacyParityTest) **FIXED**, P2-007 (docs validation) **FIXED**; remaining: P2-003 (error_log), git history, DocChallenge.md paths |
 
 ## Audit Methodology
