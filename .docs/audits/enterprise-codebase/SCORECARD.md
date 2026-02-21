@@ -27,13 +27,13 @@ status: active
 | 3 | Input Validation | 3 | 3 | -- | 3.0 | MCP schema validator (3 modes); 244 validated call sites; 2 compile-time bypass sites annotated with @mcp-schema-bypass; audit Check 18 enforces regression gate |
 | 4 | Security | 2 | 3 | 2 | 2.3 | ~~No static analysis~~ **FIXED** (phpstan level 0); ~~API keys in MCP files~~ **FIXED** (getenv()); ~~CI actions tag-pinned~~ **FIXED** (SHA-pinned); **NEW**: Secret scanning CI gate, release bundle .mcp.json exclusion, upload.sh/settings.json untracked, threat model doc, CI concurrency guards, pre-publication kill-switch |
 | 5 | Docs Parity | 3 | 3 | -- | 3.0 | ~~`composer test`/`analyse` missing at root~~ **FIXED**; ~~LegacyParityTest referenced but never existed~~ **FIXED** (removed from CLAUDE.md, actual test list updated); ~~docs validation 1 invalid~~ **FIXED** (YAML front matter added); `brain docs --validate` = 0 invalid |
-| 6 | Testability | 3 | 2 | 1 | 2.0 | 244/244 tests, 578 assertions; **Refactor Batch 8**: +3 tests (command include policy, agent ID uniqueness, MCP ID uniqueness); **Refactor Batch 7**: NodeIntegrityTest +1 test (testNoTestStubMcpFiles) + Meta('model') assertion; **Refactor Batch 5**: id() contract fix + 4 id-method tests, XmlBuilder edge cases (15 new tests), SnapshotTest golden-file regression (12 tests); **Refactor Batch 4**: BlueprintTest (44→48 tests); **Refactor Batch 3**: MDTest (30), CoreTest (28), VarChainTest (20); Node: 12 tests via NodeIntegrityTest; CLI: phpstan level 0 |
+| 6 | Testability | 3 | 3 | 1 | 2.3 | 244/244 tests, 578 assertions; **Refactor Batch 8**: +3 tests (command include policy, agent ID uniqueness, MCP ID uniqueness); **Refactor Batch 7**: NodeIntegrityTest +1 test (testNoTestStubMcpFiles) + Meta('model') assertion; **Refactor Batch 5**: id() contract fix + 4 id-method tests, XmlBuilder edge cases (15 new tests), SnapshotTest golden-file regression (12 tests); **Refactor Batch 4**: BlueprintTest (44→48 tests); **Refactor Batch 3**: MDTest (30), CoreTest (28), VarChainTest (20); Node: 12 tests via NodeIntegrityTest; CLI: phpstan level 0 |
 | 7 | Release Discipline | 3 | 3 | -- | 3.0 | Pinning, manifest, bundle, release CI -- all good |
 | 8 | Operability | 3 | 3 | -- | 3.0 | Benchmarks, runbooks, ops-evidence, demo -- comprehensive; **Refactor Batch 6**: 3 P0 script bugs fixed (jq key mismatch, md5 portability, version consistency check) |
 | 9 | Footguns | 3 | 3 | -- | 3.0 | ~~Debug artifacts~~ **FIXED**; ~~typo in class name~~ **FIXED**; ~~dead scaffold~~ **FIXED**; ~~hardcoded MCP paths~~ **FIXED** (generator emits getcwd()); **Refactor Batch 2**: awesome-mcp.json `--save-as` → `--as` CLI bug fix; **Refactor Batch 4**: ~~Guideline::workflow() dead method~~ **REMOVED**; **Refactor Batch 5**: ~~BlueprintArchitecture::id() broken~~ **FIXED** (→ set()); **Refactor Batch 6**: ~~Core::getVariable @return scalar lie~~ **FIXED**, ~~McpArchitecture::id() copy-paste docblock~~ **FIXED**; **Refactor Batch 7**: ~~Test2Mcp.php stub artifact~~ **REMOVED**; **Refactor Batch 8**: ~~AgentArchetype::id() silent 'explore' fallback~~ **FIXED** (→ throw), ~~McpArchitecture::id() silent 'unknown' fallback~~ **FIXED** (→ throw) |
 | 10 | Maintainability | 3 | 3 | -- | 3.0 | ~~strict_types~~ **FIXED**; ~~CompileStandartsTrait typo~~ **FIXED**; ~~faker in prod~~ **FIXED**; ~~hardcoded paths~~ **FIXED** (generator + test); **Refactor Batch 1**: var-dumper→require-dev (17 prod deps); **Refactor Batch 2**: workspace.json portable paths, both Compilation traits 100% return-typed (verified); **Refactor Batch 4**: BlueprintArchitecture::mutateToString() `: mixed` return type added; **Refactor Batch 6**: core/composer.json version v0.0.1→v0.2.0, `^v12.0`→`^12.0` normalize; **Refactor Batch 7**: all 8 agents now have `#[Meta('model')]`; **Refactor Batch 8**: ~~commands-no-includes false rule~~ **AMENDED** (→ commands-no-brain-includes), shebang consistency (7 scripts normalized to `#!/usr/bin/env bash`) |
 
-**Overall Score: 28.3 / 30 (94.3%)**
+**Overall Score: 28.6 / 30 (95.3%)**
 
 ## Category Details
 
@@ -71,6 +71,8 @@ No sources of non-determinism found. No `rand()`, `shuffle()`, `mt_rand()`, `arr
 - **NEW**: CI concurrency guards — all 3 workflows have `concurrency:` blocks (cancel-in-progress for lint/benchmark, safe for release)
 - **NEW**: `.docs/product/10-pre-publication.md` — pre-publication kill-switch checklist (credential rotation + history cleanup)
 
+**Upgrade candidate (Core 2→3, pending criteria):** All P0/P1 security items are FIXED, CI gates block secret introduction, actions SHA-pinned, threat model documented. Two criteria block upgrade: (1) git history contamination not clean — 10 matches remain, mitigated via P2-008 but not resolved; (2) phpstan at level 0, not level 1+ which would provide stronger type-safety guarantees. Upgrade when: history clean (Option C new repo) AND phpstan level ≥1.
+
 ### 5. Docs Parity (3/3)
 
 - `QUALITY GATE [TEST]: composer test` — ~~no `test` script in root~~ **FIXED** — added, proxies to `core/phpunit`
@@ -79,13 +81,15 @@ No sources of non-determinism found. No `rand()`, `shuffle()`, `mt_rand()`, `arr
 - ~~`brain docs --validate` = 1 invalid~~ **FIXED** — YAML front matter added to `deep-research-report-system-prompting.md`
 - Both quality gates enforceable from root. Documentation claims verified against reality.
 
-### 6. Testability (2.0/3)
+### 6. Testability (2.3/3)
 
 | Package | Test Files | Source Files | Tests | Assertions | Status |
 |---------|-----------|--------------|-------|------------|--------|
 | Core | 19 | 167+ | 244 | 578 | 244/244 PASS |
 | Node | 0 (tested via Core) | 43 | 13 | 30 | via NodeIntegrityTest |
 | CLI | 8 | ~30+ | ~20 | ~50 | Separate repo + PHPStan level 0 |
+
+**Node upgrade (2→3, Batch 13B):** All 11 NodeIntegrityTest criteria met. Node is declarative configuration — PHP files declare metadata via attributes and `handle()` builders. 13 Reflection-based tests verify every structural invariant: strict_types, Meta attributes, MCP contracts (defaultCommand, defaultArgs), no secrets, no stubs, include policy, ID uniqueness, schema bypass. No runtime logic exists to test beyond these contracts. "Enterprise-ready, minor improvements only" = accurate.
 
 **Fixes applied:**
 - ~~MergerTest: protected `handle()` call from test~~ **FIXED** — Reflection-based invocation

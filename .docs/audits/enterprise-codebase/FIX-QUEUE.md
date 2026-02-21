@@ -486,6 +486,15 @@ Regression prevention: `audit-enterprise.sh` Check 18 (mcp-schema-bypass) + `Nod
 | Risk Matrix P1 row | 17→19 test files, 233→244 tests | Aligns with SCORECARD |
 | Score unchanged | Count realignment only — no score changes | All gates GREEN |
 
+### Refactor Batch 13B — Score Recalibration
+
+| Item | Change | Proof |
+|------|--------|-------|
+| Testability Node 2→3 | All 11 NodeIntegrityTest criteria met; declarative config with comprehensive contract coverage; no runtime logic beyond structural invariants | 13 tests, 30 assertions, all PASS |
+| Testability weighted 2.0→2.3 | (Core=3 + Node=3 + CLI=1) / 3 = 2.3 | Arithmetic |
+| Overall score 28.3→28.6 (94.3%→95.3%) | +0.3 from Testability Node upgrade | Sum of 10 categories |
+| Security Core stays at 2 | Upgrade candidate note added; blocked by: (1) history contamination not clean, (2) phpstan level 0 | P2-008 mitigated, not resolved |
+
 ## Summary
 
 | Priority | Total | Fixed | Reclassified | Open |
