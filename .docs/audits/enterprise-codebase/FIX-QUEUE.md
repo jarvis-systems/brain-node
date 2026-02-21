@@ -346,7 +346,7 @@ status: active
 | Decision | No BFG now (private repo, creds dead). Cleanup via Option C (new canon repo) when X-Brain migration happens. |
 | Status | **MITIGATED** — operational risk neutralized, history cleanup deferred |
 | Validate | `bash scripts/scan-secrets-history.sh --quiet` → TOTAL_MATCHES=10 (stable baseline) |
-| Reference | `.docs/product/16-security-3.0-playbook.md` § "Current State: History Dirty (Mitigated)" |
+| Reference | `.docs/product/16-security-3.0-playbook.md` § "Current State: History Dirty (Mitigated)"; SCORECARD.md § "Security (2.3/3)" posture + upgrade path |
 
 ## Refactor Batches
 

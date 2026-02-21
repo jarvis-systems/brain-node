@@ -71,7 +71,32 @@ No sources of non-determinism found. No `rand()`, `shuffle()`, `mt_rand()`, `arr
 - **NEW**: CI concurrency guards — all 3 workflows have `concurrency:` blocks (cancel-in-progress for lint/benchmark, safe for release)
 - **NEW**: `.docs/product/10-pre-publication.md` — pre-publication kill-switch checklist (credential rotation + history cleanup)
 
-**Upgrade candidate (Core 2→3, pending criteria):** All P0/P1 security items are FIXED, CI gates block secret introduction, actions SHA-pinned, threat model documented. Two criteria block upgrade: (1) git history contamination not clean — 10 matches remain, mitigated via P2-008 but not resolved; (2) phpstan at level 0, not level 1+ which would provide stronger type-safety guarantees. Upgrade when: history clean (Option C new repo) AND phpstan level ≥1.
+**Current posture:**
+
+| Layer | Status | Evidence |
+|-------|--------|----------|
+| HEAD (tracked files) | Clean | `scan-secrets.sh` exit 0, audit Check 14 PASS |
+| Git history | Dirty (mitigated) | `scan-secrets-history.sh`: TOTAL_MATCHES=10, exit 2 |
+| Credential risk | Neutralized | All leaked credentials revoked/disabled by providers (incident closed) |
+
+**Why 2.x (not 3.0) — criteria mapping:**
+
+Two criteria block Core upgrade to 3 (enterprise-ready):
+
+1. **History clean** — NOT MET. 10 secret pattern matches across 6 commits remain in git history. Mitigated (credentials dead), but history not sanitized. See FIX-QUEUE P2-008.
+2. **PHPStan level >=1** — NOT MET. Currently level 0 with 4 documented suppressions. Level 1 adds return type checks for stronger type-safety guarantees.
+
+Score stays at Core=2 (Adequate): known weaknesses documented and mitigated, but not fully resolved.
+
+**Upgrade path to 3.0:**
+
+| Step | Action | Gate |
+|------|--------|------|
+| 1 | Option C: new canon repo with clean export (during X-Brain Go migration) | `scan-secrets-history.sh` exit 0 |
+| 2 | PHPStan level 0 to 1 (fix return type violations) | `composer analyse` at level 1 |
+| 3 | Re-evaluate all 3.0 criteria | All criteria MET then Core=3 |
+
+Reference: `.docs/product/16-security-3.0-playbook.md` section "Recommended Path: Option C"; FIX-QUEUE P2-008.
 
 ### 5. Docs Parity (3/3)
 
