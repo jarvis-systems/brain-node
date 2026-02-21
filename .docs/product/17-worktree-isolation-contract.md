@@ -183,7 +183,11 @@ Merges happen in root repo (operator). Agents never merge to master directly.
 | v2 | Brain-managed worktrees; auto-create on Task delegation; auto-cleanup on task complete | v1 stable for 2+ weeks |
 | v3 (optional) | Container-per-agent; network namespace isolation; resource limits | v2 stable; Docker available |
 
-## 10. Cross-References
+## 10. Repo Boundary Awareness
+
+Worktree isolation applies **per repo**, not per monorepo. The project contains three independent git repositories (root, core/, cli/) — each with its own `.git/`. Worktree commands (`git worktree add`) operate within a single repo. An agent working in a core/ worktree cannot commit to root, and vice versa. See `.docs/architecture/repo-topology.md` for the full topology and agent guardrails.
+
+## 11. Cross-References
 
 - Compile Safety: `.docs/product/04-security-model.md` § "Compile Safety Contract"
 - Quad-Mode Drift: `.docs/audits/enterprise-codebase/ENTERPRISE-DOD.md` § "Quad-Mode Drift Policy"

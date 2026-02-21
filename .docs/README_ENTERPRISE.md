@@ -129,6 +129,10 @@ bash scripts/benchmark-llm-suite.sh --scenario MT-002 --model haiku --yolo
 
 **Full gate demo (2-3 min, all gates):** see `.docs/product/18-enterprise-demo-script.md`.
 
+## Repo Topology
+
+This project consists of three independent git repositories co-located on disk (not a monorepo). See `.docs/architecture/repo-topology.md` for the full topology diagram, operator cookbook, and agent guardrails.
+
 ## Cost Estimates (haiku)
 
 | Profile | Scenarios | Est. tokens | Est. time | Est. cost |
