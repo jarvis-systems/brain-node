@@ -16,7 +16,7 @@ Validates all scenario JSON files structurally.
 composer benchmark:dry
 ```
 
-Expected: 78 valid (40 full + 28 cmd-auto + 9 ADV + 1 smoke), 0 errors.
+Expected: 80 valid (42 full + 28 cmd-auto + 9 ADV + 1 smoke), 0 errors.
 
 ## 2. Session ID check
 
@@ -71,7 +71,7 @@ composer benchmark:mt
 ## 6. Full suite
 
 ```bash
-# All 40 scenarios (full profile)
+# All 42 scenarios (full profile)
 scripts/benchmark-llm-suite.sh --profile full --model sonnet
 ```
 
@@ -112,7 +112,7 @@ No live API calls on PR. Structural gates handled by brain-lint.yml.
 1. **smoke-test** — S00 only, haiku (~20s)
 2. **nightly-live** (after smoke passes):
    - `nightly-live` profile (8 scenarios, sonnet, ~10 min)
-   - Model gating: MT-LP-001 requires sonnet, rest compatible with haiku
+   - Model gating: MT-LP-001-EXEC requires sonnet, rest compatible with haiku
    - Regression check (WARN mode)
    - Artifact: `nightly-live-report` retained 30 days
 3. **free-live** (after smoke passes):
@@ -236,7 +236,7 @@ Scenarios can declare a minimum model tier required for execution. Models below 
 
 ```json
 {
-  "id": "MT-LP-001",
+  "id": "MT-LP-001-EXEC",
   "min_model_tier": "sonnet",
   ...
 }
@@ -253,22 +253,22 @@ Tier hierarchy: `haiku(1) < sonnet(2) < opus(3)`.
 ### Example Output
 
 ```
-[MT-LP-001] Constitutional Learn: store lesson on trigger signal (L2) — SKIP: model haiku < min_model_tier sonnet
+[MT-LP-001-EXEC] Constitutional Learn: store lesson on trigger signal (L2) — SKIP: model haiku < min_model_tier sonnet
 ```
 
 ### Applied Scenarios
 
 | Scenario | min_model_tier | Reason |
 |----------|---------------|--------|
-| MT-LP-001 | sonnet | Haiku cannot reliably execute store_memory via MCP |
+| MT-LP-001-EXEC | sonnet | Haiku cannot reliably execute store_memory via MCP |
 | MT-LP-002 | (none) | No-store governance works on haiku |
 | MT-LP-003 | (none) | No-store governance works on haiku |
 
 ### Profile Impact
 
-- `nightly-live` (sonnet): 8 total, 8 executed (CMD-001, CMD-004, ST-004, MT-001, MT-002, MT-LP-001, MT-LP-002, ADV-004).
-- `telemetry-ci` (haiku): MT-LP-001 counted but skipped → 12 total, 11 executed, 1 skipped.
-- `full` (sonnet): MT-LP-001 executes normally → 40 total, 40 executed.
+- `nightly-live` (sonnet): 8 total, 8 executed (CMD-001, CMD-004, ST-004, MT-001, MT-002, MT-LP-001-EXEC, MT-LP-002, ADV-004).
+- `telemetry-ci` (haiku): MT-LP-001-KNOWLEDGE (no gating) → 12 total, 12 executed, 0 skipped.
+- `full` (sonnet): MT-LP-001-KNOWLEDGE + MT-LP-001-EXEC → 42 total, 42 executed.
 - Baselines unchanged — skipped scenarios contribute 0 to token/duration/mcp totals.
 
 ## 10. Flakiness Protocol
@@ -362,7 +362,7 @@ composer benchmark:golden  # golden-live profile with claude opus
 
 ## Checklist
 
-- [x] `composer benchmark:dry` → 40/40 pass (full profile)
+- [x] `composer benchmark:dry` → 42/42 pass (full profile)
 - [x] cmd-auto dry-run → 28/28 pass
 - [ ] Init DTO contains sessionId
 - [ ] Resume preserves context
@@ -374,12 +374,12 @@ composer benchmark:golden  # golden-live profile with claude opus
 - [x] MT-LP-002 live evidence captured (core behavior PASS)
 - [x] telemetry-ci profile: 12 scenarios
 - [x] ci profile: 26 scenarios
-- [x] full profile: 40 scenarios
+- [x] full profile: 42 scenarios
 - [x] cmd-auto profile: 28 scenarios
 - [x] nightly-live profile: 8 scenarios
 - [x] free-live profile: 8 scenarios (opencode + free model)
 - [x] golden-live profile: 8 scenarios (claude opus)
-- [x] Model gating: MT-LP-001 skipped on haiku, executed on sonnet
+- [x] Model gating: MT-LP-001-EXEC skipped on haiku, executed on sonnet
 - [x] PR gate: dry-run only (zero API cost)
 - [x] Nightly: nightly-live profile with sonnet
 - [x] Instruction quality contract documented

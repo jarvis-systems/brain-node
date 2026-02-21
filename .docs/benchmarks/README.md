@@ -36,10 +36,10 @@ Each scenario sends a prompt through the full Brain pipeline (compile → claude
 | Command core | CMD | 6 | Command safety, MCP format, permissions |
 | Command auto | CMD-AUTO | 28 | Auto-generated per-command knowledge checks |
 | Single-turn telemetry | ST | 6 | MCP tool execution, budget, mode invariant |
-| Multi-turn | MT | 3 | Cross-turn memory, task, governance workflows |
-| Multi-turn learn protocol | MT-LP | 3 | Constitutional learn: store/no-store triggers |
+| Multi-turn | MT | 4 | Cross-turn memory, task, governance workflows |
+| Multi-turn learn protocol | MT-LP | 4 | Constitutional learn: store/no-store triggers |
 | Adversarial | ADV | 9 | Hallucination, injection, noise, safety |
-| **Total unique** | | **78** | |
+| **Total unique** | | **80** | |
 
 **Check types:**
 
@@ -99,7 +99,7 @@ scripts/benchmark-llm-suite.sh --dry-run --json
 | smoke | 1 | S00-000 | ~20s |
 | telemetry-ci | 12 | S00 + L1 (partial) + L2 (partial) + ST (partial) + MT (partial) + MT-LP | ~3 min |
 | ci | 26 | L1 + L2 + ST + CMD | ~7 min |
-| full | 40 | CMD + L1 + L2 + L3 + ST + MT + MT-LP | ~15 min |
+| full | 42 | CMD + L1 + L2 + L3 + ST + MT + MT-LP | ~15 min |
 | cmd-auto | 28 | CMD-AUTO-* (auto-generated) | ~10 min |
 | nightly-live | 8 | CMD (partial) + ST (partial) + MT (partial) + MT-LP (partial) + ADV (partial) | ~10 min |
 | matrix | 4×4 | 4 scenarios × 4 mode configs (stress) | ~6 min |
@@ -114,7 +114,7 @@ Each scenario invocation costs ~$0.02-0.25 depending on model and cache state. M
 | smoke | 1 | ~$0.001 | ~$0.01 |
 | telemetry-ci | 12 | ~$0.01 | ~$0.05 |
 | ci | 26 | ~$0.03 | ~$0.10 |
-| full | 40 | ~$0.06 | ~$0.20 |
+| full | 42 | ~$0.06 | ~$0.20 |
 | cmd-auto | 28 | ~$0.04 | ~$0.12 |
 | nightly-live | 8 | ~$0.02 | ~$0.06 |
 
@@ -227,7 +227,8 @@ Create a JSON file in `.docs/benchmarks/scenarios/`:
 | MT-001 | Memory | multi | Store → search → verify retrieval (2 turns) |
 | MT-002 | Task | multi | Create → list → validate fields (2 turns) |
 | MT-003 | Governance | multi | Cookbook limits across 3 turns |
-| MT-LP-001 | Learn | multi | Store lesson on trigger signal |
+| MT-LP-001-KNOWLEDGE | Learn | multi | Protocol reasoning + format knowledge |
+| MT-LP-001-EXEC | Learn | multi | Store lesson on trigger signal |
 | MT-LP-002 | Learn | multi | No store on clean completion |
 | MT-LP-003 | Learn | multi | No store in relaxed mode |
 | CMD-001..006 | Commands | single | Init safety, task lifecycle, mem governance, do permissions, doc validation, destructive refusal |

@@ -99,9 +99,9 @@ version: "2.0"
 | L2 | Applied knowledge | L2-001..L2-007 | 7 |
 | L3 | Governance reasoning | L3-001..L3-008 | 8 |
 | ST | Single-turn telemetry | ST-001..ST-006 | 6 |
-| MT | Multi-turn | MT-001..MT-003 | 3 |
-| MT-LP | Multi-turn learn protocol | MT-LP-001..MT-LP-003 | 3 |
+| MT | Multi-turn | MT-001..MT-004 | 4 |
+| MT-LP | Multi-turn learn protocol | MT-LP-001-KNOWLEDGE..MT-LP-003 | 4 |
 | CMD | Command knowledge | CMD-001..CMD-006 | 6 |
 | CMD-AUTO | Auto-generated command | CMD-AUTO-* | 28 |
 | ADV | Adversarial | ADV-001..ADV-009 | 9 |
-| **Total** | | | **78** |
+| **Total** | | | **80** |

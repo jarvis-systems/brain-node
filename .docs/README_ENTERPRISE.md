@@ -33,7 +33,7 @@ brain compile
 # Compile (paranoid mode)
 STRICT_MODE=paranoid brain compile
 
-# Dry-run: validate all 40 scenarios (full profile)
+# Dry-run: validate all 42 scenarios (full profile)
 composer benchmark:dry
 
 # Telemetry-CI (12 scenarios, haiku)
@@ -42,7 +42,7 @@ composer benchmark:telemetry
 # CI profile (26 scenarios, haiku)
 composer benchmark:ci
 
-# Full profile (40 scenarios, sonnet)
+# Full profile (42 scenarios, sonnet)
 composer benchmark
 
 # Matrix stress (4 configs × 4 scenarios, haiku)
@@ -75,7 +75,7 @@ composer benchmark:regression benchmark-report.json
        +-- Smoke (1 scenario, S00)
        +-- Telemetry-CI (12 scenarios, S00+L1+L2+ST+MT+MT-LP)
        +-- CI (26 scenarios, CMD+L1+L2+ST)
-       +-- Full (40 scenarios, CMD+L1+L2+L3+ST+MT+MT-LP)
+       +-- Full (42 scenarios, CMD+L1+L2+L3+ST+MT+MT-LP)
        +-- Cmd-auto (28 scenarios, auto-generated)
        +-- Nightly-live (8 scenarios, live proof set)
        +-- Matrix Stress (4 configs × 4 scenarios)
@@ -100,12 +100,12 @@ composer benchmark:regression benchmark-report.json
 | Knowledge L2 | 7 | L2-001..L2-007 | ci, full |
 | Governance L3 | 8 | L3-001..L3-008 | full |
 | Single-turn telemetry | 6 | ST-001..ST-006 | ci, full |
-| Multi-turn sessions | 3 | MT-001..MT-003 | telemetry-ci, full |
-| Multi-turn learn protocol | 3 | MT-LP-001..MT-LP-003 | telemetry-ci, full |
+| Multi-turn sessions | 4 | MT-001..MT-004 | telemetry-ci, full |
+| Multi-turn learn protocol | 4 | MT-LP-001-KNOWLEDGE..MT-LP-003 | telemetry-ci, full |
 | Adversarial | 9 | ADV-001..ADV-009 | adversarial-matrix |
 | Command auto | 28 | CMD-AUTO-* | cmd-auto |
 | Smoke | 1 | S00-000 | smoke, telemetry-ci |
-| **Total unique** | **78** | | |
+| **Total unique** | **80** | | |
 
 ## Demo: Reproducible Proof
 
@@ -134,7 +134,7 @@ bash scripts/benchmark-llm-suite.sh --scenario MT-002 --model haiku --yolo
 | smoke | 1 | ~400 | ~20s | ~$0.001 |
 | telemetry-ci | 12 | ~11,000 | ~3 min | ~$0.01 |
 | ci | 26 | ~23,000 | ~7 min | ~$0.03 |
-| full | 40 | ~52,000 | ~15 min | ~$0.06 |
+| full | 42 | ~52,000 | ~15 min | ~$0.06 |
 | cmd-auto | 28 | ~34,000 | ~10 min | ~$0.04 |
 | nightly-live | 8 | ~15,000 | ~10 min | ~$0.02 |
 | matrix | 16 runs | ~12,000 | ~6 min | ~$0.03 |
