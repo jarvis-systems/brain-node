@@ -28,6 +28,20 @@ status: "active"
 3. **Benchmarks**: Adversarial scenarios test boundary conditions.
 4. **CI gates**: Pin verification, compile discipline, baseline regression.
 
+## Compile Safety Contract
+
+Single-writer lock prevents concurrent `brain compile` race conditions. Lock uses `flock()` — kernel-managed, auto-released on process death.
+
+**Rules:**
+- Lock is mandatory. Concurrent compile attempts are blocked with holder PID/timestamp.
+- `--no-lock` is emergency-only, gated by strict mode policy:
+  - `paranoid` / `strict`: blocked unless `BRAIN_ALLOW_NO_LOCK=1` is set in environment.
+  - `standard` / `relaxed`: allowed with warning.
+- Compile auto-detects project root — running from a subdirectory triggers auto-chdir to root.
+- Compile must never dirty tracked files. Gate: `scripts/check-compile-clean.sh` (audit check 19/19).
+
+**Verification:** `brain compile` → `git status --porcelain` must show zero new changes.
+
 ## Known Gaps (Future Work)
 
 - **Secret management**: API keys in MCP PHP source files need vault integration

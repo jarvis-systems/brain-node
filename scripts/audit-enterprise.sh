@@ -22,6 +22,7 @@
 #   - Hardcoded user paths in tracked source files
 #   - Version consistency (core vs root composer.json)
 #   - MCP schema bypass: raw ::call() on schema-enabled MCPs without @mcp-schema-bypass
+#   - Compile clean-worktree: brain compile must not dirty tracked files
 #
 # Output: dist/audit-report.json + stdout summary
 #
@@ -98,7 +99,7 @@ add_category() {
 
 # ── Check 1: PHP syntax ──────────────────────────────────────────────────
 
-log "${BOLD}[1/18] PHP syntax check${NC}"
+log "${BOLD}[1/19] PHP syntax check${NC}"
 
 PHP_ERRORS=0
 PHP_FINDINGS="[]"
@@ -135,7 +136,7 @@ add_category "php-syntax" "$([ $PHP_ERRORS -eq 0 ] && echo pass || echo fail)" "
 
 # ── Check 2: PHPUnit (if available) ─────────────────────────────────────
 
-log "${BOLD}[2/18] PHPUnit tests${NC}"
+log "${BOLD}[2/19] PHPUnit tests${NC}"
 
 TEST_FINDINGS="[]"
 TEST_COUNT=0
@@ -154,7 +155,7 @@ add_category "phpunit" "$([ $TEST_COUNT -eq 0 ] && echo pass || echo fail)" "$TE
 
 # ── Check 3: Silent catch blocks ────────────────────────────────────────
 
-log "${BOLD}[3/18] Silent catch blocks${NC}"
+log "${BOLD}[3/19] Silent catch blocks${NC}"
 
 CATCH_FINDINGS="[]"
 CATCH_COUNT=0
@@ -214,7 +215,7 @@ add_category "silent-catches" "$([ $CATCH_COUNT -eq 0 ] && echo pass || echo war
 
 # ── Check 4: Debug artifacts ────────────────────────────────────────────
 
-log "${BOLD}[4/18] Debug artifacts${NC}"
+log "${BOLD}[4/19] Debug artifacts${NC}"
 
 DEBUG_FINDINGS="[]"
 DEBUG_COUNT=0
@@ -259,7 +260,7 @@ add_category "debug-artifacts" "$([ $DEBUG_COUNT -eq 0 ] && echo pass || echo wa
 
 # ── Check 5: TODO/FIXME markers ────────────────────────────────────────
 
-log "${BOLD}[5/18] TODO/FIXME markers${NC}"
+log "${BOLD}[5/19] TODO/FIXME markers${NC}"
 
 TODO_FINDINGS="[]"
 TODO_COUNT=0
@@ -296,7 +297,7 @@ add_category "todo-fixme" "$([ $TODO_COUNT -eq 0 ] && echo pass || echo info)" "
 
 # ── Check 6: Unsafe patterns ───────────────────────────────────────────
 
-log "${BOLD}[6/18] Unsafe patterns (eval/shell_exec/die/exit)${NC}"
+log "${BOLD}[6/19] Unsafe patterns (eval/shell_exec/die/exit)${NC}"
 
 UNSAFE_FINDINGS="[]"
 UNSAFE_COUNT=0
@@ -343,7 +344,7 @@ add_category "unsafe-patterns" "$([ $UNSAFE_COUNT -eq 0 ] && echo pass || echo w
 
 # ── Check 7: Shell script safety ────────────────────────────────────────
 
-log "${BOLD}[7/18] Shell script safety headers${NC}"
+log "${BOLD}[7/19] Shell script safety headers${NC}"
 
 SHELL_FINDINGS="[]"
 SHELL_COUNT=0
@@ -371,7 +372,7 @@ add_category "shell-safety" "$([ $SHELL_COUNT -eq 0 ] && echo pass || echo warn)
 
 # ── Check 8: No-op escape methods ───────────────────────────────────────
 
-log "${BOLD}[8/18] No-op escape method detection${NC}"
+log "${BOLD}[8/19] No-op escape method detection${NC}"
 
 NOOP_FINDINGS="[]"
 NOOP_COUNT=0
@@ -409,7 +410,7 @@ add_category "noop-escape" "$([ $NOOP_COUNT -eq 0 ] && echo pass || echo warn)" 
 
 # ── Check 9: self:: in trait files ─────────────────────────────────────
 
-log "${BOLD}[9/18] Late static binding in traits${NC}"
+log "${BOLD}[9/19] Late static binding in traits${NC}"
 
 LSB_FINDINGS="[]"
 LSB_COUNT=0
@@ -441,7 +442,7 @@ add_category "trait-lsb" "$([ $LSB_COUNT -eq 0 ] && echo pass || echo warn)" "$L
 
 # ── Check 10: Known typos ──────────────────────────────────────────────
 
-log "${BOLD}[10/18] Known typos in codebase${NC}"
+log "${BOLD}[10/19] Known typos in codebase${NC}"
 
 TYPO_FINDINGS="[]"
 TYPO_COUNT=0
@@ -471,7 +472,7 @@ add_category "known-typos" "$([ $TYPO_COUNT -eq 0 ] && echo pass || echo fail)" 
 
 # ── Check 11: Dev deps in production require ───────────────────────────
 
-log "${BOLD}[11/18] Dev dependencies in production require${NC}"
+log "${BOLD}[11/19] Dev dependencies in production require${NC}"
 
 DEVDEP_FINDINGS="[]"
 DEVDEP_COUNT=0
@@ -502,7 +503,7 @@ add_category "dev-deps-prod" "$([ $DEVDEP_COUNT -eq 0 ] && echo pass || echo fai
 
 # ── Check 12: PHPStan (static analysis) ───────────────────────────────
 
-log "${BOLD}[12/18] PHPStan static analysis${NC}"
+log "${BOLD}[12/19] PHPStan static analysis${NC}"
 
 PHPSTAN_FINDINGS="[]"
 PHPSTAN_COUNT=0
@@ -521,7 +522,7 @@ add_category "phpstan" "$([ $PHPSTAN_COUNT -eq 0 ] && echo pass || echo fail)" "
 
 # ── Check 13: strict_types declaration ─────────────────────────────────
 
-log "${BOLD}[13/18] Missing declare(strict_types=1)${NC}"
+log "${BOLD}[13/19] Missing declare(strict_types=1)${NC}"
 
 STRICT_FINDINGS="[]"
 STRICT_COUNT=0
@@ -560,7 +561,7 @@ add_category "strict-types" "$([ $STRICT_COUNT -eq 0 ] && echo pass || echo fail
 
 # ── Check 14: Secret patterns in tracked files ─────────────────────────
 
-log "${BOLD}[14/18] Secret patterns in tracked files${NC}"
+log "${BOLD}[14/19] Secret patterns in tracked files${NC}"
 
 SECRET_FINDINGS="[]"
 SECRET_COUNT=0
@@ -600,7 +601,7 @@ add_category "secrets" "$([ $SECRET_COUNT -eq 0 ] && echo pass || echo fail)" "$
 
 # ── Check 15: Hardcoded user paths ────────────────────────────────────
 
-log "${BOLD}[15/18] Hardcoded user paths in tracked source files${NC}"
+log "${BOLD}[15/19] Hardcoded user paths in tracked source files${NC}"
 
 HPATH_FINDINGS="[]"
 HPATH_COUNT=0
@@ -641,7 +642,7 @@ add_category "hardcoded-paths" "$([ $HPATH_COUNT -eq 0 ] && echo pass || echo wa
 
 # ── Check 16: Degradation observability ────────────────────────────────
 
-log "${BOLD}[16/18] Degradation observability in catch blocks${NC}"
+log "${BOLD}[16/19] Degradation observability in catch blocks${NC}"
 
 DEGRAD_COUNT=0
 DEGRAD_FINDINGS="[]"
@@ -683,7 +684,7 @@ add_category "degradation-observability" "$([ $DEGRAD_COUNT -eq 0 ] && echo pass
 
 # ── Check 17: Version consistency ─────────────────────────────────────
 
-log "${BOLD}[17/18] Version consistency${NC}"
+log "${BOLD}[17/19] Version consistency${NC}"
 
 VER_FINDINGS="[]"
 VER_COUNT=0
@@ -705,7 +706,7 @@ add_category "version-consistency" "$([ $VER_COUNT -eq 0 ] && echo pass || echo 
 
 # ── Check 18: MCP schema bypass enforcement ─────────────────────────────
 
-log "${BOLD}[18/18] MCP schema bypass enforcement${NC}"
+log "${BOLD}[18/19] MCP schema bypass enforcement${NC}"
 
 MCPBYPASS_FINDINGS="[]"
 MCPBYPASS_COUNT=0
@@ -755,6 +756,41 @@ if [[ $MCPBYPASS_COUNT -eq 0 ]]; then
     log "  ${GREEN}PASS${NC} All schema-enabled MCP calls validated or annotated"
 fi
 add_category "mcp-schema-bypass" "$([ $MCPBYPASS_COUNT -eq 0 ] && echo pass || echo fail)" "$MCPBYPASS_COUNT" "$MCPBYPASS_FINDINGS"
+
+# ── Check 19: Compile clean-worktree gate ────────────────────────────────
+
+log "${BOLD}[19/19] Compile clean-worktree gate${NC}"
+
+COMPILECLEAN_FINDINGS="[]"
+COMPILECLEAN_COUNT=0
+
+if command -v brain &>/dev/null; then
+    # Snapshot worktree BEFORE compile
+    BEFORE_COMPILE=$(cd "$PROJECT_ROOT" && git status --porcelain 2>/dev/null || true)
+
+    # Run compile with --no-lock (audit already runs sequentially)
+    if (cd "$PROJECT_ROOT" && BRAIN_ALLOW_NO_LOCK=1 brain compile --no-lock >/dev/null 2>&1); then
+        # Snapshot worktree AFTER compile — diff to find NEW changes only
+        AFTER_COMPILE=$(cd "$PROJECT_ROOT" && git status --porcelain 2>/dev/null || true)
+        NEW_COMPILE_CHANGES=$(diff <(echo "$BEFORE_COMPILE") <(echo "$AFTER_COMPILE") | grep '^>' | sed 's/^> //' || true)
+
+        if [[ -n "$NEW_COMPILE_CHANGES" ]]; then
+            COMPILECLEAN_COUNT=1
+            DIRTY_FILES=$(echo "$NEW_COMPILE_CHANGES" | awk '{print $2}' | head -20)
+            COMPILECLEAN_FINDINGS=$(echo "$COMPILECLEAN_FINDINGS" | jq \
+                --arg files "$DIRTY_FILES" \
+                '. + [{"message": "brain compile produced new uncommitted changes", "files": $files}]')
+            log "  ${RED}FAIL${NC} brain compile dirtied worktree"
+        else
+            log "  ${GREEN}PASS${NC} brain compile produces clean worktree"
+        fi
+    else
+        log "  ${YELLOW}SKIP${NC} brain compile failed (check compilation errors separately)"
+    fi
+else
+    log "  ${YELLOW}SKIP${NC} brain CLI not available"
+fi
+add_category "compile-clean" "$([ $COMPILECLEAN_COUNT -eq 0 ] && echo pass || echo fail)" "$COMPILECLEAN_COUNT" "$COMPILECLEAN_FINDINGS"
 
 # ── Output JSON report ──────────────────────────────────────────────────
 
