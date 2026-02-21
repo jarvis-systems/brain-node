@@ -10,6 +10,8 @@
 <provides>Defines essential runtime constraints for Brain orchestration operations.
 Simplified version focused on delegation-level limits without detailed CI/CD or agent-specific metrics.</provides>
 
+<provides>Enforces secret output prevention policy across all Brain and Agent responses.</provides>
+
 <provides>Vector memory iron rules with cookbook delegation.</provides>
 
 <provides>Vector task iron rules with cookbook delegation.</provides>
@@ -38,11 +40,16 @@ Provides simple fallback guidelines for common delegation failures without detai
 ## Quality-gates-mandatory (CRITICAL)
 ALL quality commands below MUST be executed and PASS. Any `failure` = create fix-task. Cannot mark `validated` until ALL pass.
 
+## Quality-PHPSTAN (CRITICAL)
+QUALITY GATE [PHPSTAN]: composer analyse
+
 ## Quality-TEST (CRITICAL)
 QUALITY GATE [TEST]: composer test
 
-## Quality-PHPSTAN (CRITICAL)
-QUALITY GATE [PHPSTAN]: composer analyse
+## No-secret-output (CRITICAL)
+NEVER output secrets, API keys, tokens, passwords, or sensitive ENV variable values in responses, logs, or delegated outputs.
+- **why**: Secrets in output leak through conversation logs, vector memory, screen sharing, CI artifacts, and MCP responses. Redaction is the only safe default.
+- **on_violation**: Redact the value immediately. Show only the variable name and status: FOUND or NOT FOUND. Never echo, print, or embed secret values.
 
 ## Cookbook-governance (CRITICAL)
 Cookbook calls ONLY via: (1) compile-time preset above, (2) explicit onViolation. BANNED: uncertainty triggers, speculative pulls, runtime param construction.
