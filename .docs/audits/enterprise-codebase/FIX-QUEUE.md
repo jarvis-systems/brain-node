@@ -452,6 +452,15 @@ Regression prevention: `audit-enterprise.sh` Check 18 (mcp-schema-bypass) + `Nod
 | Baselines metadata | `stability_window` + `stability_rule` in baselines.json | Prevents premature baseline updates |
 | Compiled outputs synced | AGENTS.md (codex target) + GEMINI.md (gemini target) | `brain compile codex` / `brain compile gemini` |
 
+### Refactor Batch 12
+
+| Item | Change | Proof |
+|------|--------|-------|
+| README_ENTERPRISE.md doc truth | 15+ stale claims updated: telemetry-ci 9→12, ci 17→25, full 27→38, ADV 5→7, ST 3→5, total 32→74, PR gate (live→dry-run), nightly (full→nightly-live), pipeline diagram (+cmd-auto, +nightly-live profiles), scenario coverage table (+CMD, +MT-LP, +CMD-AUTO categories), cost estimates (scenario counts updated) | All values derived from baselines.json, file counts, benchmark-llm-suite.sh profile filters, brain-benchmark.yml workflow |
+| ENTERPRISE-DOD.md checkboxes | CI Supply Chain 3× `[ ]` → `[x]`: SHA pinning, concurrency guards, no secrets in workflows | Verified: all 4 actions SHA-pinned in brain-benchmark.yml, concurrency blocks in all 3 workflows, only `${{ secrets.* }}` references |
+| VERIFICATION.md cleanup | 3 duplicate checklist entries removed (lines 332-334 = 313-315), full suite count "28 scenarios" → "38 scenarios" | Dry-run: 38/38 pass (full profile) |
+| Score unchanged | Doc-only batch — zero runtime impact, zero test impact | 233/233 PASS, PASS:18 WARN:0 FAIL:0 |
+
 ## Summary
 
 | Priority | Total | Fixed | Reclassified | Open |
@@ -534,3 +543,6 @@ Remaining P2 open: P2-003 (error_log in ConvertCommand — acceptable, env-gated
 | Batch 11 (doc truth phase 2) | pre-publication.md + DOD expected values aligned with current reality |
 | Batch 11 (benchmark flakiness) | 38/38 dry + 74/74 matrix + 28/28 adversarial — all profiles PASS with retry infrastructure |
 | Batch 11 (prompt-change-contract) | `brain docs --validate` = 0 invalid, YAML front matter present |
+| Batch 12 (README doc truth) | 15+ stale scenario/pipeline claims in README_ENTERPRISE.md updated to match reality |
+| Batch 12 (DOD checkboxes) | CI Supply Chain 3× `[ ]` → `[x]` (SHA pinning, concurrency, no secrets — verified from workflow source) |
+| Batch 12 (VERIFICATION dedup) | 3 duplicate checklist entries removed, full suite count 28→38 |

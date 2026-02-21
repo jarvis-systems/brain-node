@@ -16,10 +16,10 @@ These 12 properties hold across every release. CI enforces them automatically.
 | 3 | **Lint gate** | `composer analyse` (PHPSTAN) + `composer test` (PHPUnit) must pass |
 | 4 | **Governance rules** | Iron rules compiled into Brain artifacts; banned patterns checked per scenario |
 | 5 | **Single-mode invariant** | `no-mode-self-switch` (CRITICAL): mode is compile-time only, no runtime changes |
-| 6 | **CI PR gate** | Every PR runs telemetry-ci (9 scenarios) + ci (17 scenarios) with haiku |
-| 7 | **Nightly benchmarks** | Full profile (27 scenarios) with sonnet, regression check against baselines |
-| 8 | **Matrix stress** | 4 configs (standard/paranoid × standard/exhaustive) × stress subset nightly |
-| 9 | **Adversarial robustness** | 5 ADV scenarios test hallucination, injection, noise resistance across configs |
+| 6 | **CI PR gate** | PR gate runs dry-run schema validation (zero API cost) + brain-lint (tests, phpstan, audit, secrets) |
+| 7 | **Nightly benchmarks** | Nightly-live profile (8 scenarios) with sonnet + matrix stress + adversarial matrix |
+| 8 | **Matrix stress** | 4 configs (standard/paranoid × standard/exhaustive) × 4 stress scenarios nightly |
+| 9 | **Adversarial robustness** | 7 ADV scenarios test hallucination, injection, noise resistance across configs |
 | 10 | **Regression baselines** | Budget ceilings (tokens, duration, MCP calls) with 20% threshold per profile |
 | 11 | **Telemetry-first validation** | ToolUse DTOs as primary MCP verification signal, not grep on response text |
 | 12 | **Multi-turn session integrity** | `--resume` with sessionId from Init DTO, context preserved across turns |
@@ -33,22 +33,22 @@ brain compile
 # Compile (paranoid mode)
 STRICT_MODE=paranoid brain compile
 
-# Dry-run: validate all 32 scenarios
+# Dry-run: validate all 38 scenarios (full profile)
 composer benchmark:dry
 
-# Telemetry-CI: fast gate (9 scenarios, haiku, ~2.5 min)
+# Telemetry-CI (12 scenarios, haiku)
 composer benchmark:telemetry
 
-# CI profile (17 scenarios, haiku)
+# CI profile (25 scenarios, haiku)
 composer benchmark:ci
 
-# Full profile (27 scenarios, sonnet)
+# Full profile (38 scenarios, sonnet)
 composer benchmark
 
 # Matrix stress (4 configs × 4 scenarios, haiku)
 composer benchmark:matrix
 
-# Adversarial matrix (4 configs × 5 scenarios, haiku)
+# Adversarial matrix (4 configs × 7 scenarios, haiku)
 composer benchmark:adversarial
 
 # Single scenario
@@ -73,19 +73,21 @@ composer benchmark:regression benchmark-report.json
   Benchmark Suite (scripts/benchmark-llm-suite.sh)
        |
        +-- Smoke (1 scenario, S00)
-       +-- Telemetry-CI (9 scenarios, S00+L1+L2+ST+MT)
-       +-- CI (17 scenarios, L1+L2+ST)
-       +-- Full (27 scenarios, L1+L2+L3+ST+MT)
-       +-- Matrix Stress (4 configs x 4 scenarios)
-       +-- Adversarial Matrix (4 configs x 5 scenarios)
+       +-- Telemetry-CI (12 scenarios, S00+L1+L2+ST+MT+MT-LP)
+       +-- CI (25 scenarios, CMD+L1+L2+ST)
+       +-- Full (38 scenarios, CMD+L1+L2+L3+ST+MT+MT-LP)
+       +-- Cmd-auto (28 scenarios, auto-generated)
+       +-- Nightly-live (8 scenarios, live proof set)
+       +-- Matrix Stress (4 configs × 4 scenarios)
+       +-- Adversarial Matrix (4 configs × 7 scenarios)
        |
        v
   Regression Gate (baselines.json, 20% threshold)
        |
        v
   CI Pipeline
-       +-- PR: telemetry-ci + ci (haiku)
-       +-- Nightly: full (sonnet) + matrix (haiku) + adversarial (haiku)
+       +-- PR: dry-run validation (zero API cost)
+       +-- Nightly: smoke → nightly-live (sonnet) + matrix (haiku) + adversarial (haiku)
        +-- Manual: any profile via workflow_dispatch
 ```
 
@@ -93,14 +95,17 @@ composer benchmark:regression benchmark-report.json
 
 | Category | Count | IDs | Profile |
 |----------|-------|-----|---------|
+| Command core | 6 | CMD-001..CMD-006 | telemetry-ci, ci, full |
 | Knowledge L1 | 7 | L1-001..L1-007 | ci, full |
 | Knowledge L2 | 7 | L2-001..L2-007 | ci, full |
 | Governance L3 | 7 | L3-001..L3-007 | full |
-| Single-turn telemetry | 3 | ST-001..ST-003 | ci, full |
+| Single-turn telemetry | 5 | ST-001..ST-005 | ci, full |
 | Multi-turn sessions | 3 | MT-001..MT-003 | telemetry-ci, full |
-| Adversarial | 5 | ADV-001..ADV-005 | adversarial-matrix |
+| Multi-turn learn protocol | 3 | MT-LP-001..MT-LP-003 | telemetry-ci, full |
+| Adversarial | 7 | ADV-001..ADV-007 | adversarial-matrix |
+| Command auto | 28 | CMD-AUTO-* | cmd-auto |
 | Smoke | 1 | S00-000 | smoke, telemetry-ci |
-| **Total** | **32** | | |
+| **Total unique** | **74** | | |
 
 ## Demo: Reproducible Proof
 
@@ -127,8 +132,10 @@ bash scripts/benchmark-llm-suite.sh --scenario MT-002 --model haiku --yolo
 | Profile | Scenarios | Est. tokens | Est. time | Est. cost |
 |---------|-----------|-------------|-----------|-----------|
 | smoke | 1 | ~400 | ~20s | ~$0.001 |
-| telemetry-ci | 9 | ~8,000 | ~2.5 min | ~$0.01 |
-| ci | 17 | ~15,000 | ~5 min | ~$0.02 |
-| full | 27 | ~35,000 | ~12 min | ~$0.04 |
+| telemetry-ci | 12 | ~11,000 | ~3 min | ~$0.01 |
+| ci | 25 | ~22,000 | ~7 min | ~$0.03 |
+| full | 38 | ~50,000 | ~15 min | ~$0.06 |
+| cmd-auto | 28 | ~34,000 | ~10 min | ~$0.04 |
+| nightly-live | 8 | ~15,000 | ~10 min | ~$0.02 |
 | matrix | 16 runs | ~12,000 | ~6 min | ~$0.03 |
-| adversarial-matrix | 20 runs | ~10,000 | ~5 min | ~$0.02 |
+| adversarial-matrix | 28 runs | ~14,000 | ~7 min | ~$0.03 |

@@ -71,7 +71,7 @@ composer benchmark:mt
 ## 6. Full suite
 
 ```bash
-# All 28 scenarios
+# All 38 scenarios (full profile)
 scripts/benchmark-llm-suite.sh --profile full --model sonnet
 ```
 
@@ -329,7 +329,4 @@ Scenarios can override the profile default with `"retry": N` in their JSON:
 - [x] Instruction quality contract documented
 - [x] Flakiness protocol: retry support in runner
 - [ ] Regression check passes on nightly-live report
-- [ ] Init DTO contains sessionId
-- [ ] Resume preserves context
-- [ ] ST-001 passes expected-tool check
 - [ ] Nightly-live full live proof captured

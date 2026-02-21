@@ -175,6 +175,12 @@ No sources of non-determinism found. No `rand()`, `shuffle()`, `mt_rand()`, `arr
 - Baselines metadata: stability window (3-run rule before baseline update)
 - Compiled outputs synchronized: AGENTS.md (codex), GEMINI.md (gemini)
 
+**Refactor Batch 12 — Doc Truth Phase 3 + DoD Alignment:**
+- `README_ENTERPRISE.md`: 15+ stale scenario counts/claims updated to match current truth (telemetry-ci 9→12, ci 17→25, full 27→38, ADV 5→7, ST 3→5, total 32→74, PR gate description, nightly pipeline, cost estimates). Pipeline diagram rewritten with cmd-auto and nightly-live profiles.
+- `ENTERPRISE-DOD.md`: CI Supply Chain 3× `[ ]` → `[x]` (SHA pinning, concurrency guards, no secrets in workflows — all verified from workflow source)
+- `VERIFICATION.md`: 3 duplicate checklist entries removed (Init DTO, Resume, ST-001 — lines 332-334 duplicated 313-315), full suite scenario count 28→38
+- Score unchanged (doc-only, zero runtime impact)
+
 Remaining gaps: CLI runtime tests require Laravel framework.
 
 ### 7. Release Discipline (3/3)

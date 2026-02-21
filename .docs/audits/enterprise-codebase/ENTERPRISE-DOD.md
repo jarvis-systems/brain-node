@@ -52,9 +52,9 @@ All 18 checks in `audit-enterprise.sh` must PASS or WARN (no FAIL):
 
 ## CI Supply Chain
 
-- [ ] All GitHub Actions pinned by SHA (not tag) — see `.github/workflows/*.yml`
-- [ ] All workflows have `concurrency:` guards to prevent parallel waste
-- [ ] No secrets in workflow files (only `${{ secrets.* }}` references)
+- [x] All GitHub Actions pinned by SHA (not tag) — see `.github/workflows/*.yml`
+- [x] All workflows have `concurrency:` guards to prevent parallel waste
+- [x] No secrets in workflow files (only `${{ secrets.* }}` references)
 
 ## Release Discipline
 
