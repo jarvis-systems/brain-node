@@ -11,6 +11,8 @@ status: active
 
 Execute this checklist BEFORE any public release (GitHub public, Packagist, npm, or distribution to external parties).
 
+**Strategic playbook:** For the full decision matrix (BFG vs Fresh Repo vs New Canon Repo), credential inventory, pattern governance, and recommended migration path, see `.docs/product/16-security-3.0-playbook.md`.
+
 ## 1. Credential Rotation (BLOCKING)
 
 All credentials that ever touched git history MUST be rotated before publication.
