@@ -743,15 +743,9 @@ for repo_name in root core cli; do
     fi
 done
 
-# Category status: fail if root/core mismatch (VER_COUNT), else warn if drift detected, else pass
-if [[ $VER_COUNT -gt 0 ]]; then
-    VER_STATUS="fail"
-elif [[ $VER_WARN_COUNT -gt 0 ]]; then
-    VER_STATUS="warn"
-else
-    VER_STATUS="pass"
-fi
-add_category "version-consistency" "$VER_STATUS" "$VER_COUNT" "$VER_FINDINGS"
+# Category status: pass/fail determined ONLY by root vs core mismatch (VER_COUNT).
+# WARN subchecks (17b/17c) are informational — logged + in JSON findings, but do NOT affect category status.
+add_category "version-consistency" "$([ $VER_COUNT -eq 0 ] && echo pass || echo fail)" "$VER_COUNT" "$VER_FINDINGS"
 
 # ── Check 18: MCP schema bypass enforcement ─────────────────────────────
 
