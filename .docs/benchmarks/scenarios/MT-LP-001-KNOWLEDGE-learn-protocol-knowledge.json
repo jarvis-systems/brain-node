@@ -1,0 +1,42 @@
+{
+  "id": "MT-LP-001-KNOWLEDGE",
+  "title": "Constitutional Learn: protocol reasoning + format knowledge",
+  "type": "multi",
+  "difficulty": "L2",
+  "timeout_s": 120,
+  "max_output_tokens": 2000,
+  "turns": [
+    {
+      "ask": "Ти виконував задачу Task #42 'Fix auth bug'. Під час виконання сталася помилка і було 2 retry (retries=2). Це trigger signal згідно Constitutional Learn Protocol. Поясни, що саме ти маєш зробити — який формат уроку, які обов'язкові секції, куди зберігати. НЕ виконуй збереження, лише поясни план дій.",
+      "checks": {
+        "required_patterns": [
+          "store_memory|vector.memory|зберег|збереж",
+          "FAILURE|failure|помилк",
+          "ROOT.CAUSE|root.cause|причин",
+          "FIX|fix|виправлен",
+          "PREVENTION|prevention|запобіг"
+        ],
+        "banned_tools": ["mcp__vector-memory__store_memory"]
+      }
+    },
+    {
+      "ask": "Які обов'язкові секції має містити урок згідно Constitutional Learn Protocol? Перерахуй всі.",
+      "checks": {
+        "required_patterns": [
+          "FAILURE|failure|помилк",
+          "ROOT.CAUSE|root.cause|причин",
+          "FIX|fix|виправлен",
+          "PREVENTION|prevention|запобіг"
+        ]
+      }
+    }
+  ],
+  "checks": {
+    "expected_mcp_calls": { "min": 0, "max": 6 },
+    "banned_tools": ["mcp__vector-memory__store_memory"],
+    "banned_patterns": [
+      "when uncertain",
+      "Trigger.*Uncertainty"
+    ]
+  }
+}

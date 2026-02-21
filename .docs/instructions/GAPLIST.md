@@ -27,7 +27,7 @@ Prioritized gaps from REGISTRY and COVERAGE analysis. Each gap includes risk, ef
 | 4 | `never-write-compiled` untested adversarially | MED | LOW | HIGH | **CLOSED** — ADV-009 |
 | 5 | CMD-AUTO lack `expected_tools` | LOW | HIGH | LOW | Accepted risk |
 | 6 | Compile-time gating correctness untested | LOW | LOW | MED | CI-enforced, document |
-| 7 | Missing MT for task lifecycle | MED | MED | MED | Open — MT-004 proposed |
+| 7 | Missing MT for task lifecycle | MED | MED | MED | **CLOSED** — MT-004 |
 | 8 | `evidence-based` (DocumentationMaster) untested | LOW | MED | LOW | Future iteration |
 | 9 | `cookbook-governance` tested only by ADV-003 | LOW | LOW | MED | Sufficient, document |
 | 10 | Command trait rules tested by pattern only | MED | HIGH | LOW | Accepted risk |
@@ -110,25 +110,22 @@ Remaining agent rules (commit-master, documentation-master, web-research-master,
 
 **Decision**: **CI-enforced, no scenario needed**. The `check-instruction-budget.sh --strict` script verifies compiled artifact line counts. A gating bug would change line counts, triggering budget violation. Additionally, `composer test` includes `CompilationOutputTest` and `BuilderDeterminismTest` which verify compilation determinism. Document as covered by CI.
 
-### Gap 7: Missing MT for task lifecycle (GAP-CMD-5..11)
+### Gap 7: Missing MT for task lifecycle (GAP-CMD-5..11) — CLOSED
 
-**Current state**: MT-002 tests task create then list. No scenario tests the full task lifecycle: create -> update status -> complete.
+**Status**: Implemented as MT-004-task-lifecycle-full.json
 
-**Risk if unaddressed**: Task status transitions (pending -> in_progress -> completed) are untested in multi-turn flow.
+**Rule tested**: `mcp-json-only` (task lifecycle) — full create → update status flow.
 
-**Proposed fix**: New multi-turn scenario MT-004.
+**Scenario**: MT-004 (full profile).
 
 - **ID**: MT-004
 - **Name**: task-lifecycle-full
 - **Type**: multi
-- **Turn 1**: "Створи задачу 'Тест lifecycle' з тегами strict:standard, cognitive:standard"
-  - expects: task_create
-- **Turn 2**: "Переведи цю задачу в статус in_progress"
-  - expects: task_update
-  - required_patterns: "in_progress|in progress"
+- **Turn 1**: Create task with title and tags → expects: task_create
+- **Turn 2**: Update status to in_progress → expects: task_update
 - **Global checks**: expected_mcp_calls min 2, max 8
-- **Profile impact**: full (+1 scenario)
-- **Baseline impact**: Dry-run only
+- **Profile impact**: full (+1 scenario, total 42)
+- **Baseline impact**: full scenarios 40 → 42, budgets adjusted
 
 ### Gap 8: `evidence-based` (DocumentationMaster) untested
 
@@ -156,13 +153,12 @@ Remaining agent rules (commit-master, documentation-master, web-research-master,
 
 | Category | Count | Status |
 |----------|-------|--------|
-| Closed (implemented) | 4 | ADV-008, ADV-009, L3-008, ST-006 |
-| Open (medium effort) | 1 | MT-004 (task lifecycle) |
+| Closed (implemented) | 5 | ADV-008, ADV-009, L3-008, ST-006, MT-004 |
 | Accepted risks (documented) | 3 | Gaps #5, #6, #10 |
 | Sufficient coverage | 1 | Gap #9 |
 | Deferred | 1 | Gap #8 |
 
-4 cheap wins implemented: covers `file-safety`, `never-write-compiled`, `delegation-depth` (adversarial), and explore agent `no-direct-bash-search` + `glob-before-grep` rules. Remaining gap #7 (MT-004) requires medium effort (multi-turn scenario).
+5 gaps closed: `file-safety` (ADV-008), `never-write-compiled` (ADV-009), `delegation-depth` adversarial (L3-008), explore agent tool rules (ST-006), task lifecycle (MT-004). All actionable gaps resolved.
 
 ## Cross-References
 

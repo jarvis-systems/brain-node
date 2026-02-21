@@ -1,6 +1,6 @@
 {
-  "id": "MT-LP-001",
-  "title": "Constitutional Learn: store lesson on trigger signal",
+  "id": "MT-LP-001-EXEC",
+  "title": "Constitutional Learn: store lesson execution on trigger signal",
   "type": "multi",
   "difficulty": "L2",
   "min_model_tier": "sonnet",

@@ -529,6 +529,31 @@ run_scenario() {
         fi
     fi
 
+    # Failure triage classification
+    local triage_json=""
+    if [ "$scenario_status" = "FAIL" ] || [ "$scenario_status" = "FLAKY_FAIL" ] || [ "$scenario_status" = "ERROR" ]; then
+        local _has_model=false _has_mcp=false _has_tool=false _has_prompt=false
+        for _ck in "${checks[@]}"; do
+            echo "$_ck" | grep -q '"status":"FAIL"' || continue
+            if echo "$_ck" | grep -qE '"check":"(response-received|dto-schema|duration)"'; then
+                _has_model=true
+            elif echo "$_ck" | grep -q 'mcp-calls-range'; then
+                _has_mcp=true
+            elif echo "$_ck" | grep -qE '"check":"(expected-tool:|banned-tool:)'; then
+                _has_tool=true
+            else
+                _has_prompt=true
+            fi
+        done
+        local _bucket="PROMPT_REGRESSION" _target="doc/include"
+        if $_has_model; then _bucket="MODEL_LIMIT"; _target="scenario"
+        elif $_has_mcp; then _bucket="MCP_REGRESSION"; _target="runner"
+        elif $_has_tool; then _bucket="TOOLING_REGRESSION"; _target="runner"
+        fi
+        triage_json=",\"triage\":{\"root_cause_bucket\":\"$_bucket\",\"first_bad_turn\":1,\"recommended_fix_target\":\"$_target\"}"
+        log "  ${YELLOW}[TRIAGE] $_bucket → fix: $_target${NC}"
+    fi
+
     # Update counters
     case "$scenario_status" in
         PASS) ((PASSED++)) ;;
@@ -549,7 +574,7 @@ run_scenario() {
         checks_json=$(IFS=,; echo "${checks[*]}")
     fi
     local rchars=${#response_text}
-    RESULTS+=("{\"id\":\"$sid\",\"title\":\"$stitle\",\"difficulty\":\"$sdiff\",\"status\":\"$scenario_status\",\"executed_model\":\"$MODEL\",\"model_tier\":$RESOLVED_MODEL_TIER,\"duration_ms\":$duration_ms,\"input_tokens\":$input_tokens,\"output_tokens\":$output_tokens,\"mcp_calls_count\":$mcp_calls,\"response_chars\":$rchars,\"attempts\":$attempt,\"checks\":[$checks_json]}")
+    RESULTS+=("{\"id\":\"$sid\",\"title\":\"$stitle\",\"difficulty\":\"$sdiff\",\"status\":\"$scenario_status\",\"executed_model\":\"$MODEL\",\"model_tier\":$RESOLVED_MODEL_TIER,\"duration_ms\":$duration_ms,\"input_tokens\":$input_tokens,\"output_tokens\":$output_tokens,\"mcp_calls_count\":$mcp_calls,\"response_chars\":$rchars,\"attempts\":$attempt${triage_json},\"checks\":[$checks_json]}")
 }
 
 # ============================================================
@@ -913,6 +938,37 @@ run_multi_turn_scenario() {
         TOTAL_MCP_CALLS=$((TOTAL_MCP_CALLS + total_mcp_calls))
     fi
 
+    # Failure triage classification (multi-turn: detect first bad turn)
+    local triage_json=""
+    if [ "$scenario_status" = "FAIL" ] || [ "$scenario_status" = "FLAKY_FAIL" ] || [ "$scenario_status" = "ERROR" ]; then
+        local _has_model=false _has_mcp=false _has_tool=false _has_prompt=false _first_turn=0
+        for _ck in "${checks[@]}"; do
+            echo "$_ck" | grep -q '"status":"FAIL"' || continue
+            local _tn
+            _tn=$(echo "$_ck" | sed -n 's/.*"check":"turn\([0-9]*\):.*/\1/p')
+            if [ -n "$_tn" ] && { [ "$_first_turn" -eq 0 ] || [ "$_tn" -lt "$_first_turn" ]; }; then
+                _first_turn=$_tn
+            fi
+            if echo "$_ck" | grep -qE '"check":"(turn[0-9]*:)?(response|dto-schema|duration)"'; then
+                _has_model=true
+            elif echo "$_ck" | grep -q 'mcp-calls-range'; then
+                _has_mcp=true
+            elif echo "$_ck" | grep -qE '"check":"(turn[0-9]*:)?(expected-tool:|banned-tool:)'; then
+                _has_tool=true
+            else
+                _has_prompt=true
+            fi
+        done
+        [ "$_first_turn" -eq 0 ] && _first_turn=1
+        local _bucket="PROMPT_REGRESSION" _target="doc/include"
+        if $_has_model; then _bucket="MODEL_LIMIT"; _target="scenario"
+        elif $_has_mcp; then _bucket="MCP_REGRESSION"; _target="runner"
+        elif $_has_tool; then _bucket="TOOLING_REGRESSION"; _target="runner"
+        fi
+        triage_json=",\"triage\":{\"root_cause_bucket\":\"$_bucket\",\"first_bad_turn\":$_first_turn,\"recommended_fix_target\":\"$_target\"}"
+        log "  ${YELLOW}[TRIAGE] $_bucket → fix: $_target (first bad turn: $_first_turn)${NC}"
+    fi
+
     # Update status counters
     case "$scenario_status" in
         PASS) ((PASSED++)) ;;
@@ -928,7 +984,7 @@ run_multi_turn_scenario() {
         checks_json=$(IFS=,; echo "${checks[*]}")
     fi
     local rchars=${#total_response}
-    RESULTS+=("{\"id\":\"$sid\",\"title\":\"$stitle\",\"difficulty\":\"$sdiff\",\"status\":\"$scenario_status\",\"executed_model\":\"$MODEL\",\"model_tier\":$RESOLVED_MODEL_TIER,\"duration_ms\":${duration_ms:-0},\"input_tokens\":$total_input_tokens,\"output_tokens\":$total_output_tokens,\"mcp_calls_count\":$total_mcp_calls,\"response_chars\":$rchars,\"turns\":$num_turns,\"attempts\":$attempt,\"checks\":[$checks_json]}")
+    RESULTS+=("{\"id\":\"$sid\",\"title\":\"$stitle\",\"difficulty\":\"$sdiff\",\"status\":\"$scenario_status\",\"executed_model\":\"$MODEL\",\"model_tier\":$RESOLVED_MODEL_TIER,\"duration_ms\":${duration_ms:-0},\"input_tokens\":$total_input_tokens,\"output_tokens\":$total_output_tokens,\"mcp_calls_count\":$total_mcp_calls,\"response_chars\":$rchars,\"turns\":$num_turns,\"attempts\":$attempt${triage_json},\"checks\":[$checks_json]}")
 }
 
 # ============================================================
@@ -1174,7 +1230,7 @@ main() {
                         L2-001|L2-002) ;; # MCP format checks
                         ST-001) ;; # telemetry tool check
                         MT-001|MT-002) ;; # multi-turn
-                        MT-LP-001|MT-LP-002|MT-LP-003) ;; # constitutional learn protocol
+                        MT-LP-001-KNOWLEDGE|MT-LP-002|MT-LP-003) ;; # constitutional learn protocol (KNOWLEDGE only, no MCP exec)
                         *) continue ;;
                     esac
                     ;;
@@ -1196,29 +1252,29 @@ main() {
                         CMD-001|CMD-004) ;; # Init safety + Do permissions (knowledge)
                         ST-004) ;; # Task execution (MCP task_create)
                         MT-001|MT-002) ;; # Mem + Task lifecycle (execution)
-                        MT-LP-001|MT-LP-002) ;; # Constitutional Learn Protocol (execution + governance)
+                        MT-LP-001-EXEC|MT-LP-002) ;; # Constitutional Learn Protocol (execution + governance)
                         ADV-004) ;; # Adversarial prompt injection
                         *) continue ;;
                     esac
                     ;;
                 free-live)
-                    # Free-first strategy: same scenarios as nightly-live, run on free model
+                    # Free-first strategy: KNOWLEDGE variants only (free model cannot exec MCP reliably)
                     case "$sid_check" in
                         CMD-001|CMD-004) ;;
                         ST-004) ;;
                         MT-001|MT-002) ;;
-                        MT-LP-001|MT-LP-002) ;;
+                        MT-LP-001-KNOWLEDGE|MT-LP-002) ;; # KNOWLEDGE only (no MCP exec on free model)
                         ADV-004) ;;
                         *) continue ;;
                     esac
                     ;;
                 golden-live)
-                    # Golden verification: same scenarios as nightly-live, run on opus
+                    # Golden verification: EXEC variants (opus can execute MCP reliably)
                     case "$sid_check" in
                         CMD-001|CMD-004) ;;
                         ST-004) ;;
                         MT-001|MT-002) ;;
-                        MT-LP-001|MT-LP-002) ;;
+                        MT-LP-001-EXEC|MT-LP-002) ;; # EXEC (opus executes store_memory)
                         ADV-004) ;;
                         *) continue ;;
                     esac
@@ -1249,18 +1305,22 @@ main() {
         local min_tier_name
         min_tier_name=$(jq -r '.min_model_tier // empty' "$sf" 2>/dev/null)
         if [ -n "$min_tier_name" ]; then
-            local current_t required_t
-            current_t=$(model_tier "$MODEL")
-            required_t=$(model_tier "$min_tier_name")
+            local current_t=$RESOLVED_MODEL_TIER
+            local required_t
+            case "$min_tier_name" in
+                haiku) required_t=1 ;; sonnet) required_t=2 ;; opus) required_t=3 ;; *) required_t=0 ;;
+            esac
             if [ "$current_t" -lt "$required_t" ]; then
                 local skip_sid skip_title skip_diff
                 skip_sid=$(jq -r '.id' "$sf")
                 skip_title=$(jq -r '.title' "$sf")
                 skip_diff=$(jq -r '.difficulty' "$sf")
-                log "\n${YELLOW}[$skip_sid] $skip_title${NC} ${DIM}($skip_diff) — SKIP: model $MODEL < min_model_tier $min_tier_name${NC}"
+                local skip_model_label="$MODEL"
+                [ -n "$MODEL_TIER_OVERRIDE" ] && skip_model_label="$MODEL (tier:$MODEL_TIER_OVERRIDE)"
+                log "\n${YELLOW}[$skip_sid] $skip_title${NC} ${DIM}($skip_diff) — SKIP: $skip_model_label < min_model_tier $min_tier_name${NC}"
                 ((TOTAL++))
                 ((SKIPPED++))
-                RESULTS+=("{\"id\":\"$skip_sid\",\"title\":\"$skip_title\",\"difficulty\":\"$skip_diff\",\"status\":\"SKIP\",\"skip_reason\":\"model_not_supported: $MODEL < $min_tier_name\",\"executed_model\":\"$MODEL\",\"model_tier\":$RESOLVED_MODEL_TIER,\"duration_ms\":0,\"input_tokens\":0,\"output_tokens\":0,\"mcp_calls_count\":0,\"response_chars\":0,\"checks\":[]}")
+                RESULTS+=("{\"id\":\"$skip_sid\",\"title\":\"$skip_title\",\"difficulty\":\"$skip_diff\",\"status\":\"SKIP\",\"skip_reason\":\"model_not_supported: $skip_model_label < $min_tier_name\",\"executed_model\":\"$MODEL\",\"model_tier\":$RESOLVED_MODEL_TIER,\"duration_ms\":0,\"input_tokens\":0,\"output_tokens\":0,\"mcp_calls_count\":0,\"response_chars\":0,\"checks\":[]}")
                 continue
             fi
         fi

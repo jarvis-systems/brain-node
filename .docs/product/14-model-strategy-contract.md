@@ -65,7 +65,8 @@ Scenarios can declare minimum model capability via `min_model_tier` in their JSO
 | Knowledge (L1, L2, L3) | (none) | Text comprehension works across all tiers |
 | Governance (ADV, banned_tools) | (none) | Refusal behavior works across all tiers |
 | Execution (expected_tools) | varies | MCP tool execution requires minimum capability |
-| Constitutional Learn (MT-LP-001) | sonnet | Haiku cannot reliably execute store_memory via MCP |
+| Constitutional Learn KNOWLEDGE (MT-LP-001-KNOWLEDGE) | (none) | Reasoning/format knowledge — no MCP execution |
+| Constitutional Learn EXEC (MT-LP-001-EXEC) | sonnet | Haiku cannot reliably execute store_memory via MCP |
 
 ### Runner Behavior
 

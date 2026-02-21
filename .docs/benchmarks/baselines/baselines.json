@@ -28,10 +28,10 @@
       "max_total_mcp_calls": 35
     },
     "full": {
-      "scenarios": 40,
-      "max_total_output_tokens": 67000,
-      "max_total_duration_ms": 1860000,
-      "max_total_mcp_calls": 86
+      "scenarios": 42,
+      "max_total_output_tokens": 72000,
+      "max_total_duration_ms": 2160000,
+      "max_total_mcp_calls": 100
     },
     "matrix": {
       "scenarios": 4,

@@ -15,12 +15,12 @@ Maps every benchmark scenario to the rules it tests, artifacts it protects, and 
 
 | Metric | Value |
 |--------|-------|
-| Total scenarios | 78 |
+| Total scenarios | 80 |
 | Scenario categories | 10 |
 | Profiles | 10 |
-| Multi-turn scenarios | 6 |
-| Tool-requiring scenarios | 6 |
-| Model-gated scenarios | 1 (MT-LP-001: sonnet+) |
+| Multi-turn scenarios | 8 |
+| Tool-requiring scenarios | 7 |
+| Model-gated scenarios | 1 (MT-LP-001-EXEC: sonnet+) |
 | Multi-agent profiles | 2 (free-live: opencode, golden-live: claude) |
 
 ## Profile Coverage
@@ -30,7 +30,7 @@ Maps every benchmark scenario to the rules it tests, artifacts it protects, and 
 | smoke | 1 | claude | S0 |
 | ci | 26 | claude | L1, L2, ST, CMD |
 | telemetry-ci | 12 | claude | S0, L1 (partial), L2 (partial), ST (partial), MT (partial), MT-LP |
-| full | 40 | claude | L1, L2, L3, ST, CMD, MT, MT-LP |
+| full | 42 | claude | L1, L2, L3, ST, CMD, MT, MT-LP |
 | cmd-auto | 28 | claude | CMD-AUTO |
 | nightly-live | 8 | claude | CMD (partial), ST (partial), MT (partial), MT-LP (partial), ADV (partial) |
 | free-live | 8 | opencode | Same as nightly-live (free model, $0 cost) |
@@ -92,19 +92,21 @@ Maps every benchmark scenario to the rules it tests, artifacts it protects, and 
 | ST-005 | Memory tag search | mcp-json-only (tool use) | search_memories | ci, full |
 | ST-006 | Explore agent tool rules | no-direct-bash-search, glob-before-grep (agent rules) | — | ci, full |
 
-## MT Multi-Turn (3 scenarios)
+## MT Multi-Turn (4 scenarios)
 
 | ID | Name | Rules Tested | Expected Tools | Profiles |
 |----|------|-------------|----------------|----------|
 | MT-001 | Store then search | search-before-store, mcp-json-only | store_memory, search_memories | telemetry-ci, full, nightly-live, matrix |
 | MT-002 | Task create then list | mcp-json-only (task) | task_create, task_list | telemetry-ci, full, nightly-live, matrix |
 | MT-003 | Governance across turns | cookbook-governance (pulls limit) | — | full, matrix |
+| MT-004 | Task lifecycle: create → update | mcp-json-only (task lifecycle) | task_create, task_update | full |
 
-## MT-LP Learn Protocol (3 scenarios)
+## MT-LP Learn Protocol (4 scenarios)
 
 | ID | Name | Rules Tested | Expected/Banned Tools | Profiles |
 |----|------|-------------|----------------------|----------|
-| MT-LP-001 | Store on trigger | triggered-suggestion (store on signal) | expects: store_memory | telemetry-ci, full, nightly-live |
+| MT-LP-001-KNOWLEDGE | Protocol reasoning + format | triggered-suggestion (knowledge) | banned: store_memory | telemetry-ci, full, free-live |
+| MT-LP-001-EXEC | Store execution on trigger | triggered-suggestion (execution) | expects: store_memory | full, nightly-live, golden-live |
 | MT-LP-002 | No store on clean | triggered-suggestion (no false positive) | banned: store_memory | telemetry-ci, full, nightly-live |
 | MT-LP-003 | Relaxed no store | triggered-suggestion (mode compliance) | banned: store_memory | telemetry-ci, full |
 

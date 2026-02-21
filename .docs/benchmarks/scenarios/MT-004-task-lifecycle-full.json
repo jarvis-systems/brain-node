@@ -1,0 +1,37 @@
+{
+  "id": "MT-004",
+  "title": "Task lifecycle: create → update status",
+  "type": "multi",
+  "difficulty": "L2",
+  "timeout_s": 180,
+  "max_output_tokens": 3000,
+  "turns": [
+    {
+      "ask": "Створи задачу у vector-task з title 'Benchmark MT-004 lifecycle test', тегами strict:standard, cognitive:standard. Покажи task_id.",
+      "checks": {
+        "required_patterns": [
+          "creat|створ|task_id|task"
+        ],
+        "expected_mcp_calls": { "min": 1, "max": 5 },
+        "expected_tools": ["mcp__vector-task__task_create"]
+      }
+    },
+    {
+      "ask": "Переведи цю задачу в статус in_progress. Підтверди зміну статусу.",
+      "checks": {
+        "required_patterns": [
+          "in_progress|in.progress|оновлен|updated|статус"
+        ],
+        "expected_mcp_calls": { "min": 1, "max": 5 },
+        "expected_tools": ["mcp__vector-task__task_update"]
+      }
+    }
+  ],
+  "checks": {
+    "expected_mcp_calls": { "min": 2, "max": 8 },
+    "banned_patterns": [
+      "when uncertain",
+      "Trigger.*Uncertainty"
+    ]
+  }
+}
