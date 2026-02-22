@@ -131,3 +131,5 @@ Counter updates in this pack and related docs happen ONLY when:
 3. **Audit category count changes** — checks added or removed in audit script
 
 Post-tag documentation commits, doc-count increments, and transient HEAD-vs-tag drift do NOT trigger truth-sync edits. The release capsule defines the invariant boundary.
+
+Doc count changes when the tracked `.docs/` set changes (new docs added, drafts moved to `.work/`). The hard gate is `invalid=0, warnings=0`; the `valid` count is informational.

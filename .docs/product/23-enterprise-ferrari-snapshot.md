@@ -37,6 +37,8 @@ Three independent git repos co-located on disk. Not a monorepo. See `.docs/archi
 
 **Verdict: ALL GREEN** (history scan mitigated per private-repo exception).
 
+**Doc count semantics:** The hard invariant is `invalid=0, warnings=0`. The `valid` count reflects the tracked `.docs/` set at commit time — moving drafts to `.work/` reduces it, adding new docs increases it. This is expected, not a regression.
+
 ## What Changed Since v0.2.0 Tag
 
 Post-tag work focused on enterprise hardening without feature changes: audit Check 17c normalized to tag-existence semantics (eliminating false WARN on post-tag HEAD advance), `json_encode` calls in ConvertCommand received `JSON_THROW_ON_ERROR` flags, Core env access was split into filtered runtime path (`Core::env`/`allEnv`) and unfiltered compile-time path (`resolveCompileEnv`/`hasCompileEnv`) with expanded allowlist and deprecation wrappers, and repo-topology documentation received an env semantics section. Test count grew from 264 to 273 (+9 env split tests). Doc count grew from 87 to 90. All changes are backward-compatible with zero compiled-output diff.
@@ -49,7 +51,7 @@ Post-tag work focused on enterprise hardening without feature changes: audit Che
 | P2-009 | Worktree isolation contract: not CI-enforced | PLANNED | P2 |
 | P2-003 | `error_log` in ConvertCommand | ACCEPTABLE — env-gated | P3 |
 | — | CLI has 21 `dd()` calls (debug artifacts) | OPEN — vector tasks #47-#50 | P3 |
-| — | Root: 4 unpushed commits | SYNC GAP — push when ready | P4 |
+| — | ~~Root: 4 unpushed commits~~ | CLOSED — pushed 16e3501 | — |
 
 ## Canonical References
 
