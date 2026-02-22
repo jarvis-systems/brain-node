@@ -52,7 +52,7 @@ Expected: `valid:79, invalid:0, warnings:0`. Proves: all 79 docs have YAML front
 composer test
 ```
 
-Expected: `253 tests, 594 assertions, 0 failures`. Proves: full test coverage, deterministic compilation, merger invariants, node integrity, MCP schema validation.
+Expected: `254 tests, 596 assertions, 0 failures`. Proves: full test coverage, deterministic compilation, merger invariants, node integrity, MCP schema validation.
 
 ### 5. Static Analysis
 
@@ -103,7 +103,7 @@ Expected: `42/42`, `12/12`, `28/28` — all 82 unique scenarios pass schema vali
 | Clean worktree | No drift, no forgotten changes |
 | Version signals | All three repos accessible, version history intact |
 | Docs validate | 79 documents with consistent metadata |
-| 253 tests green | Core logic, compilation determinism, node contracts |
+| 254 tests green | Core logic, compilation determinism, node contracts |
 | PHPStan 0 errors | Type safety across 295 files (core + CLI) |
 | 19/19 audit PASS | Enterprise checklist: strict_types, no secrets, no debug, clean compile. WARN:1 (`version-drift`) expected in dev |
 | Secret scan clean | Zero credentials in tracked files |
