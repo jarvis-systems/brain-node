@@ -236,6 +236,32 @@ After publication, verify:
 - [ ] `scan-secrets.sh` passes on fresh clone
 - [ ] `brain compile` works with new `.brain/.env` credentials
 
+## 7. Output Contract (Plan vs Evidence)
+
+Two modes for readiness/snapshot reports. Mixing them is a P0 failure mode.
+
+**A) PLAN-ONLY** — checklist, runbook, or template. No commands executed.
+Must include banner: `PLAN-ONLY: No repo state was read. Commands are examples.`
+
+**B) EVIDENCE-ONLY** — current state, verification, evidence pack. Commands MUST run; outputs MUST be pasted or machine-parsed. Any row without live output is marked `UNVERIFIED` and blocks the pack.
+
+**Decision rule:** request contains "evidence / verify / current / live / snapshot" → B. Request contains "checklist / runbook / plan" → A. Ambiguous → default to B and run commands.
+
+**Evidence Collection Command Set** (minimum for a valid evidence pack):
+
+```
+git status --porcelain                          # root (tracked changes only: filter '^\?\?')
+brain docs --validate                           # summary JSON: invalid=0, warnings=0
+bash scripts/audit-enterprise.sh                # PASS/WARN/FAIL counts
+bash scripts/scan-secrets.sh                    # exit 0 = clean
+bash scripts/scan-secrets-history.sh --quiet    # TOTAL_MATCHES + exit code
+git describe --tags --always                    # root version
+git -C core describe --tags --always            # core version (SEPARATE repo)
+git -C cli describe --tags --always             # cli version (SEPARATE repo)
+```
+
+Any "Evidence Pack" missing live output from these commands is PLAN-ONLY by definition, regardless of its title.
+
 ## Decision Log
 
 | Date | Decision | Rationale |
