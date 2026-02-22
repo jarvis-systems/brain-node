@@ -3,7 +3,7 @@ name: "Memory Hygiene Runbook"
 description: "Operational procedure for vector memory health: ledger snapshots, compaction survival smoke tests, and semantic dedup policy"
 type: runbook
 date: 2026-02-22
-version: "1.0.0"
+version: "1.1.0"
 status: active
 ---
 
@@ -114,12 +114,9 @@ The real issue is **topic bloat** — 51% of code-solution memories cover 2 feat
 | Lab Screen / Tab Bar UI | 32 | 26% | HIGH potential |
 | Task validation reports | 15 | 12% | MEDIUM potential |
 
-### Recommended Next Steps (Batch 2B)
+### Recommended Next Steps (Batch 2B) — COMPLETED
 
-1. **Consolidate step-by-step memories**: #64-#68 → 1 record, #130-#135 → 1 record (~10 merges)
-2. **Consolidate validation pairs**: keep re-validation only (#119→delete, keep #123, etc.) (~7 deletes)
-3. **Consolidate CustomRunCommand subtopics**: 8 ternary memories → 1-2 summaries (~6 merges)
-4. **Expected net reduction**: ~25 memories (204 → ~179)
+See Batch 2B section below for results.
 
 ### Artifacts
 
@@ -127,6 +124,58 @@ The real issue is **topic bloat** — 51% of code-solution memories cover 2 feat
 |------|---------|
 | `.work/memory-hygiene/dedup-snapshot.json` | Pre-dedup baseline (204 memories, categories, smoke test) |
 | `.work/memory-hygiene/dedup-plan.json` | Full analysis: thresholds, clusters, topic concentration, strategies |
+
+## Batch 2B: Topic Consolidation (2026-02-22)
+
+Phase 2B.1 applied. Strategy: consolidate step-by-step implementation memories into single canonical summaries. Non-destructive — original memories remain, superseded status tracked in apply-log only (MCP lacks update_memory).
+
+### Clusters Consolidated
+
+| Cluster | Canonical | Supersedes | Topic |
+|---------|-----------|------------|-------|
+| A_docblock_steps | #280 | #64, #65, #66, #67, #68 | Task #13 Lab Docblock Documentation |
+| B_tabbar_steps | #281 | #130, #132, #133, #134, #135 | Task #6 Tab Bar & Navigation |
+| C1_conditional_syntax | #282 | #219-#225 (7 memories) | CustomRunCommand Conditional Syntax |
+
+### Cluster Deferred
+
+| Cluster | Original Memories | Reason |
+|---------|-------------------|--------|
+| C2_null_coalescing | #227, #229 | Embedding overlap with P11 pseudo-syntax probe. Two attempts (IDs 283, 284) both outranked anchor #267. Margin: 0.002 → 0.001. Deferred until probe query tuning. |
+
+### Key Finding: Embedding Overlap Risk
+
+MiniLM-L6-v2 (384-dim) has tight semantic neighborhoods. Adjacent content domains (expression syntax operators vs pseudo-syntax Operator.php) cannot be reliably separated by content rewording alone. When canonical content shares vocabulary with an existing probe's query space, the new memory can outrank the correct anchor by slim margins (0.001-0.002 cosine similarity).
+
+**Mitigation:** Always run full smoke test after storing canonicals. If any probe regresses, roll back the offending canonical immediately.
+
+### Results
+
+| Metric | Before (2A) | After (2B.1) |
+|--------|-------------|--------------|
+| Total memories | 204 | 207 |
+| Active memories | 204 | 190 |
+| Logically superseded | 0 | 17 |
+| Canonicals stored | 0 | 3 |
+| Pass rate | 12/15 (80%) | 12/15 (80%) |
+| Critical probes | 7/7 PASS | 7/7 PASS |
+| Probes affected | — | None (after C2 rollback) |
+
+### Artifacts
+
+| File | Purpose |
+|------|---------|
+| `.work/memory-hygiene/topic-consolidation-snapshot.json` | Pre-consolidation backup (19 memory metadata, cluster definitions) |
+| `.work/memory-hygiene/apply-log.json` | Applied operations, superseded IDs, C2 deferral, rollback instructions |
+| `.work/memory-hygiene/smoke-results.json` | Post-consolidation smoke test (v1.2.0) |
+
+### Remaining Consolidation Candidates
+
+| Target | Memories | Strategy | Priority |
+|--------|----------|----------|----------|
+| C2 null-coalescing | #227, #229 | Deferred — needs probe query tuning first | LOW |
+| Validation reports | ~15 memories | Keep re-validation only, delete initial runs | MEDIUM |
+| Remaining CustomRunCommand | ~24 memories (post C1 consolidation) | Further topic-level merges | MEDIUM |
 
 ## Anti-Patterns
 
