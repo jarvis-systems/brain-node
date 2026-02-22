@@ -124,10 +124,12 @@ Failure: stop release until root repo is verified clean and all agent worktrees 
 
 Before any batch (mandatory in quad-mode), declare the exact set of files you intend to modify. After the batch, assert that only those files were touched.
 
-1. **Before editing:** `git diff --name-only` — record baseline (should be empty or known state)
-2. **Declare whitelist:** list intended files in prompt or evidence pack (e.g., `ENTERPRISE-DOD.md`, `10-pre-publication.md`)
-3. **After work:** `git diff --name-only` — must match declared whitelist exactly
-4. **Violation:** STOP. Revert unexpected files (`git checkout -- <file>`). Quarantine to `wip/` branch if changes are legitimate but out-of-scope
+**Scan-first rule:** Whitelist is declared AFTER scanning candidate files for stale content — not before. If the scan finds fewer files than the candidate set, the whitelist lists only files that actually need changes.
+
+1. **Scan:** grep/read candidate files for stale values → identify which files actually need edits
+2. **Declare whitelist:** list ONLY files from scan result (not the full candidate set)
+3. **Apply:** make replacements in whitelisted files only
+4. **Verify:** `git diff --name-only` must match declared whitelist EXACTLY. Violation: STOP, revert unexpected files (`git checkout -- <file>`), quarantine to `wip/` if legitimate but out-of-scope
 
 Rationale: prevents accidental multi-file drift in constrained batches. Complements repo boundary preflight (which verifies *where* — correct repo) with file-level *what* verification (only intended files touched).
 

@@ -134,7 +134,6 @@ Short form `wip/<scope>-<YYYYMMDD>` is acceptable when topic is obvious from com
 
 | Branch | Scope | Content | Owner |
 |--------|-------|---------|-------|
-| `wip/root-claude-20260222` | root | CLAUDE.md deprecation rewrite (345→16 lines) | Doc |
 | `wip/doc-architecture-20260222` | docs | brain-docs-architecture notes | Doc |
 | `wip/quad-20260222-parallel-spec-suite` | root | Parallel isolation spec suite | Doc |
 
