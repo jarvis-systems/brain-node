@@ -19,7 +19,8 @@ These checks run automatically and block merges or produce actionable warnings.
 | Scenario JSON schema | benchmark-llm-suite.sh --dry-run | PR + nightly | BLOCK (exit 1 on invalid) |
 | Instruction budget | check-instruction-budget.sh --strict | PR (brain-lint) | BLOCK (exit 1 if delta > 10%) |
 | Baselines JSON validity | jq empty baselines.json | PR (brain-lint) | BLOCK |
-| PHPStan static analysis | composer analyse | PR (brain-lint) | BLOCK |
+| PHPStan static analysis (core) | composer analyse (level 3) | PR (brain-lint) | BLOCK |
+| PHPStan static analysis (CLI)  | composer analyse (level 2) | PR (brain-lint) | BLOCK |
 | Unit tests | composer test | PR (brain-lint) | BLOCK |
 | Compile discipline | brain-lint compile check | PR (brain-lint) | BLOCK (source change requires compiled update) |
 | Docs front matter | brain docs --validate | PR (brain-lint) | BLOCK |
@@ -204,3 +205,24 @@ When adding a new scenario, classify it as exactly one of: knowledge, execution,
 3. Broadening regex patterns (`|` alternatives) is preferred over removing checks.
 4. Increasing `timeout_s` is acceptable for latency-related flakiness.
 5. Adding `"retry": N` to individual scenarios is acceptable for known-flaky execution scenarios.
+
+## 6. Static Analysis Baseline
+
+### Policy
+
+| Package | Minimum Level | Command |
+|---------|--------------|---------|
+| brain-core | 3 | `composer analyse` (core/) |
+| brain-cli  | 2 | `composer analyse` (cli/) |
+
+### Enforcement
+
+A dedicated **PHPStan level guard** step in `brain-lint.yml` parses `phpstan.neon` for each package and fails the pipeline if the configured level drops below the minimum. This runs before the actual PHPStan analysis steps to provide a fast, clear error message ("level lowered") instead of a cryptic pass on weaker rules.
+
+### Downgrade Process
+
+Lowering a PHPStan level requires an explicit RFC with justification, reviewed and approved before merge. Accidental downgrades are blocked by CI.
+
+### Evidence
+
+Level 3 uplift for brain-core completed in commits `9cbcb15`, `35dbd2a`, `ef8b315` (30 errors → 0, all PHPDoc-only fixes).
