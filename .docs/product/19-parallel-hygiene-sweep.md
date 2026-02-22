@@ -134,8 +134,7 @@ Short form `wip/<scope>-<YYYYMMDD>` is acceptable when topic is obvious from com
 
 | Branch | Scope | Content | Owner |
 |--------|-------|---------|-------|
-| `wip/doc-architecture-20260222` | docs | brain-docs-architecture notes | Doc |
-| `wip/quad-20260222-parallel-spec-suite` | root | Parallel isolation spec suite | Doc |
+| *(none — all WIP branches integrated to master)* | — | — | — |
 
 ### Merge Rules
 
