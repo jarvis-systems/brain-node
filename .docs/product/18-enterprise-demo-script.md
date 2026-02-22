@@ -68,7 +68,7 @@ Expected: `0 errors` for both core (169 files) and CLI (125 files). Proves: type
 bash scripts/audit-enterprise.sh
 ```
 
-Expected: `PASS:19, WARN:0, FAIL:0`. Proves: strict_types, no debug artifacts, no secret patterns, no unsafe exec, version consistency, compile clean-worktree, MCP schema enforcement.
+Expected: `PASS:19, WARN:0, FAIL:0`. In dev mode you will typically see `WARN:1` — the `version-drift` category flags CLI version mismatch and untagged HEADs across repos. This is expected while tags are not aligned. To clear `WARN:1` for release: follow `10-pre-publication.md` § "Version Alignment" (GO PRE-PUB). Proves: strict_types, no debug artifacts, no secret patterns, no unsafe exec, version consistency, compile clean-worktree, MCP schema enforcement.
 
 ### 7. Secret Scan (tracked files)
 
@@ -105,7 +105,7 @@ Expected: `42/42`, `12/12`, `28/28` — all 82 unique scenarios pass schema vali
 | Docs validate | 72 documents with consistent metadata |
 | 244 tests green | Core logic, compilation determinism, node contracts |
 | PHPStan 0 errors | Type safety across 294 files (core + CLI) |
-| 19/19 audit PASS | Enterprise checklist: strict_types, no secrets, no debug, clean compile |
+| 19/19 audit PASS | Enterprise checklist: strict_types, no secrets, no debug, clean compile. WARN:1 (`version-drift`) expected in dev |
 | Secret scan clean | Zero credentials in tracked files |
 | History scan mitigated | Known debt tracked, credentials revoked, upgrade path documented |
 | 82 benchmark scenarios | Full governance coverage: knowledge, commands, multi-turn, adversarial schemas |
