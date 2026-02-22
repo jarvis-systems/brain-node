@@ -1107,34 +1107,6 @@
                     "type": "string",
                     "description": "Custom CRITICAL rule #2 for GetCommand"
                 },
-                "GITHUB_MCP_GUIDELINE_0": {
-                    "type": "string",
-                    "description": "Custom guideline #0 for GithubMcp"
-                },
-                "GITHUB_MCP_GUIDELINE_1": {
-                    "type": "string",
-                    "description": "Custom guideline #1 for GithubMcp"
-                },
-                "GITHUB_MCP_GUIDELINE_2": {
-                    "type": "string",
-                    "description": "Custom guideline #2 for GithubMcp"
-                },
-                "GITHUB_MCP_MODEL": {
-                    "type": "string",
-                    "description": "Model override for GithubMcp"
-                },
-                "GITHUB_MCP_RULE_0": {
-                    "type": "string",
-                    "description": "Custom CRITICAL rule #0 for GithubMcp"
-                },
-                "GITHUB_MCP_RULE_1": {
-                    "type": "string",
-                    "description": "Custom CRITICAL rule #1 for GithubMcp"
-                },
-                "GITHUB_MCP_RULE_2": {
-                    "type": "string",
-                    "description": "Custom CRITICAL rule #2 for GithubMcp"
-                },
                 "GROQ_MASTER_MODEL": {
                     "type": "string",
                     "description": "Default model for Groq CLI agents"
@@ -1318,10 +1290,6 @@
                 "MCP_CONTEXT7_MCP_DISABLE": {
                     "type": "string",
                     "description": "Disable Context7Mcp from compilation (true/false)"
-                },
-                "MCP_GITHUB_MCP_DISABLE": {
-                    "type": "string",
-                    "description": "Disable GithubMcp from compilation (true/false)"
                 },
                 "MCP_SEQUENTIAL_THINKING_MCP_DISABLE": {
                     "type": "string",
