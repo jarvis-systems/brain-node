@@ -51,6 +51,16 @@ All 19 checks in `audit-enterprise.sh` must PASS or WARN (no FAIL):
 | 18. MCP schema bypass | Raw `::call()` on schema-enabled MCP without `@mcp-schema-bypass` | FAIL |
 | 19. Compile clean-worktree | `brain compile` produces new uncommitted changes (source ↔ artifact drift) | FAIL |
 
+### CLI Sub-Checks (Cross-Repo Boundary)
+
+Checks 2 (PHPUnit) and 12 (PHPStan) include CLI sub-checks that respect the three-repo topology:
+
+- **Clean cli/ worktree:** sub-checks execute normally (tests + phpstan).
+- **Dirty cli/ worktree:** sub-checks degrade to `WARN` + skip (parallel WIP detected). This is dev-safe — dirty CLI does not fail the audit.
+- **Release stabilization:** CLI worktree MUST be clean so sub-checks actually run. `WARN` from CLI skip is not acceptable for release.
+
+Worktree guard ignores `.phpunit.cache` and `.phpunit.result.cache` (PHPUnit artifacts, not real drift).
+
 ## CI Supply Chain
 
 - [x] All GitHub Actions pinned by SHA (not tag) — see `.github/workflows/*.yml`

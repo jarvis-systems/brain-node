@@ -144,12 +144,29 @@ if [[ -f "$PROJECT_ROOT/core/vendor/bin/phpunit" ]]; then
     if (cd "$PROJECT_ROOT/core" && ./vendor/bin/phpunit 2>&1) >/dev/null 2>&1; then
         log "  ${GREEN}PASS${NC} Core tests passed"
     else
-        TEST_COUNT=1
+        TEST_COUNT=$((TEST_COUNT + 1))
         TEST_FINDINGS=$(echo "$TEST_FINDINGS" | jq '. + [{"file": "core/", "message": "PHPUnit tests failed"}]')
         log "  ${RED}FAIL${NC} Core tests failed"
     fi
 else
     log "  ${YELLOW}SKIP${NC} PHPUnit not installed (run: cd core && composer install)"
+fi
+# CLI tests: only reliable on clean worktree (separate repo, may have parallel WIP)
+CLI_DIRTY=$(git -C "$PROJECT_ROOT/cli" status --porcelain -- ':!.phpunit.cache' ':!.phpunit.result.cache' 2>/dev/null | head -1)
+if [[ -n "$CLI_DIRTY" ]]; then
+    log "  ${YELLOW}WARN${NC} CLI worktree dirty — skipping CLI tests (parallel WIP detected)"
+else
+    if [[ -f "$PROJECT_ROOT/cli/vendor/bin/phpunit" ]]; then
+        if (cd "$PROJECT_ROOT/cli" && ./vendor/bin/phpunit 2>&1) >/dev/null 2>&1; then
+            log "  ${GREEN}PASS${NC} CLI tests passed"
+        else
+            TEST_COUNT=$((TEST_COUNT + 1))
+            TEST_FINDINGS=$(echo "$TEST_FINDINGS" | jq '. + [{"file": "cli/", "message": "CLI PHPUnit tests failed"}]')
+            log "  ${RED}FAIL${NC} CLI tests failed"
+        fi
+    else
+        log "  ${YELLOW}SKIP${NC} CLI PHPUnit not installed (run: cd cli && composer install)"
+    fi
 fi
 add_category "phpunit" "$([ $TEST_COUNT -eq 0 ] && echo pass || echo fail)" "$TEST_COUNT" "$TEST_FINDINGS"
 
@@ -511,12 +528,29 @@ if [[ -f "$PROJECT_ROOT/core/vendor/bin/phpstan" ]]; then
     if (cd "$PROJECT_ROOT/core" && ./vendor/bin/phpstan analyse --no-progress 2>&1) >/dev/null 2>&1; then
         log "  ${GREEN}PASS${NC} Core phpstan passed"
     else
-        PHPSTAN_COUNT=1
+        PHPSTAN_COUNT=$((PHPSTAN_COUNT + 1))
         PHPSTAN_FINDINGS=$(echo "$PHPSTAN_FINDINGS" | jq '. + [{"file": "core/", "message": "PHPStan analysis failed"}]')
         log "  ${RED}FAIL${NC} Core phpstan failed"
     fi
 else
     log "  ${YELLOW}SKIP${NC} PHPStan not installed (run: cd core && composer install)"
+fi
+# CLI phpstan: only reliable on clean worktree (separate repo, may have parallel WIP)
+CLI_DIRTY_PHPSTAN=$(git -C "$PROJECT_ROOT/cli" status --porcelain -- ':!.phpunit.cache' ':!.phpunit.result.cache' 2>/dev/null | head -1)
+if [[ -n "$CLI_DIRTY_PHPSTAN" ]]; then
+    log "  ${YELLOW}WARN${NC} CLI worktree dirty — skipping CLI phpstan (parallel WIP detected)"
+else
+    if [[ -f "$PROJECT_ROOT/cli/vendor/bin/phpstan" ]]; then
+        if (cd "$PROJECT_ROOT/cli" && ./vendor/bin/phpstan analyse --no-progress 2>&1) >/dev/null 2>&1; then
+            log "  ${GREEN}PASS${NC} CLI phpstan passed"
+        else
+            PHPSTAN_COUNT=$((PHPSTAN_COUNT + 1))
+            PHPSTAN_FINDINGS=$(echo "$PHPSTAN_FINDINGS" | jq '. + [{"file": "cli/", "message": "CLI PHPStan analysis failed"}]')
+            log "  ${RED}FAIL${NC} CLI phpstan failed"
+        fi
+    else
+        log "  ${YELLOW}SKIP${NC} CLI PHPStan not installed (run: cd cli && composer install)"
+    fi
 fi
 add_category "phpstan" "$([ $PHPSTAN_COUNT -eq 0 ] && echo pass || echo fail)" "$PHPSTAN_COUNT" "$PHPSTAN_FINDINGS"
 

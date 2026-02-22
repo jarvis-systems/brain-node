@@ -119,6 +119,15 @@ If multi-agent / quad-mode was used during the release cycle:
 
 Failure: stop release until root repo is verified clean and all agent worktrees are pruned.
 
+### CLI Worktree Stabilization (Required for Release)
+
+Audit sub-checks for CLI tests and PHPStan skip when `cli/` worktree is dirty (dev-safe). For release, CLI MUST be clean so these sub-checks actually execute:
+
+1. Verify CLI worktree: `git -C cli status --porcelain` — must return empty
+2. If dirty — quarantine WIP: `cd cli && git checkout -b wip/release-stabilize && git add -A && git commit -m "wip: quarantine for release" && git checkout master && cd ..`
+3. Rerun audit: `bash scripts/audit-enterprise.sh` — CLI sub-checks must show `PASS` (not `WARN`/`SKIP`)
+4. After release: restore WIP if needed: `cd cli && git merge wip/release-stabilize && cd ..`
+
 ## 4. Version Alignment (BLOCKING)
 
 All three repos must have matching git tags and matching `composer.json` version fields before publication. This gate applies only at release time (GO PRE-PUB). During normal dev batches, version drift is non-blocking — do not tag during regular work.
