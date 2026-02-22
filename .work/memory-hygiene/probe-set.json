@@ -3,6 +3,9 @@
   "description": "Compaction Survival Smoke Test — 15 probes covering critical project invariants",
   "pass_threshold": 12,
   "total_probes": 15,
+  "baseline_overall": 15,
+  "baseline_critical": 7,
+  "baseline_date": "2026-02-22",
   "similarity_floor": 0.40,
   "relevance_rule": "Top result must be semantically relevant to probe target AND similarity >= floor",
   "probes": [
@@ -33,17 +36,17 @@
     {
       "id": "P04",
       "domain": "static-analysis",
-      "query": "PHPStan level analysis zero errors 170 files 124 files static analysis",
-      "expected_concept": "PHPStan L2 zero errors across core (170 files) and CLI (124 files)",
-      "expected_memory_id": null,
+      "query": "PHPStan level composer analyse zero errors mandatory CI quality gates brain-core brain-cli",
+      "expected_concept": "PHPStan level enforcement: core L3, CLI L2, zero errors — CI quality gate",
+      "expected_memory_id": 277,
       "critical": false
     },
     {
       "id": "P05",
       "domain": "release-ritual",
-      "query": "roadmap release closure phases batch testing coverage assertions",
-      "expected_concept": "Roadmap closure with phases, evidence, next candidates",
-      "expected_memory_id": null,
+      "query": "release process version tag milestone state-of-system snapshot closure evidence",
+      "expected_concept": "Release ritual: version tag, state-of-system snapshot, milestone evidence",
+      "expected_memory_id": 285,
       "critical": false
     },
     {
@@ -97,9 +100,9 @@
     {
       "id": "P12",
       "domain": "benchmark",
-      "query": "benchmark JSONL tool_use DTO scenario validation runner suite",
-      "expected_concept": "Benchmark system with JSONL output, tool_use DTOs, scenario runner",
-      "expected_memory_id": null,
+      "query": "benchmark-llm-suite scenario runner profiles baselines JSONL parse_cli_output tool_use check types regression",
+      "expected_concept": "Benchmark LLM suite: scenario runner, JSONL telemetry, profiles, baselines, check types",
+      "expected_memory_id": 274,
       "critical": false
     },
     {

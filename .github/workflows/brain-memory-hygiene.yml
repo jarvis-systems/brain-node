@@ -92,6 +92,10 @@ jobs:
       - name: Print summary
         if: always()
         run: |
+          # Baseline invariants (locked 2026-02-22)
+          BASELINE_OVERALL=15
+          BASELINE_CRITICAL=7
+
           echo "## Memory Hygiene Report" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
 
@@ -112,30 +116,46 @@ jobs:
               CRIT_TOTAL=$(jq -r '.critical_total // 0' .work/memory-hygiene/smoke-results.json)
               THRESHOLD=$(jq -r '.threshold_met // false' .work/memory-hygiene/smoke-results.json)
 
-              echo "| Metric | Value |" >> "$GITHUB_STEP_SUMMARY"
-              echo "|--------|-------|" >> "$GITHUB_STEP_SUMMARY"
-              echo "| Smoke score | ${PASSED}/${TOTAL} (${RATE}) |" >> "$GITHUB_STEP_SUMMARY"
-              echo "| Critical probes | ${CRIT_PASS}/${CRIT_TOTAL} |" >> "$GITHUB_STEP_SUMMARY"
-              echo "| Threshold met | ${THRESHOLD} |" >> "$GITHUB_STEP_SUMMARY"
+              # Calculate delta from baseline
+              DELTA_OVERALL=$((PASSED - BASELINE_OVERALL))
+              DELTA_CRITICAL=$((CRIT_PASS - BASELINE_CRITICAL))
+
+              # Determine alert level
+              ALERT="OK"
+              ALERT_ICON=""
+              if [ "$CRIT_PASS" -lt "$BASELINE_CRITICAL" ]; then
+                ALERT="CRITICAL"
+                ALERT_ICON=":red_circle:"
+              elif [ "$PASSED" -lt 14 ] || [ "$CRIT_PASS" -lt "$BASELINE_CRITICAL" ]; then
+                ALERT="WARNING"
+                ALERT_ICON=":yellow_circle:"
+              fi
+
+              echo "| Metric | Current | Baseline | Delta |" >> "$GITHUB_STEP_SUMMARY"
+              echo "|--------|---------|----------|-------|" >> "$GITHUB_STEP_SUMMARY"
+              echo "| Smoke score | ${PASSED}/${TOTAL} (${RATE}) | ${BASELINE_OVERALL}/${TOTAL} | ${DELTA_OVERALL} |" >> "$GITHUB_STEP_SUMMARY"
+              echo "| Critical probes | ${CRIT_PASS}/${CRIT_TOTAL} | ${BASELINE_CRITICAL}/${CRIT_TOTAL} | ${DELTA_CRITICAL} |" >> "$GITHUB_STEP_SUMMARY"
+              echo "| Threshold met | ${THRESHOLD} | — | — |" >> "$GITHUB_STEP_SUMMARY"
 
               if [ -f .work/memory-hygiene/rank-safety-results.json ]; then
                 VERDICT=$(jq -r '.verdict // "UNKNOWN"' .work/memory-hygiene/rank-safety-results.json)
                 OVERLAPS=$(jq -r '.overlap_risks_detected // 0' .work/memory-hygiene/rank-safety-results.json)
-                echo "| Rank safety | ${VERDICT} (${OVERLAPS} risks) |" >> "$GITHUB_STEP_SUMMARY"
+                echo "| Rank safety | ${VERDICT} (${OVERLAPS} risks) | ALL_CLEAR | — |" >> "$GITHUB_STEP_SUMMARY"
               fi
 
-              echo "Smoke: ${PASSED}/${TOTAL} | Critical: ${CRIT_PASS}/${CRIT_TOTAL} | Threshold: ${THRESHOLD}"
+              echo "" >> "$GITHUB_STEP_SUMMARY"
+              if [ "$ALERT" != "OK" ]; then
+                echo "${ALERT_ICON} **${ALERT}**: Score below baseline. See [remediation checklist](../docs/operations/memory-hygiene-runbook.md#remediation-checklist)." >> "$GITHUB_STEP_SUMMARY"
+              else
+                echo ":green_circle: **OK**: Score at or above baseline." >> "$GITHUB_STEP_SUMMARY"
+              fi
+
+              echo "Smoke: ${PASSED}/${TOTAL} (baseline: ${BASELINE_OVERALL}) | Critical: ${CRIT_PASS}/${CRIT_TOTAL} | Alert: ${ALERT}"
             fi
           else
             echo "No smoke results generated (MCP server connection failed)" >> "$GITHUB_STEP_SUMMARY"
             echo "No smoke results generated"
           fi
-
-          # TODO: Enable build failure when critical < 7/7 and DB is seeded
-          # if [ "$CRIT_PASS" -lt "$CRIT_TOTAL" ] && [ "$CRIT_TOTAL" -gt 0 ]; then
-          #   echo "::error::Critical probes failed: ${CRIT_PASS}/${CRIT_TOTAL}"
-          #   exit 1
-          # fi
 
       - name: Upload hygiene artifacts
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
