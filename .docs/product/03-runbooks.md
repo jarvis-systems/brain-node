@@ -1,8 +1,8 @@
 ---
 name: "Operational Runbooks"
-description: "Step-by-step procedures for common Brain operations: compile, benchmark, update, rollback"
+description: "Step-by-step procedures for common Brain operations: compile, benchmark, memory status, update, rollback"
 type: "product"
-version: "v0.1.0"
+version: "v0.2.0"
 status: "active"
 ---
 
@@ -69,7 +69,72 @@ fi
 
 **Safety:** Restore runs in a `finally` block — original files are always restored, even on compilation failure.
 
-## 3. Run Benchmarks
+## 3. Memory Status Dashboard
+
+Quick read-only snapshot of memory health. Reads cached artifacts from `.work/memory-hygiene/` — no MCP server spawned, completes in <1s.
+
+```
+brain memory:status
+```
+
+**Default output (human-readable):**
+
+```
+  Memory Status
+
+  Status ............. ok
+  Namespace .......... jarvis-brain-node
+  Total memories ..... 207 (190 active)
+  Health ............. Healthy
+  Smoke pass rate .... 100% (15/15) — threshold met
+  Critical score ..... 100% (7/7)
+  Rank safety ........ ALL_CLEAR (0 overlap risks)
+  Last hygiene run ... 2026-02-22 19:00 UTC
+
+  Top categories:
+    code-solution .... 127
+    architecture ..... 57
+    bug-fix .......... 9
+    tool-usage ....... 8
+    learning ......... 3
+```
+
+**JSON output for scripting:**
+
+```
+brain memory:status --json
+```
+
+Returns a stable schema:
+
+```json
+{
+  "version": "1.0.0",
+  "status": "ok",
+  "namespace": "jarvis-brain-node",
+  "counts": { "total_memories": 207, "active_memories": 190, "canonical_tags": 15, "unique_tags": 553 },
+  "health": "Healthy",
+  "smoke": { "pass_rate": 1.0, "critical_pass_rate": 1.0, "threshold_met": true, "passed": 15, "total": 15, "critical_passed": 7, "critical_total": 7 },
+  "rank_safety": { "verdict": "ALL_CLEAR", "overlap_risks": 0 },
+  "last_run": "2026-02-22T19:00:00Z",
+  "top_categories": [ { "name": "code-solution", "count": 127 } ],
+  "hints": []
+}
+```
+
+**Statuses:**
+
+| Status | Meaning | Action |
+|--------|---------|--------|
+| `ok` | All 3 artifacts present, total_memories > 0 | None — memory is healthy |
+| `stale` | One or more artifacts missing | Run `brain memory:hygiene` to regenerate |
+| `no_data` | No artifacts at all, or total_memories = 0 | Run `brain memory:hygiene` to generate initial baseline |
+
+**Staleness hints:** If `snapshot_date` in ledger is > 24h old, a warning hint appears. Over 7 days triggers an urgent hint.
+
+**Readiness integration:** `brain readiness:check` includes `memory_status` as an informational (NEUTRAL) section. It never affects the pass/fail outcome.
+
+## 4. Run Benchmarks
 
 Ordered by scope — run the smallest sufficient suite first.
 
@@ -92,7 +157,7 @@ composer benchmark:dry
 composer benchmark:regression
 ```
 
-## 4. Update MCP Server Versions
+## 5. Update MCP Server Versions
 
 1. Check current pins: `cat pins.json`
 2. Update version in `pins.json`
@@ -101,7 +166,7 @@ composer benchmark:regression
 5. Run telemetry benchmark: `composer benchmark:telemetry`
 6. If all pass, commit changes
 
-## 5. Rollback to Previous Version
+## 6. Rollback to Previous Version
 
 ```
 git checkout <tag> -- .mcp.json .claude/ .codex/ .opencode/
@@ -114,7 +179,7 @@ git checkout <tag>
 brain compile
 ```
 
-## 6. Add New Benchmark Scenario
+## 7. Add New Benchmark Scenario
 
 1. Create scenario JSON in `.docs/benchmarks/scenarios/`
 2. Validate: `composer benchmark:dry`
@@ -122,7 +187,7 @@ brain compile
 4. Update baselines if needed: add entry to `.docs/benchmarks/baselines/baselines.json`
 5. Commit all changes
 
-## 7. Debug CI Failure
+## 8. Debug CI Failure
 
 1. Read CI artifacts/logs for the failing step
 2. Reproduce locally:
