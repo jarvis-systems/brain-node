@@ -108,8 +108,8 @@ jobs:
           CORE_LEVEL=$(grep -E '^[[:space:]]*level:' core/phpstan.neon | awk '{print $2}')
           CLI_LEVEL=$(grep -E '^[[:space:]]*level:' cli/phpstan.neon | awk '{print $2}')
           echo "core: L${CORE_LEVEL}, cli: L${CLI_LEVEL}"
-          if [ "$CORE_LEVEL" -lt 3 ]; then
-            echo "::error::core phpstan.neon level ($CORE_LEVEL) below required minimum (3)"
+          if [ "$CORE_LEVEL" -lt 4 ]; then
+            echo "::error::core phpstan.neon level ($CORE_LEVEL) below required minimum (4)"
             exit 1
           fi
           if [ "$CLI_LEVEL" -lt 2 ]; then

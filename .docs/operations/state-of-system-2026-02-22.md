@@ -14,7 +14,7 @@ status: "active"
 
 | Metric | Value |
 |--------|-------|
-| PHPStan level | 3 (uplifted from L1 via `9cbcb15`, `35dbd2a`, `ef8b315`) |
+| PHPStan level | 4 (L1→L3 via `9cbcb15`/`35dbd2a`/`ef8b315`; L3→L4: 6 errors, inline ignores + neon ignore) |
 | Tests | 273 tests, 645 assertions |
 | Composer audit | Clean (0 advisories) |
 
@@ -32,7 +32,7 @@ status: "active"
 | Metric | Value |
 |--------|-------|
 | CI pipeline | 22 steps, all green (run `22284578303`) |
-| PHPStan level guard | Enforced — core >= L3, cli >= L2 |
+| PHPStan level guard | Enforced — core >= L4, cli >= L2 |
 | Enterprise audit | Passing (P0 gate) |
 | Compile discipline | Enforced |
 

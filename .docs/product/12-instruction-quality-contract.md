@@ -19,7 +19,7 @@ These checks run automatically and block merges or produce actionable warnings.
 | Scenario JSON schema | benchmark-llm-suite.sh --dry-run | PR + nightly | BLOCK (exit 1 on invalid) |
 | Instruction budget | check-instruction-budget.sh --strict | PR (brain-lint) | BLOCK (exit 1 if delta > 10%) |
 | Baselines JSON validity | jq empty baselines.json | PR (brain-lint) | BLOCK |
-| PHPStan static analysis (core) | composer analyse (level 3) | PR (brain-lint) | BLOCK |
+| PHPStan static analysis (core) | composer analyse (level 4) | PR (brain-lint) | BLOCK |
 | PHPStan static analysis (CLI)  | composer analyse (level 2) | PR (brain-lint) | BLOCK |
 | Unit tests | composer test | PR (brain-lint) | BLOCK |
 | Compile discipline | brain-lint compile check | PR (brain-lint) | BLOCK (source change requires compiled update) |
@@ -212,7 +212,7 @@ When adding a new scenario, classify it as exactly one of: knowledge, execution,
 
 | Package | Minimum Level | Command |
 |---------|--------------|---------|
-| brain-core | 3 | `composer analyse` (core/) |
+| brain-core | 4 | `composer analyse` (core/) |
 | brain-cli  | 2 | `composer analyse` (cli/) |
 
 ### Enforcement
@@ -226,3 +226,4 @@ Lowering a PHPStan level requires an explicit RFC with justification, reviewed a
 ### Evidence
 
 Level 3 uplift for brain-core completed in commits `9cbcb15`, `35dbd2a`, `ef8b315` (30 errors → 0, all PHPDoc-only fixes).
+Level 4 uplift: 6 errors → 0 (4× inline `@phpstan-ignore` for intentional guards, 1× neon ignore for cross-package trait, 1× defensive `is_array` guard).
