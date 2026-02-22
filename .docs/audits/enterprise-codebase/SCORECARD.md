@@ -27,7 +27,7 @@ status: active
 | 3 | Input Validation | 3 | 3 | -- | 3.0 | MCP schema validator (3 modes); 244 validated call sites; 2 compile-time bypass sites annotated with @mcp-schema-bypass; audit Check 18 enforces regression gate |
 | 4 | Security | 3 | 3 | 3 | 3.0 | All controls met; mitigated-history variant applied (private repo, all guardrails met 2026-02-21); ~~No static analysis~~ **FIXED** (phpstan level 2); ~~API keys in MCP files~~ **FIXED** (getenv()); ~~CI actions tag-pinned~~ **FIXED** (SHA-pinned); **NEW**: Secret scanning CI gate, release bundle .mcp.json exclusion, upload.sh/settings.json untracked, threat model doc, CI concurrency guards, pre-publication kill-switch |
 | 5 | Docs Parity | 3 | 3 | -- | 3.0 | ~~`composer test`/`analyse` missing at root~~ **FIXED**; ~~LegacyParityTest referenced but never existed~~ **FIXED** (removed from CLAUDE.md, actual test list updated); ~~docs validation 1 invalid~~ **FIXED** (YAML front matter added); `brain docs --validate` = 0 invalid |
-| 6 | Testability | 3 | 3 | 1 | 2.3 | 246/246 tests, 583 assertions; **Refactor Batch 8**: +3 tests (command include policy, agent ID uniqueness, MCP ID uniqueness); **Refactor Batch 7**: NodeIntegrityTest +1 test (testNoTestStubMcpFiles) + Meta('model') assertion; **Refactor Batch 5**: id() contract fix + 4 id-method tests, XmlBuilder edge cases (15 new tests), SnapshotTest golden-file regression (12 tests); **Refactor Batch 4**: BlueprintTest (44→48 tests); **Refactor Batch 3**: MDTest (30), CoreTest (28), VarChainTest (20); Node: 12 tests via NodeIntegrityTest; CLI: phpstan level 0 |
+| 6 | Testability | 3 | 3 | 1 | 2.3 | 253/253 tests, 594 assertions; **Refactor Batch 8**: +3 tests (command include policy, agent ID uniqueness, MCP ID uniqueness); **Refactor Batch 7**: NodeIntegrityTest +1 test (testNoTestStubMcpFiles) + Meta('model') assertion; **Refactor Batch 5**: id() contract fix + 4 id-method tests, XmlBuilder edge cases (15 new tests), SnapshotTest golden-file regression (12 tests); **Refactor Batch 4**: BlueprintTest (44→48 tests); **Refactor Batch 3**: MDTest (30), CoreTest (28), VarChainTest (20); Node: 12 tests via NodeIntegrityTest; CLI: phpstan level 0 |
 | 7 | Release Discipline | 3 | 3 | -- | 3.0 | Pinning, manifest, bundle, release CI -- all good |
 | 8 | Operability | 3 | 3 | -- | 3.0 | Benchmarks, runbooks, ops-evidence, demo -- comprehensive; **Refactor Batch 6**: 3 P0 script bugs fixed (jq key mismatch, md5 portability, version consistency check) |
 | 9 | Footguns | 3 | 3 | -- | 3.0 | ~~Debug artifacts~~ **FIXED**; ~~typo in class name~~ **FIXED**; ~~dead scaffold~~ **FIXED**; ~~hardcoded MCP paths~~ **FIXED** (generator emits getcwd()); **Refactor Batch 2**: awesome-mcp.json `--save-as` → `--as` CLI bug fix; **Refactor Batch 4**: ~~Guideline::workflow() dead method~~ **REMOVED**; **Refactor Batch 5**: ~~BlueprintArchitecture::id() broken~~ **FIXED** (→ set()); **Refactor Batch 6**: ~~Core::getVariable @return scalar lie~~ **FIXED**, ~~McpArchitecture::id() copy-paste docblock~~ **FIXED**; **Refactor Batch 7**: ~~Test2Mcp.php stub artifact~~ **REMOVED**; **Refactor Batch 8**: ~~AgentArchetype::id() silent 'explore' fallback~~ **FIXED** (→ throw), ~~McpArchitecture::id() silent 'unknown' fallback~~ **FIXED** (→ throw) |
@@ -148,7 +148,7 @@ This is an explicit criteria variant, not a redefinition. It applies only when A
 
 | Package | Test Files | Source Files | Tests | Assertions | Status |
 |---------|-----------|--------------|-------|------------|--------|
-| Core | 19 | 170 | 246 | 583 | 246/246 PASS |
+| Core | 19 | 170 | 253 | 594 | 253/253 PASS |
 | Node | 0 (tested via Core) | 43 | 13 | 30 | via NodeIntegrityTest |
 | CLI | 8 | ~30+ | ~20 | ~50 | Separate repo + PHPStan level 0 |
 
@@ -163,7 +163,7 @@ This is an explicit criteria variant, not a redefinition. It applies only when A
 
 **Proof Pack (v1) — invariant proofs added:**
 - `BuilderDeterminismTest` (5 tests): XmlBuilder/TomlBuilder idempotency, child ordering, key ordering, double-newline contract
-- `MergerInvariantsTest` (4 tests): no child loss, empty includes, deep nesting (3-level), determinism
+- `MergerInvariantsTest` (7 tests): no child loss, empty includes, deep nesting (3-level), determinism, contiguous grouping (interleaved includes, three includes, splice index rebuild)
 - `CompilationOutputTest` (13 tests): Store::as/get/var format, Operator::if/forEach/task/verify/validate, BrainCLI constants/methods, Operator::do chaining, determinism
 
 **Phase 4 — Node integrity + CLI phpstan:**

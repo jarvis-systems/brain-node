@@ -11,7 +11,7 @@ status: active
 
 ## Executive Summary
 
-Security 2.3→3.0 is blocked by one factor: git history contains leaked credentials in 6+ commits. HEAD is clean (scan-secrets=0, audit PASS:18).
+Security 2.3→3.0 is blocked by one factor: git history contains leaked credentials in 6+ commits. HEAD is clean (scan-secrets=0, audit PASS:19).
 
 This repo was previously public — history may have been cloned by third parties. BFG history rewrite cannot recall third-party copies. Credential rotation is mandatory regardless of strategy.
 
@@ -199,8 +199,8 @@ No BFG. No force push. No history rewrite. Rotated credentials = dead values.
 ```
 git status --porcelain
 bash scripts/scan-secrets.sh                    # Gate: exit 0
-bash scripts/audit-enterprise.sh                # Gate: PASS:18
-composer test                                   # Gate: 233+ pass
+bash scripts/audit-enterprise.sh                # Gate: PASS:19
+composer test                                   # Gate: 253+ pass
 # Tier-1 baseline:
 git log --all -p | grep -cE "$(grep -oP "SECRET_PATTERNS='\K[^']+" scripts/scan-secrets.sh)"
 # → Expected: >0 (documents the problem)
@@ -245,10 +245,10 @@ Gate: `.brain/.env` contains only active credentials. No C7/C8. No old values.
 ### Step C4: Full gates in new repo
 
 ```
-composer test              # 233+ pass, 0 failures
+composer test              # 253+ pass, 0 failures
 composer analyse           # 0 errors
 bash scripts/scan-secrets.sh   # Exit 0
-bash scripts/audit-enterprise.sh   # PASS:18, FAIL:0
+bash scripts/audit-enterprise.sh   # PASS:19, FAIL:0
 brain docs --validate      # 0 invalid
 ```
 
@@ -293,7 +293,7 @@ For cases where Option C is not viable (must keep same repo URL):
 | Gate | Command | Pass Condition |
 |------|---------|---------------|
 | HEAD clean | `bash scripts/scan-secrets.sh` | Exit 0 |
-| Audit green | `bash scripts/audit-enterprise.sh` | PASS:18, FAIL:0 |
+| Audit green | `bash scripts/audit-enterprise.sh` | PASS:19, FAIL:0 |
 | Old creds dead | Manual: each old value → 401/403 | All fail auth |
 | Tier-1 baseline | `git log --all -p \| grep -cE <patterns>` | >0 (confirms problem) |
 
@@ -303,10 +303,10 @@ For cases where Option C is not viable (must keep same repo URL):
 |------|---------|---------------|
 | No .git in export | `ls -la /tmp/x-brain-clean/.git` | Not found |
 | No .env in export | `ls -la /tmp/x-brain-clean/.brain/.env` | Not found |
-| Tests pass | `composer test` | 233+, 0 failures |
+| Tests pass | `composer test` | 253+, 0 failures |
 | PHPStan clean | `composer analyse` | 0 errors |
 | Secrets scan | `bash scripts/scan-secrets.sh` | Exit 0 |
-| Audit green | `bash scripts/audit-enterprise.sh` | PASS:18, FAIL:0 |
+| Audit green | `bash scripts/audit-enterprise.sh` | PASS:19, FAIL:0 |
 | Docs valid | `brain docs --validate` | 0 invalid |
 | Clone clean | `grep -rE <patterns>` on fresh clone | 0 matches |
 
@@ -434,7 +434,7 @@ As of 2026-02-21, git history contains leaked credential patterns:
 - **Commits:** 6 (`89f7e88`, `40afe0d`, `2b54793`, `375e8bd`, `002a157`, `ad73b3d`)
 - **Files:** 5 (`.env`, `.env.example`, `.mcp.json`, `node/Mcp/Context7Mcp.php`, `settings.json`)
 
-**Operational risk: NEUTRALIZED.** All leaked credentials have been rotated or revoked at provider consoles (incident CLOSED). Old values return 401/403. HEAD is clean (`scan-secrets.sh` = 0, `audit-enterprise.sh` PASS:18).
+**Operational risk: NEUTRALIZED.** All leaked credentials have been rotated or revoked at provider consoles (incident CLOSED). Old values return 401/403. HEAD is clean (`scan-secrets.sh` = 0, `audit-enterprise.sh` PASS:19).
 
 **History cleanup: DEFERRED.** No BFG/force-push — private repo, dead credentials. Cleanup happens naturally via Option C (new canon repo) when X-Brain migration proceeds. Tracked as FIX-QUEUE P2-008.
 
