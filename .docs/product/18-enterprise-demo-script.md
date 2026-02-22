@@ -44,7 +44,7 @@ Expected: three version strings, e.g. `v0.2.0-51-gabcdef0`. The `-N-gXXXXXXX` su
 brain docs --validate
 ```
 
-Expected: `valid:85, invalid:0, warnings:0`. Proves: all 85 docs have YAML front matter, no broken references.
+Expected: `valid:86, invalid:0, warnings:0`. Proves: all 86 docs have YAML front matter, no broken references.
 
 ### 4. Tests
 
@@ -102,7 +102,7 @@ Expected: `42/42`, `12/12`, `28/28` — all 82 unique scenarios pass schema vali
 |------|---------------|
 | Clean worktree | No drift, no forgotten changes |
 | Version signals | All three repos accessible, version history intact |
-| Docs validate | 85 documents with consistent metadata |
+| Docs validate | 86 documents with consistent metadata |
 | 264 tests green | Core logic, compilation determinism, node contracts |
 | PHPStan 0 errors | Type safety across 295 files (core + CLI) |
 | 19/19 audit PASS | Enterprise checklist: strict_types, no secrets, no debug, clean compile. WARN:1 (`version-drift`) expected in dev |
