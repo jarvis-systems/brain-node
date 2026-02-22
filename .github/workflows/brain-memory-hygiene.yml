@@ -79,7 +79,7 @@ jobs:
       - name: Run memory hygiene
         id: hygiene
         continue-on-error: true
-        run: php cli/brain memory:hygiene
+        run: php cli/bin/brain memory:hygiene
 
       - name: Print summary
         if: always()
