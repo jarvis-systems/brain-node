@@ -338,15 +338,17 @@ status: active
 
 | Field | Value |
 |-------|-------|
-| Scope | Git history contains secret patterns in 6 commits across 5 files |
-| Evidence | `scan-secrets-history.sh`: TOTAL_MATCHES=10, AFFECTED_COMMITS=6, AFFECTED_FILES=5 (2026-02-21) |
-| Affected commits | `89f7e88`, `40afe0d`, `2b54793`, `375e8bd`, `002a157`, `ad73b3d` |
+| Scope | Git history contained secret patterns in 6 commits across 5 files |
+| Evidence (before) | `scan-secrets-history.sh`: TOTAL_MATCHES=10, AFFECTED_COMMITS=6, AFFECTED_FILES=5 (2026-02-21) |
+| Affected commits (old SHAs) | `89f7e88`, `40afe0d`, `2b54793`, `375e8bd`, `002a157`, `ad73b3d` |
 | Affected files | `.env`, `.env.example`, `.mcp.json`, `node/Mcp/Context7Mcp.php`, `settings.json` |
-| Mitigation | All leaked credentials rotated/revoked (incident CLOSED 2026-02-21). HEAD is clean (`scan-secrets.sh` = 0). |
-| Decision | No BFG now (private repo, creds dead). Cleanup via Option C (new canon repo) when X-Brain migration happens. |
-| Status | **MITIGATED** — operational risk neutralized, history cleanup deferred |
-| Validate | `bash scripts/scan-secrets-history.sh --quiet` → TOTAL_MATCHES=10 (stable baseline) |
-| Reference | `.docs/product/16-security-3.0-playbook.md` § "Current State: History Dirty (Mitigated)"; SCORECARD.md § "Security (2.3/3)" posture + upgrade path |
+| Fix | `git-filter-repo --blob-callback` with regex replacement of 4 secret patterns → `***REMOVED***`. Force-pushed rewritten history. 251 commits rewritten, 39 blob replacements. |
+| Security exception | Remote tag `v0.2.0` (SHA `b976e2d`) deleted during history scrub; replaced by `v0.2.1`. |
+| Rollback mirror | `/tmp/brain-node-ROLLBACK-20260223-000806.git` (pre-rewrite remote state) |
+| Evidence (after) | `scan-secrets-history.sh --quiet`: TOTAL_MATCHES=0, exit=0 (2026-02-23) |
+| Status | **FIXED** — history clean, all secret patterns scrubbed |
+| Validate | `bash scripts/scan-secrets-history.sh --quiet` → TOTAL_MATCHES=0, exit=0 |
+| Reference | `.docs/product/16-security-3.0-playbook.md`; SCORECARD.md § "Security" |
 
 ### P2-009: Worktree isolation for parallel agents (infra)
 
@@ -540,11 +542,11 @@ Regression prevention: `audit-enterprise.sh` Check 18 (mcp-schema-bypass) + `Nod
 |----------|-------|-------|--------------|------|
 | P0 | 15 | 13 | 2 (to P2) | 0 |
 | P1 | 8 | 7 | 1 (to P2) | 0 |
-| P2 | 3+2+1+1+3+1+1+2 | 7 | 0 | 6 |
+| P2 | 3+2+1+1+3+1+1+2 | 8 | 0 | 5 |
 | Cat-B | 2 | 2 | 0 | 0 |
-| **Total** | **36** | **29** | **3** | **6** |
+| **Total** | **36** | **30** | **3** | **5** |
 
-Remaining P2 open: P2-003 (error_log in ConvertCommand — acceptable, env-gated), P2-008 (history contamination — mitigated, cleanup deferred to Option C), P2-009 (worktree isolation — planned, contract written), P2-010 (demo script stale valid:72→75), P2-011 (CI CLI tests + paths triggers), DocChallenge.md paths.
+Remaining P2 open: P2-003 (error_log in ConvertCommand — acceptable, env-gated), P2-009 (worktree isolation — planned, contract written), P2-010 (demo script stale valid:72→75), P2-011 (CI CLI tests + paths triggers), DocChallenge.md paths.
 
 **Current baseline (2026-02-22):** Core PHPStan level 2 (0 errors, 170 files, 5 suppressions + constants bootstrap); CLI PHPStan level 0 (separate repo — level may differ). Level policy locked in `ENTERPRISE-DOD.md` § "PHPStan Level Policy (Cross-Repo)".
 

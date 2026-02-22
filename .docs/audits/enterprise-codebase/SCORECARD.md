@@ -25,7 +25,7 @@ status: active
 | 1 | Determinism | 3 | 3 | -- | 3.0 | No rand/shuffle; compile is idempotent (verified S12) |
 | 2 | Error Handling | 3 | 3 | -- | 3.0 | All catches: graceful degradation + `logDegradation()` observability (env-gated); Node: zero catches = correct for declarative config; **NEW**: VarExporterDegradationTest (8 tests), audit Check 16 |
 | 3 | Input Validation | 3 | 3 | -- | 3.0 | MCP schema validator (3 modes); 244 validated call sites; 2 compile-time bypass sites annotated with @mcp-schema-bypass; audit Check 18 enforces regression gate |
-| 4 | Security | 3 | 3 | 3 | 3.0 | All controls met; mitigated-history variant applied (private repo, all guardrails met 2026-02-21); ~~No static analysis~~ **FIXED** (phpstan level 2); ~~API keys in MCP files~~ **FIXED** (getenv()); ~~CI actions tag-pinned~~ **FIXED** (SHA-pinned); **NEW**: Secret scanning CI gate, release bundle .mcp.json exclusion, upload.sh/settings.json untracked, threat model doc, CI concurrency guards, pre-publication kill-switch |
+| 4 | Security | 3 | 3 | 3 | 3.0 | All controls met; history fully clean (scrubbed 2026-02-23, standard criteria); ~~No static analysis~~ **FIXED** (phpstan level 2); ~~API keys in MCP files~~ **FIXED** (getenv()); ~~CI actions tag-pinned~~ **FIXED** (SHA-pinned); **NEW**: Secret scanning CI gate, release bundle .mcp.json exclusion, upload.sh/settings.json untracked, threat model doc, CI concurrency guards, pre-publication kill-switch, git history scrub via git-filter-repo |
 | 5 | Docs Parity | 3 | 3 | -- | 3.0 | ~~`composer test`/`analyse` missing at root~~ **FIXED**; ~~LegacyParityTest referenced but never existed~~ **FIXED** (removed from CLAUDE.md, actual test list updated); ~~docs validation 1 invalid~~ **FIXED** (YAML front matter added); `brain docs --validate` = 0 invalid |
 | 6 | Testability | 3 | 3 | 3 | 3.0 | Core: 273 tests, 645 assertions (19 files); CLI: 444 tests, 853 assertions (31 files); Node: 13 tests via NodeIntegrityTest; PHPStan L2 across core+CLI (0 errors); **Roadmap 15.4**: 4 batches of CLI test expansion (docs services, traits, make commands, make:mcp deep) |
 | 7 | Release Discipline | 3 | 3 | -- | 3.0 | Pinning, manifest, bundle, release CI -- all good |
@@ -76,56 +76,41 @@ No sources of non-determinism found. No `rand()`, `shuffle()`, `mt_rand()`, `arr
 | Layer | Status | Evidence |
 |-------|--------|----------|
 | HEAD (tracked files) | Clean | `scan-secrets.sh` exit 0, audit Check 14 PASS |
-| Git history | Dirty (mitigated) | `scan-secrets-history.sh`: TOTAL_MATCHES=10, exit 2 |
+| Git history | **Clean** | `scan-secrets-history.sh`: TOTAL_MATCHES=0, exit 0 (scrubbed 2026-02-23 via `git-filter-repo`) |
 | Credential risk | Neutralized | All leaked credentials revoked/disabled by providers (incident closed) |
 
-**Security 3.0 criteria — Private Repo, Mitigated History variant:**
+**Security 3.0 criteria — Standard (history clean):**
 
-This is an explicit criteria variant, not a redefinition. It applies only when ALL guardrails below are met. Standard criteria (history fully clean) remain the default for public repositories.
+All controls met under standard criteria (no mitigated-history variant needed):
 
-**Mandatory controls (unchanged from 2.x):**
+**Controls:**
 
 - HEAD clean: `scan-secrets.sh` exit 0, audit Check 14 PASS
+- Git history clean: `scan-secrets-history.sh` exit 0, TOTAL_MATCHES=0 (scrubbed 2026-02-23)
 - Threat model documented (`09-secrets.md`)
 - Pre-publication checklist with credential rotation gate (`10-pre-publication.md`)
 - Release bundle excludes secrets (`.mcp.json` exclusion in `build-release-bundle.sh`)
 - CI gates: `scan-secrets.sh` (blocking), audit Check 14 (blocking)
 - Secret output policy enforced (redaction rule, `16-security-3.0-playbook.md` § Redaction Rule)
 - Dependency pinning (`pins.json`, SHA-pinned CI actions)
+- All leaked credentials revoked/rotated at provider consoles (incident closed 2026-02-21)
 
-**History criterion (changed):**
+**History scrub record (2026-02-23):**
 
-- **Previous:** History must be fully clean (`scan-secrets-history.sh` exit 0)
-- **Current:** History mitigated + tracked + gated — all of the following:
-  1. All leaked credentials revoked/rotated at provider consoles (confirmed dead, return 401/403)
-  2. Incident documented and CLOSED (`16-security-3.0-playbook.md` § Incident Log)
-  3. `scan-secrets-history.sh` baseline recorded: TOTAL_MATCHES=10, AFFECTED_COMMITS=6 (stable)
-  4. `scan-secrets-history.sh` is a mandatory pre-publication manual gate (`10-pre-publication.md`)
-  5. Upgrade path to full history clean documented (Option C / BFG — plan-only, `16-security-3.0-playbook.md`)
-  6. History contamination tracked as open item (FIX-QUEUE P2-008, status: MITIGATED)
-
-**Guardrails:**
-
-| # | Guardrail | Revert trigger |
-|---|-----------|----------------|
-| G1 | Private repos only | If repo visibility changes to public → Security reverts to 2.x until `scan-secrets-history.sh` exit 0 |
-| G2 | Provider-side revocation confirmed | If any leaked credential returns 200 → Security reverts to 2.x immediately |
-| G3 | `scan-secrets-history.sh` is mandatory pre-pub gate | If gate removed from `10-pre-publication.md` → Security reverts to 2.x |
-| G4 | Baseline TOTAL_MATCHES tracked | If P2-008 closed without history cleanup → Security reverts to 2.x |
-| G5 | Upgrade path documented | If `16-security-3.0-playbook.md` Option C section removed → Security reverts to 2.x |
-
-**Criterion removed from Security (miscategorized):**
-
-"PHPStan level >=1" was previously listed as a Security 3.0 criterion. PHPStan level 0→1 adds return type enforcement — this is type safety, not a security control. No enterprise security framework (OWASP, NIST, CIS) classifies return type checking as a security gate. Moved to Testability/Maintainability improvement backlog. Note: `16-security-3.0-playbook.md` § Executive Summary already stated history as the sole blocking factor — this aligns SCORECARD with that assessment.
+- Tool: `git-filter-repo --blob-callback` (regex replacement of 4 secret patterns → `***REMOVED***`)
+- Scope: 251 commits rewritten, 39 blob replacements
+- Security exception: Remote tag `v0.2.0` (SHA `b976e2d`) deleted; replaced by `v0.2.1`
+- Rollback mirror: `/tmp/brain-node-ROLLBACK-20260223-000806.git`
+- FIX-QUEUE: P2-008 status changed MITIGATED → **FIXED**
 
 **Evidence pointers:**
 
 - History scan gate: `.docs/product/10-pre-publication.md` § "History secrets scan"
 - Incident log + redaction rule: `.docs/product/16-security-3.0-playbook.md` § Incident Log, § Redaction Rule
-- History contamination tracking: FIX-QUEUE P2-008 (status: MITIGATED, open)
+- History cleanup: FIX-QUEUE P2-008 (status: **FIXED**)
 - Scan tooling: `scripts/scan-secrets-history.sh`
 
-**Variant applied: 2026-02-21.** Evidence snapshot at time of application:
+**Standard criteria applied: 2026-02-23.** (Supersedes mitigated-history variant from 2026-02-21.) Evidence:
 
 | Gate | Result |
 |------|--------|
