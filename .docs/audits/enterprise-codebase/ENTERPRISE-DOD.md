@@ -122,6 +122,7 @@ Worktree guard ignores `.phpunit.cache` and `.phpunit.result.cache` (PHPUnit art
 - [ ] **Repo boundary preflight (manual):** before editing, confirm correct repo root. Three independent repos share the disk — edits must be committed in the owning repo. Commands: `git rev-parse --show-toplevel` (from file's directory); for sub-repos: `cd core && git rev-parse --show-toplevel` / `cd cli && git rev-parse --show-toplevel`. See `.docs/architecture/repo-topology.md`.
 - [ ] **Touch Whitelist Preflight (mandatory in quad-mode):** before editing, declare intended file list in prompt or evidence pack. After work: `git diff --name-only` must match whitelist exactly. Steps: (A) run `git diff --name-only` to record baseline, (B) declare whitelist of files to touch, (C) after work assert `git diff --name-only` matches whitelist. Violation: STOP, revert unexpected files (`git checkout -- <file>`), quarantine to `wip/` branch if changes are legitimate but out-of-scope. See `10-pre-publication.md` § Touch Whitelist Preflight.
 - [ ] **Parallel hygiene sweep (end-of-batch):** run 3-agent sweep (docs, workspace, vector memory) to maintain invariants between batches. See `.docs/product/19-parallel-hygiene-sweep.md`.
+- [ ] **WIP branch governance:** `wip/*` branches follow naming convention, cherry-pick merge rule, and expiry policy. Direct merge to master forbidden. See `.docs/product/19-parallel-hygiene-sweep.md` § WIP Branch Governance.
 
 ## Quad-Mode Drift Policy
 

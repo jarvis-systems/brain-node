@@ -110,6 +110,73 @@ Each sweep agent must produce:
 | Vector memory destructive step proposed | Requires explicit GO PRE-PUB from operator |
 | Any agent fails to complete | Report partial results; do not block other agents |
 
+## WIP Branch Governance
+
+When parallel work, quarantine, or operator WIP requires parking changes outside `master`, use dedicated `wip/*` branches.
+
+### Naming Convention
+
+```
+wip/<scope>-<YYYYMMDD>-<topic>
+```
+
+| Segment | Values | Example |
+|---------|--------|---------|
+| `scope` | `root`, `core`, `cli`, `docs`, `ci` | `root` |
+| `YYYYMMDD` | Creation date | `20260222` |
+| `topic` | Short kebab-case descriptor | `claude-deprecation` |
+
+Full example: `wip/root-20260222-claude-deprecation`.
+
+Short form `wip/<scope>-<YYYYMMDD>` is acceptable when topic is obvious from commit message.
+
+### Current Inventory
+
+| Branch | Scope | Content | Owner |
+|--------|-------|---------|-------|
+| `wip/root-claude-20260222` | root | CLAUDE.md deprecation rewrite (345→16 lines) | Doc |
+| `wip/doc-architecture-20260222` | docs | brain-docs-architecture notes | Doc |
+| `wip/quad-20260222-parallel-spec-suite` | root | Parallel isolation spec suite | Doc |
+
+### Merge Rules
+
+WIP branches are **NEVER merged blindly** into `master`. Integration path:
+
+1. **Cherry-pick** specific commits with a Touch Whitelist declared in the merge batch.
+2. Each cherry-pick produces an Evidence Pack (touch whitelist + gates).
+3. After cherry-pick, delete the WIP branch (local + remote if pushed).
+4. Direct `git merge wip/*` into `master` is **FORBIDDEN** — prevents unreviewed changes from slipping in.
+
+### Expiry Policy
+
+| Age | Action |
+|-----|--------|
+| ≤7 days | Active — no action |
+| 8-14 days | Review: cherry-pick or mark `parking-long` with owner |
+| >14 days | Delete unless explicitly marked `parking-long` |
+| `parking-long` | Indefinite — owner responsible for cleanup |
+
+### Operator Commands
+
+```bash
+# List all WIP branches
+git branch --list 'wip/*'
+
+# Inspect specific branch
+git log --oneline master..wip/<branch-name>
+git diff master...wip/<branch-name> --stat
+
+# Delete local WIP branch
+git branch -d wip/<branch-name>
+
+# Delete remote WIP branch (if pushed)
+git push origin --delete wip/<branch-name>
+```
+
+### CLAUDE.md Case
+
+Root `CLAUDE.md` is a compiled artifact referenced by the Brain system. When operator edits CLAUDE.md directly (outside `brain compile`), the change MUST be quarantined to a WIP branch. Master's CLAUDE.md must always match the last `brain compile` output.
+
 ## Canonical References
 
 | Document | Relationship |
