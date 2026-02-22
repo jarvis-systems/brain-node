@@ -785,22 +785,27 @@ for repo_name in root core cli; do
     esac
     [[ ! -d "$repo_dir/.git" && "$repo_name" != "root" ]] && continue
     composer_ver=$(jq -r '.version // "missing"' "$repo_composer" 2>/dev/null || echo "missing")
-    tag_ver=$(git -C "$repo_dir" describe --tags --exact-match 2>/dev/null || echo "")
-    if [[ -z "$tag_ver" ]]; then
+    # Check if a tag matching composer.json version exists anywhere in the repo
+    # (not just on HEAD). Post-tag doc/CI commits move HEAD past the tag — this is
+    # normal dev flow, not version drift. True drift = tag missing entirely or
+    # tag version != composer.json version.
+    tag_exists=$(git -C "$repo_dir" tag -l "$composer_ver" 2>/dev/null || echo "")
+    head_tag=$(git -C "$repo_dir" describe --tags --exact-match 2>/dev/null || echo "")
+    if [[ -z "$tag_exists" ]]; then
         VER_WARN_COUNT=$((VER_WARN_COUNT + 1))
         VER_DRIFT_FINDINGS=$(echo "$VER_DRIFT_FINDINGS" | jq \
             --arg repo "$repo_name" \
             --arg ver "$composer_ver" \
-            '. + [{"repo": $repo, "composer_version": $ver, "tag": "none", "message": "HEAD not tagged; dev OK, release requires exact tag"}]')
-        log "  ${YELLOW}WARN${NC} $repo_name: HEAD not tagged; composer.json=$composer_ver — dev OK, release requires tag"
-    elif [[ "$tag_ver" != "$composer_ver" ]]; then
+            '. + [{"repo": $repo, "composer_version": $ver, "tag": "none", "message": "No tag matching composer.json version; release requires exact tag"}]')
+        log "  ${YELLOW}WARN${NC} $repo_name: no tag=$composer_ver found; composer.json=$composer_ver — release requires tag"
+    elif [[ -n "$head_tag" && "$head_tag" != "$composer_ver" ]]; then
         VER_WARN_COUNT=$((VER_WARN_COUNT + 1))
         VER_DRIFT_FINDINGS=$(echo "$VER_DRIFT_FINDINGS" | jq \
             --arg repo "$repo_name" \
-            --arg tag "$tag_ver" \
+            --arg tag "$head_tag" \
             --arg ver "$composer_ver" \
-            '. + [{"repo": $repo, "tag": $tag, "composer_version": $ver, "message": "Tag differs from composer.json version"}]')
-        log "  ${YELLOW}WARN${NC} $repo_name: tag=$tag_ver != composer.json=$composer_ver — drift detected"
+            '. + [{"repo": $repo, "tag": $tag, "composer_version": $ver, "message": "HEAD tag differs from composer.json version"}]')
+        log "  ${YELLOW}WARN${NC} $repo_name: tag=$head_tag != composer.json=$composer_ver — drift detected"
     fi
 done
 
