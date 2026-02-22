@@ -543,6 +543,8 @@ Regression prevention: `audit-enterprise.sh` Check 18 (mcp-schema-bypass) + `Nod
 
 Remaining P2 open: P2-003 (error_log in ConvertCommand — acceptable, env-gated), P2-008 (history contamination — mitigated, cleanup deferred to Option C), P2-009 (worktree isolation — planned, contract written), P2-010 (demo script stale valid:72→75), P2-011 (CI CLI tests + paths triggers), DocChallenge.md paths.
 
+**Current baseline (2026-02-22):** Core PHPStan level 2 (0 errors, 170 files, 5 suppressions + constants bootstrap); CLI PHPStan level 0 (separate repo — level may differ). Level policy locked in `ENTERPRISE-DOD.md` § "PHPStan Level Policy (Cross-Repo)".
+
 **Non-P0/P1 fixes (contract consistency):** commands-no-includes rule amended (false positive eliminated), AgentArchetype::id() and McpArchitecture::id() silent fallbacks replaced with RuntimeException (compile-time safety), 7 script shebangs normalized, Category B MCP schema bypass annotated (2 sites).
 
 ### Audit Check Coverage

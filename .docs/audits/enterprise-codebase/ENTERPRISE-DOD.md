@@ -61,6 +61,14 @@ Checks 2 (PHPUnit) and 12 (PHPStan) include CLI sub-checks that respect the thre
 
 Worktree guard ignores `.phpunit.cache` and `.phpunit.result.cache` (PHPUnit artifacts, not real drift).
 
+### PHPStan Level Policy (Cross-Repo)
+
+- **Core baseline:** PHPStan level 2 — required for all Enterprise gates. Regression = merge blocked.
+- **CLI baseline:** PHPStan level 0 — separate repo, may lag. Release requires explicit alignment plan (see `10-pre-publication.md` § "Version Alignment").
+- **Downgrade prohibition:** Never lower core PHPStan level without evidence pack + Doc approval.
+- **Source of truth:** `core/phpstan.neon` → `composer analyse` output. CLI: `cli/phpstan.neon`.
+- **Level progression:** 0 → 1 → 2 (2026-02-22). Each lift produced evidence pack + test proof.
+
 ## CI Supply Chain
 
 - [x] All GitHub Actions pinned by SHA (not tag) — see `.github/workflows/*.yml`
