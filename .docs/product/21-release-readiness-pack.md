@@ -122,6 +122,16 @@ Enterprise release gates: **all green**. Version-drift: **CLOSED**. Three repos 
 
 **Canonical source:** Release snapshot semantics, reproduce commands, and known dev deltas live in `22-release-capsule-v0.2.0.md`.
 
+### Output Contract
+
+This document is subject to the **Plan-Only vs Evidence-Only** dual-mode contract:
+
+- **PLAN-ONLY:** Template/checklist. Banner required: `PLAN-ONLY: No repo state was read.`
+- **EVIDENCE-ONLY:** Every row must have live command output. Missing output → `UNVERIFIED` + STOP.
+- **Mode rule:** "evidence/verify/current/snapshot" → Evidence. "checklist/runbook/plan" → Plan. Ambiguous → Evidence.
+
+Canonical command set and full contract: `10-pre-publication.md` §7 Output Contract.
+
 ### Truth-Sync Policy
 
 Counter updates in this pack and related docs happen ONLY when:
