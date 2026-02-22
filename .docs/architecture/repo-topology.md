@@ -203,7 +203,17 @@ Dev mode: `.brain/composer.lock` references `dev-master` via path symlink — in
 
 As of 2026-02-22: `core/composer.json` says `v0.2.0` but core's latest git tag is `v0.0.1`. This is acceptable during dev (composer.json was bumped manually, tag was not). Before any release: either tag core `v0.2.0` or revert the composer.json version to match the tag. Tracked as release-time prerequisite, not a dev-blocking issue.
 
-## 8. Future: X-Brain Single Bundle
+## 8. Environment Access Semantics (Two Paths)
+
+Core provides two distinct env access paths with different security guarantees:
+
+- **Runtime-safe (filtered):** `Core::env($key)` and `Core::allEnv()` — enforced allowlist (`BRAIN_*`, `MCP_*`, `AGENTS_*`, `COMMANDS_*`, `SKILLS_*`, `INCLUDES_*` prefixes + explicit keys: `DEBUG`, `LANGUAGE`, `STRICT_MODE`, `COGNITIVE_LEVEL`, `VERBOSITY`, `SELF_DEV_MODE`, `QUALITY_COMMAND_TEST`, `QUALITY_COMMAND_PHPSTAN`). Safe for display, `--show-variables`, and listing.
+- **Compile-time (unfiltered):** `Core::resolveCompileEnv($key)` and `Core::hasCompileEnv($key)` — intentionally unfiltered. Used by `var()` resolution chain (`ArchitectureAbstract`) and CLI toggles (`MCP_*_ENABLE/DISABLE`). Marked `@internal`.
+- **Deprecated aliases:** `getEnv()` / `hasEnv()` delegate to compile-time methods. Do not use in new code.
+- **Security invariant:** compiled output must never print secret values. The allowlist governs display/listing, not compile-time resolution.
+- **Test coverage:** `core/tests/CoreTest.php` — 8 scenarios covering allowlist filtering, compile-resolve reads, backward-compat delegation, and allEnv inclusion/exclusion.
+
+## 9. Future: X-Brain Single Bundle
 
 **Status:** Informational roadmap. Not enforced. No current action required.
 
@@ -211,7 +221,7 @@ X-Brain (Go rewrite) will consolidate node + core + cli into a single binary dis
 
 This does not affect current development. The three-repo topology remains the canonical structure until X-Brain reaches feature parity.
 
-## 9. Cross-References
+## 10. Cross-References
 
 - Worktree Isolation: `.docs/product/17-worktree-isolation-contract.md` (per-repo boundary awareness)
 - Parallel Merge Protocol: `.docs/product/19-parallel-merge-protocol.md` (merge integration for parallel branches)
