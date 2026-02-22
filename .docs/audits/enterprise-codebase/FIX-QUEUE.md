@@ -172,7 +172,7 @@ status: active
 | Fix (batch 3 — Node + CLI) | **NEW**: `NodeIntegrityTest` (8 tests: strict_types, agent/command/MCP attributes, MCP contracts, no secrets, pins.json). CLI phpstan level 0 (7 ignoreErrors, 2 excludePaths). Suite: 48/48 PASS, 117 assertions. |
 | Remaining | CLI runtime tests (requires Laravel framework) |
 | Status | **FIXED** |
-| Validate | `composer test` = 244 tests, 578 assertions, 0 failures |
+| Validate | `composer test` = 245 tests, 582 assertions, 0 failures |
 
 ### P1-003a: MergerTest broken — protected handle()
 
