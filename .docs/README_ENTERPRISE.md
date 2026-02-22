@@ -138,6 +138,7 @@ This project consists of three independent git repositories co-located on disk (
 - **Release capsule (frozen):** `.docs/product/22-release-capsule-v0.2.0.md` — tag-time invariant, reproduce commands, known dev deltas
 - **Full gate evidence:** `.docs/product/21-release-readiness-pack.md` — repo-scoped counters, audit detail
 - **Pre-publication runbook:** `.docs/product/10-pre-publication.md` — GO PRE-PUB version alignment procedure
+- **Final gate snapshot:** `.docs/product/24-final-gate-snapshot.md` — authoritative current-state gate results
 
 ## Cost Estimates (haiku)
 
