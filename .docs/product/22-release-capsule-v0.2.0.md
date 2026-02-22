@@ -67,3 +67,27 @@ These are NOT release regressions:
 | `21-release-readiness-pack.md` | Full gate evidence, audit detail, repo-scoped counters |
 | `17-worktree-isolation-contract.md` | Worktree safety, isolation phases |
 | `architecture/repo-topology.md` | Three-repo topology, version source of truth |
+
+## 5. Enterprise Snapshot
+
+### Commit References
+
+| Repo | Tag-time commit (v0.2.0) | Post-tag HEAD | Delta |
+|------|-------------------------|---------------|-------|
+| root | `b976e2d` | `1efd08c` | +12 (docs + CI only) |
+| core | `1e81181` | `1e81181` | 0 |
+| cli | `613c698` | `af1c188` | +1 (CI fix) |
+
+### Tag-Time Release State
+
+| Gate | Result | Scope |
+|------|--------|-------|
+| Tests | 264 tests, 620 assertions, 0 failures | core |
+| PHPStan | 0 errors (170 files core + cli) | core + cli |
+| Audit | PASS:19, WARN:0, FAIL:0 | root (scans all 3 repos) |
+| Docs | valid:87, invalid:0, warnings:0 | root |
+| Compile | 4 targets clean | root |
+| Secrets | 0 in tracked files | root |
+
+**Tag-time release state (v0.2.0): PASS:19 WARN:0 FAIL:0.**
+**Post-tag doc drift allowed: YES (docs-only).**
