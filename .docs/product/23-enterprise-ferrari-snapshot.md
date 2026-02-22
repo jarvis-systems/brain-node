@@ -19,7 +19,7 @@ Three independent git repos co-located on disk. Not a monorepo. See `.docs/archi
 
 | Repo | Remote | Tag | HEAD status |
 |------|--------|-----|-------------|
-| root (brain-node) | jarvis-systems/brain-node | v0.2.0 | 4 ahead (unpushed) |
+| root (brain-node) | jarvis-systems/brain-node | v0.2.0 | pushed, synced |
 | core (brain-core) | jarvis-systems/brain-core | v0.2.0 | pushed, synced |
 | cli (brain-cli) | jarvis-systems/brain-cli | v0.2.0 | 4 behind remote, WIP branch exists |
 
@@ -27,7 +27,7 @@ Three independent git repos co-located on disk. Not a monorepo. See `.docs/archi
 
 | # | Gate | Command | Result |
 |---|------|---------|--------|
-| 1 | Docs Validation | `brain docs --validate` | valid:91, invalid:0, warnings:0 |
+| 1 | Docs Validation | `brain docs --validate` | valid:90, invalid:0, warnings:0 |
 | 2 | PHPUnit (core) | `composer test` | 273 tests, 645 assertions, 0 failures |
 | 3 | PHPStan (core) | `composer analyse` (core) | 0 errors (170 files) |
 | 4 | PHPStan (CLI) | `composer analyse` (cli) | 0 errors (131 files) |
@@ -39,7 +39,7 @@ Three independent git repos co-located on disk. Not a monorepo. See `.docs/archi
 
 ## What Changed Since v0.2.0 Tag
 
-Post-tag work focused on enterprise hardening without feature changes: audit Check 17c normalized to tag-existence semantics (eliminating false WARN on post-tag HEAD advance), `json_encode` calls in ConvertCommand received `JSON_THROW_ON_ERROR` flags, Core env access was split into filtered runtime path (`Core::env`/`allEnv`) and unfiltered compile-time path (`resolveCompileEnv`/`hasCompileEnv`) with expanded allowlist and deprecation wrappers, and repo-topology documentation received an env semantics section. Test count grew from 264 to 273 (+9 env split tests). Doc count grew from 87 to 91. All changes are backward-compatible with zero compiled-output diff.
+Post-tag work focused on enterprise hardening without feature changes: audit Check 17c normalized to tag-existence semantics (eliminating false WARN on post-tag HEAD advance), `json_encode` calls in ConvertCommand received `JSON_THROW_ON_ERROR` flags, Core env access was split into filtered runtime path (`Core::env`/`allEnv`) and unfiltered compile-time path (`resolveCompileEnv`/`hasCompileEnv`) with expanded allowlist and deprecation wrappers, and repo-topology documentation received an env semantics section. Test count grew from 264 to 273 (+9 env split tests). Doc count grew from 87 to 90. All changes are backward-compatible with zero compiled-output diff.
 
 ## Known Debts
 

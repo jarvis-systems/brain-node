@@ -29,6 +29,16 @@ When <=3 trivial fixes are identified during any batch (missing front matter, st
 
 This prevents micro-fix churn from accumulating across batches while keeping macro work unblocked.
 
+### Truth-Drift Batching Limits
+
+Truth-drift fixes (updating stale numeric claims like test counts, doc-valid counts, audit categories) follow stricter scope rules:
+
+- **≤2 files:** patch in-line within the current batch. No separate commit required.
+- **3-5 files:** dedicated TRUTH-SYNC batch with declared touch whitelist. Commit message prefix: `docs: truth-sync`.
+- **>5 files:** report-only. Do not mass-edit. Create a vector task for a planned sweep.
+
+Rationale: uncapped drift-fix batches grow silently and contaminate unrelated work. The 2-file threshold keeps micro-fixes trivial; the 5-file cap prevents runaway edits.
+
 ## Sweep Agents
 
 Three independent sub-agents run **concurrently**. No cross-dependencies.
