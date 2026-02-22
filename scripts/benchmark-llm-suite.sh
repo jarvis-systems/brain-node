@@ -282,7 +282,7 @@ run_scenario() {
     sretry=$(jq -r ".retry // $RETRY_DEFAULT" "$scenario_file")
 
     log "\n${CYAN}[$sid] $stitle${NC} ${DIM}($sdiff)${NC}"
-    ((TOTAL++))
+    TOTAL=$((TOTAL + 1))
 
     local scenario_status="PASS"
     local checks=()
@@ -514,7 +514,7 @@ run_scenario() {
             if [ "$scenario_status" = "PASS" ] || [ "$attempt" -ge "$max_attempts" ]; then
                 break
             fi
-            ((attempt++))
+            attempt=$((attempt + 1))
         done
 
         # Classify flaky status (only when retries were used)
@@ -556,11 +556,11 @@ run_scenario() {
 
     # Update counters
     case "$scenario_status" in
-        PASS) ((PASSED++)) ;;
-        FAIL) ((FAILED++)) ;;
-        ERROR) ((ERRORS++)) ;;
-        FLAKY_PASS) ((FLAKY_PASSED++)); ((PASSED++)) ;;
-        FLAKY_FAIL) ((FLAKY_FAILED++)); ((FAILED++)) ;;
+        PASS) PASSED=$((PASSED + 1)) ;;
+        FAIL) FAILED=$((FAILED + 1)) ;;
+        ERROR) ERRORS=$((ERRORS + 1)) ;;
+        FLAKY_PASS) FLAKY_PASSED=$((FLAKY_PASSED + 1)); PASSED=$((PASSED + 1)) ;;
+        FLAKY_FAIL) FLAKY_FAILED=$((FLAKY_FAILED + 1)); FAILED=$((FAILED + 1)) ;;
     esac
 
     TOTAL_INPUT_TOKENS=$((TOTAL_INPUT_TOKENS + input_tokens))
@@ -593,7 +593,7 @@ run_multi_turn_scenario() {
     sretry=$(jq -r ".retry // $RETRY_DEFAULT" "$scenario_file")
 
     log "\n${CYAN}[$sid] $stitle${NC} ${DIM}($sdiff, ${num_turns} turns)${NC}"
-    ((TOTAL++))
+    TOTAL=$((TOTAL + 1))
 
     local scenario_status="PASS"
     local checks=()
@@ -627,7 +627,7 @@ run_multi_turn_scenario() {
                 log "  ${RED}[ERROR] Turn $t missing 'ask' field${NC}"
                 valid=false
             fi
-            ((t++))
+            t=$((t + 1))
         done
         if $valid; then
             checks+=("{\"check\":\"schema-valid\",\"status\":\"PASS\"}")
@@ -796,7 +796,7 @@ run_multi_turn_scenario() {
 
                 log "  ${DIM}$turn_label: tokens in=$turn_in out=$turn_out | mcp=$turn_mcp | ${#turn_text} chars${NC}"
 
-                ((t++))
+                t=$((t + 1))
             done
 
             local end_ns
@@ -809,7 +809,7 @@ run_multi_turn_scenario() {
             local i=0
             while [ "$i" -lt "$num_turns" ]; do
                 cat "$TMP_DIR/msg_${sid}_t${i}.txt" >> "$all_msg_file" 2>/dev/null
-                ((i++))
+                i=$((i + 1))
             done
 
             for pattern in "${GLOBAL_BANNED[@]}"; do
@@ -848,7 +848,7 @@ run_multi_turn_scenario() {
             local ti=0
             while [ "$ti" -lt "$num_turns" ]; do
                 cat "$TMP_DIR/tools_${sid}_t${ti}.txt" >> "$all_tools_file" 2>/dev/null
-                ((ti++))
+                ti=$((ti + 1))
             done
             while IFS= read -r tool_name; do
                 [ -z "$tool_name" ] && continue
@@ -917,7 +917,7 @@ run_multi_turn_scenario() {
             if [ "$scenario_status" = "PASS" ] || [ "$attempt" -ge "$max_attempts" ]; then
                 break
             fi
-            ((attempt++))
+            attempt=$((attempt + 1))
         done
 
         # Classify flaky status (only when retries were used)
@@ -971,11 +971,11 @@ run_multi_turn_scenario() {
 
     # Update status counters
     case "$scenario_status" in
-        PASS) ((PASSED++)) ;;
-        FAIL) ((FAILED++)) ;;
-        ERROR) ((ERRORS++)) ;;
-        FLAKY_PASS) ((FLAKY_PASSED++)); ((PASSED++)) ;;
-        FLAKY_FAIL) ((FLAKY_FAILED++)); ((FAILED++)) ;;
+        PASS) PASSED=$((PASSED + 1)) ;;
+        FAIL) FAILED=$((FAILED + 1)) ;;
+        ERROR) ERRORS=$((ERRORS + 1)) ;;
+        FLAKY_PASS) FLAKY_PASSED=$((FLAKY_PASSED + 1)); PASSED=$((PASSED + 1)) ;;
+        FLAKY_FAIL) FLAKY_FAILED=$((FLAKY_FAILED + 1)); FAILED=$((FAILED + 1)) ;;
     esac
 
     # Record result JSON
@@ -1078,8 +1078,8 @@ run_matrix() {
                     skip_title=$(jq -r '.title' "$sf")
                     skip_diff=$(jq -r '.difficulty' "$sf")
                     log "\n${YELLOW}[$skip_sid] $skip_title${NC} ${DIM}($skip_diff) — SKIP: model $MODEL < min_model_tier $min_tier_name${NC}"
-                    ((TOTAL++))
-                    ((SKIPPED++))
+                    TOTAL=$((TOTAL + 1))
+                    SKIPPED=$((SKIPPED + 1))
                     RESULTS+=("{\"id\":\"$skip_sid\",\"title\":\"$skip_title\",\"difficulty\":\"$skip_diff\",\"status\":\"SKIP\",\"skip_reason\":\"model_not_supported: $MODEL < $min_tier_name\",\"executed_model\":\"$MODEL\",\"model_tier\":$RESOLVED_MODEL_TIER,\"duration_ms\":0,\"input_tokens\":0,\"output_tokens\":0,\"mcp_calls_count\":0,\"response_chars\":0,\"checks\":[]}")
                     continue
                 fi
@@ -1132,7 +1132,7 @@ run_matrix() {
         grand_mcp=$((grand_mcp + TOTAL_MCP_CALLS))
 
         if [ "$budget_status" = "OK" ] && [ "$FAILED" -eq 0 ] && [ "$ERRORS" -eq 0 ]; then
-            ((configs_passed++))
+            configs_passed=$((configs_passed + 1))
             log "  ${GREEN}[$cfg_mode/$cfg_cognitive] PASS ($PASSED/$TOTAL, ${TOTAL_OUTPUT_TOKENS} tokens)${NC}\n"
         else
             log "  ${RED}[$cfg_mode/$cfg_cognitive] FAIL (budget=$budget_status failed=$FAILED)${NC}\n"
@@ -1318,8 +1318,8 @@ main() {
                 local skip_model_label="$MODEL"
                 [ -n "$MODEL_TIER_OVERRIDE" ] && skip_model_label="$MODEL (tier:$MODEL_TIER_OVERRIDE)"
                 log "\n${YELLOW}[$skip_sid] $skip_title${NC} ${DIM}($skip_diff) — SKIP: $skip_model_label < min_model_tier $min_tier_name${NC}"
-                ((TOTAL++))
-                ((SKIPPED++))
+                TOTAL=$((TOTAL + 1))
+                SKIPPED=$((SKIPPED + 1))
                 RESULTS+=("{\"id\":\"$skip_sid\",\"title\":\"$skip_title\",\"difficulty\":\"$skip_diff\",\"status\":\"SKIP\",\"skip_reason\":\"model_not_supported: $skip_model_label < $min_tier_name\",\"executed_model\":\"$MODEL\",\"model_tier\":$RESOLVED_MODEL_TIER,\"duration_ms\":0,\"input_tokens\":0,\"output_tokens\":0,\"mcp_calls_count\":0,\"response_chars\":0,\"checks\":[]}")
                 continue
             fi

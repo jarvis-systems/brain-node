@@ -71,7 +71,7 @@ check_legacy_patterns() {
         grep -nE "$LEGACY_PATTERN_1" "$file" | head -3 | while read line; do
             echo "  → $line"
         done
-        ((errors++))
+        errors=$((errors + 1))
     fi
     
     # Pattern 2: Named arguments without braces
@@ -81,7 +81,7 @@ check_legacy_patterns() {
         grep -nE "$LEGACY_PATTERN_2" "$file" | head -3 | while read line; do
             echo "  → $line"
         done
-        ((errors++))
+        errors=$((errors + 1))
     fi
     
     # Pattern 3: String pseudo-object with double quotes
@@ -91,7 +91,7 @@ check_legacy_patterns() {
         grep -nE "$LEGACY_PATTERN_3" "$file" | head -3 | while read line; do
             echo "  → $line"
         done
-        ((errors++))
+        errors=$((errors + 1))
     fi
     
     return $errors
@@ -165,11 +165,11 @@ for file in "${FILES[@]}"; do
             grep -nE "$LEGACY_PATTERN_1" "$file" | head -2 | while read line; do
                 echo "       $line"
             done
-            ((ERROR_COUNT++))
+            ERROR_COUNT=$((ERROR_COUNT + 1))
         else
             echo -e "${YELLOW}[WARN]${NC} $REL_PATH"
             echo -e "       ${YELLOW}Found: pseudo-object with single quotes${NC}"
-            ((TOTAL_WARNINGS++))
+            TOTAL_WARNINGS=$((TOTAL_WARNINGS + 1))
         fi
     fi
     
@@ -180,11 +180,11 @@ for file in "${FILES[@]}"; do
             grep -nE "$LEGACY_PATTERN_2" "$file" | head -2 | while read line; do
                 echo "       $line"
             done
-            ((ERROR_COUNT++))
+            ERROR_COUNT=$((ERROR_COUNT + 1))
         else
             echo -e "${YELLOW}[WARN]${NC} $REL_PATH"
             echo -e "       ${YELLOW}Found: named arguments without braces${NC}"
-            ((TOTAL_WARNINGS++))
+            TOTAL_WARNINGS=$((TOTAL_WARNINGS + 1))
         fi
     fi
     
@@ -195,11 +195,11 @@ for file in "${FILES[@]}"; do
             grep -nE "$LEGACY_PATTERN_3" "$file" | head -2 | while read line; do
                 echo "       $line"
             done
-            ((ERROR_COUNT++))
+            ERROR_COUNT=$((ERROR_COUNT + 1))
         else
             echo -e "${YELLOW}[WARN]${NC} $REL_PATH"
             echo -e "       ${YELLOW}Found: pseudo-object with double quotes${NC}"
-            ((TOTAL_WARNINGS++))
+            TOTAL_WARNINGS=$((TOTAL_WARNINGS + 1))
         fi
     fi
     

@@ -42,7 +42,7 @@ check() {
     local actual="$4"
     local op="${5:-eq}"
 
-    ((TOTAL++))
+    TOTAL=$((TOTAL + 1))
     local pass=0
     case "$op" in
         eq) [ "$actual" -eq "$expected" ] 2>/dev/null && pass=1 ;;
@@ -55,10 +55,10 @@ check() {
 
     local status="PASS"
     if [ "$pass" -eq 1 ]; then
-        ((PASSED++))
+        PASSED=$((PASSED + 1))
         $JSON_MODE || echo -e "  ${GREEN}[PASS]${NC} $id: $label (actual=$actual)"
     else
-        ((FAILED++))
+        FAILED=$((FAILED + 1))
         status="FAIL"
         $JSON_MODE || echo -e "  ${RED}[FAIL]${NC} $id: $label (expected $op $expected, actual=$actual)"
     fi

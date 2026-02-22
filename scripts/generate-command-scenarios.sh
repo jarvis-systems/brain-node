@@ -100,7 +100,7 @@ while IFS= read -r cmd_file; do
     # Skip if exists and not forced
     if [[ -f "$scenario_file" ]] && ! $FORCE; then
         echo "  [SKIP] CMD-AUTO-${scenario_slug} (exists, use --force)"
-        ((SKIPPED++))
+        SKIPPED=$((SKIPPED + 1))
         continue
     fi
 
@@ -132,7 +132,7 @@ while IFS= read -r cmd_file; do
         }' > "$scenario_file"
 
     echo "  [GEN]  CMD-AUTO-${scenario_slug}"
-    ((GENERATED++))
+    GENERATED=$((GENERATED + 1))
 
 done < <(find "$COMMANDS_DIR" -name "*.md" -type f | sort)
 

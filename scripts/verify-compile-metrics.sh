@@ -42,7 +42,7 @@ check() {
         echo -e "${GREEN}[PASS]${NC} $label (actual=$actual)"
     else
         echo -e "${RED}[FAIL]${NC} $label (expected ${op} $expected, actual=$actual)"
-        ((ERRORS++))
+        ERRORS=$((ERRORS + 1))
     fi
 }
 
