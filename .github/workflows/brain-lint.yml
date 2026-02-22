@@ -27,6 +27,7 @@ on:
       - 'AGENTS.md'
       - 'agent-schema.json'
       - 'pins.json'
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -36,11 +37,32 @@ jobs:
   lint-and-test:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      COMPOSER_AUTH: '{"github-oauth": {"github.com": "${{ secrets.JARVIS_REPOS_TOKEN }}"}}'
 
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           fetch-depth: 0
+
+      - name: Checkout brain-core
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          repository: jarvis-systems/brain-core
+          path: core
+          token: ${{ secrets.JARVIS_REPOS_TOKEN }}
+
+      - name: Checkout brain-cli
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          repository: jarvis-systems/brain-cli
+          path: cli
+          token: ${{ secrets.JARVIS_REPOS_TOKEN }}
+
+      - name: Verify sub-repos
+        run: |
+          test -d core/src && echo "core/ checkout: OK" || { echo "::error::core/ checkout failed"; exit 1; }
+          test -d cli/src && echo "cli/ checkout: OK" || { echo "::error::cli/ checkout failed"; exit 1; }
 
       - name: Setup PHP
         uses: shivammathur/setup-php@44454db4f0199b8b9685a5d763dc37cbf79108e1 # v2
