@@ -354,11 +354,14 @@ status: active
 |-------|-------|
 | Scope | Implement git worktree-based filesystem isolation for parallel agent sessions |
 | Evidence | Quad-mode drift incidents: files appearing/disappearing outside agent scope during parallel work |
-| Contract | `.docs/product/17-worktree-isolation-contract.md` (plan-only, approved) |
-| Status | **PLANNED** — contract written, implementation deferred |
-| Acceptance criteria | (1) `.worktrees/` in `.gitignore`; (2) operator cookbook tested; (3) Brain `Task()` propagates `--workdir`; (4) zero drift incidents in 2-week trial |
+| Contract | `.docs/product/17-worktree-isolation-contract.md` (v2.0, full spec) |
+| Status | **SPECIFIED** — full specification written (4 documents), implementation pending |
+| Specification docs | `17-worktree-isolation-contract.md` (v2.0 spec), `19-parallel-merge-protocol.md`, `20-worktree-lifecycle-management.md`, `architecture/parallel-execution-architecture.md` |
+| Research basis | `.docs/DocDiscovery/deep-research-report-isolation.md`, `.docs/DocDiscovery/deep-research-report-task-workflow.md` |
+| Industry validation | Cursor, Windsurf, Codex CLI, Copilot coding agent, Devin — all use worktree or equivalent isolation |
+| Acceptance criteria | (1) `.worktrees/` in `.gitignore`; (2) operator cookbook tested; (3) Brain `Task()` propagates `--workdir`; (4) zero drift incidents in 2-week trial; (5) merge protocol tested on 2+ parallel branches; (6) memory SQLite WAL concurrent access verified |
 | Rollback | Remove `.worktrees/` directory; revert to v0 (single repo, drift policy as safety net) |
-| Phase | v1 = operator-managed; v2 = Brain-managed; v3 = container (optional) |
+| Phase | v1 = operator-managed (54-112h); v2 = Brain-managed (+36-64h); v3 = container (optional, +20-48h) |
 | Reference | ENTERPRISE-DOD.md § "Quad-Mode Drift Policy"; `04-security-model.md` § "Compile Safety Contract" |
 
 ### P2-010: Demo script stale doc count (valid:72 → 75)

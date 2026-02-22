@@ -1,74 +1,159 @@
 ---
 name: "Worktree Isolation Contract"
-description: "Plan-only governance contract for git worktree-based agent isolation in parallel (quad-mode) operations"
+description: "Enterprise specification for git worktree-based agent isolation in parallel multi-agent operations"
 type: "contract"
-date: "2026-02-21"
-version: "1.0"
-status: "plan"
+date: "2026-02-22"
+version: "2.0"
+status: "spec"
 ---
 
 # Worktree Isolation Contract
 
-Status: **PLAN-ONLY** — not implemented. This document defines the target architecture for agent isolation. Implementation is tracked in FIX-QUEUE P2-009.
+Status: **SPEC** — approved architecture for agent isolation. Supersedes v1.0 (plan-only).
+
+Research basis: `.docs/DocDiscovery/deep-research-report-isolation.md`, `.docs/DocDiscovery/deep-research-report-task-workflow.md`
+
+Industry validation: Cursor (parallel agents in own worktrees), Windsurf Arena Mode (per-model worktrees), Codex CLI (OS-level sandbox + workspace scoping), GitHub Copilot coding agent (PR-based integration contract), Devin (parallel sessions in isolated environments).
 
 ## 1. Goals
 
 1. **Zero file clobbering** — parallel agents never overwrite each other's uncommitted work.
-2. **Clean git history** — each agent's work lands as a clean, reviewable branch with no drift artifacts.
-3. **Reproducible runs** — any agent session can be replayed from its branch without contamination from other sessions.
+2. **Clean git history** — each agent's work lands as a clean, reviewable branch with conventional commits.
+3. **Reproducible runs** — any agent session can be replayed from its branch without contamination.
+4. **Physical isolation** — filesystem-level separation replaces policy-only protection.
+5. **Automated lifecycle** — worktree creation, dependency setup, and cleanup are orchestrator-managed (v2+).
+6. **Seamless integration** — worktree isolation integrates with existing parallel task system (file manifests, scope registration, isolation checklist).
 
 ## 2. Non-Goals
 
-- Full container sandboxing (Docker) — optional enhancement, not required for v1.
+- Full container sandboxing (Docker) — optional enhancement (v3), not required for v1/v2.
 - Network isolation between agents — agents share the same network.
-- Automated orchestration of worktrees — v1 is operator-managed, Brain-assisted.
+- OS-level sandbox (macOS Seatbelt) — complementary security layer, separate concern.
+- Cross-repo worktrees — each repo (node, core, cli) manages worktrees independently per repo-topology invariant.
 
 ## 3. Model
 
 ### 3.1 One Agent, One Branch, One Worktree
 
-Each agent session operates in its own git worktree checked out to a dedicated branch. No two agents share a worktree. The root repo working directory is reserved for the operator (Doc) only.
+Each agent session operates in its own git worktree checked out to a dedicated branch. No two agents share a worktree. The root repo working directory is reserved for the operator (Doc) and Brain orchestrator only.
+
+Git enforces this by default: it refuses to create a worktree if the branch is already checked out elsewhere (without `--force`).
 
 ### 3.2 Branch Naming
 
 ```
-agent/<agent-name>/<ticket-or-scope>
+ai/<agent-name>/<taskId>/<attempt>
 ```
 
+Fields:
+- `ai/` — namespace prefix separating agent branches from human branches
+- `<agent-name>` — agent ID (e.g. `commit-master`, `explore`, `prompt-master`)
+- `<taskId>` — vector task ID or ticket reference (e.g. `task-42`, `security-posture`)
+- `<attempt>` — attempt number for circuit breaker tracking (e.g. `a1`, `a2`, `a3`)
+
 Examples:
-- `agent/model1/security-posture`
-- `agent/model2/dd-cleanup`
-- `agent/doc/scorecard-batch13`
+- `ai/commit-master/task-42/a1`
+- `ai/explore/security-posture/a1`
+- `ai/prompt-master/dd-cleanup/a2`
+
+Rationale: (a) unique branch per attempt prevents checkout conflicts, (b) machine-parsable for automation, (c) supports circuit-breaker/attempt semantics, (d) `ai/` prefix enables bulk operations (`git branch --list 'ai/*'`).
 
 ### 3.3 Worktree Path Convention
 
+Two supported layouts depending on deployment context:
+
+**Layout A: Project-relative (recommended for single-project dev)**
+
 ```
-.worktrees/<agent-name>/<ticket-or-scope>/
+.worktrees/<agent-name>/<taskId>/
 ```
 
-Example filesystem layout:
+**Layout B: External centralized (recommended for multi-project or heavy parallel)**
+
 ```
-./                                    # Root repo (operator only)
+~/brain/worktrees/<repo-name>/<agent-name>/<taskId>/
+```
+
+Example filesystem layout (Layout A):
+
+```
+./                                    # Root repo (operator + Brain)
 .worktrees/
-  model1/
-    security-posture/                 # git worktree for model1's task
+  commit-master/
+    task-42/                          # Worktree for commit-master
       .brain/ .claude/ core/ ...      # Full repo checkout
-  model2/
-    dd-cleanup/                       # git worktree for model2's task
+      vendor/                         # Own composer dependencies
+  explore/
+    security-posture/                 # Worktree for explore agent
       .brain/ .claude/ core/ ...
 ```
 
 `.worktrees/` MUST be in `.gitignore`.
 
-### 3.4 Shared Caches Policy
+Layout B rationale: avoids disk space issues when worktrees contain large `vendor/`/`node_modules/`, enables shared caching across projects, keeps repo directory clean.
 
-| Resource | Shared? | Rationale |
-|----------|---------|-----------|
-| `vendor/` (composer) | NO — each worktree has own | Prevents autoloader conflicts |
-| `node_modules/` | NO — each worktree has own | Prevents version conflicts |
-| `.brain/` config | NO — each worktree has own | Prevents compile race conditions |
-| `memory/` (SQLite) | YES — shared via absolute path | Single vector memory for all agents |
-| `dist/` (build output) | NO — each worktree has own | Prevents artifact clobbering |
+### 3.4 Shared Resources Policy
+
+| Resource | Shared? | Mechanism | Rationale |
+|----------|---------|-----------|-----------|
+| `vendor/` | NO | Each worktree installs own | Autoloader conflicts, post-install hooks |
+| `node_modules/` | NO | Each worktree installs own | Version/symlink conflicts |
+| `.brain/` config | NO | Each worktree has own | Compile race condition prevention |
+| `memory/` (SQLite) | YES | Absolute path or symlink | Single vector memory for all agents |
+| `dist/` build output | NO | Each worktree has own | Artifact clobbering prevention |
+| `.claude/` compiled | NO | Each worktree compiles own | Per-worktree instruction state |
+| Composer cache | YES | `COMPOSER_CACHE_DIR` | Shared download cache, separate installs |
+| pnpm store | YES | Content-addressable store + hard links | Disk-efficient shared dependencies |
+| npm cache | YES | `npm config set cache` | Shared HTTP/package cache |
+
+### 3.5 Memory Isolation Architecture
+
+SQLite vector memory (`memory/`) is the ONLY shared mutable resource between worktrees.
+
+**Access model:**
+- **Location:** Single absolute path outside any worktree (e.g. `~/brain/state/<repo>/memory/`)
+- **Binding:** Each worktree references memory via environment variable or symlink
+- **WAL mode:** MANDATORY for concurrent read access from multiple worktrees
+- **Write serialization:** Brain (or dedicated memory-writer MCP instance) serializes writes. Agents perform read-heavy access
+- **Checkpoint policy:** Periodic WAL checkpoint to prevent WAL file growth degradation
+- **Busy handling:** All SQLite clients MUST handle `SQLITE_BUSY` with retry + backoff
+
+**Why absolute path:** All worktree processes must reference the SAME inode for SQLite locking to function correctly. Relative paths or copies would create N independent memories, breaking knowledge persistence.
+
+### 3.6 MCP Server Isolation
+
+Two deployment models for MCP servers in worktree context:
+
+**Model A: Per-worktree MCP instances (recommended for v2+)**
+- Each agent worktree starts its own MCP server instances
+- MCP servers are rooted in the worktree path
+- Maximum isolation: agent cannot accidentally access another worktree
+- Cost: N instances × M MCP servers = N×M processes
+
+**Model B: Shared MCP with workspace scoping (acceptable for v1)**
+- Single MCP server instance shared by all agents
+- Each request includes workspace root parameter
+- Server enforces "no escape" from workspace root
+- Cost: lower process count, higher trust requirement
+
+Exception: `vector-memory` and `vector-task` MCP servers are ALWAYS shared (they access the shared memory SQLite).
+
+### 3.7 Per-Worktree Configuration
+
+Git supports per-worktree configuration via `extensions.worktreeConfig`:
+
+```bash
+# Enable per-worktree config (once, in main repo)
+git config extensions.worktreeConfig true
+
+# Set worktree-specific hooks path
+git config --worktree core.hooksPath .worktree-hooks/
+```
+
+Use cases:
+- Different `core.hooksPath` per worktree (agent-specific hooks)
+- Environment setup via `post-checkout` hook (copy `.env`, set variables)
+- Policy checks on blacklisted files via commit hooks
 
 ## 4. Hard Rules (Iron)
 
@@ -90,131 +175,167 @@ All build artifacts (`vendor/`, `node_modules/`, `dist/`, `.claude/` compiled ou
 
 ### 4.5 No Force Push
 
-Agents NEVER force-push. Branch conflicts are resolved by the operator via merge or rebase in root repo.
+Agents NEVER force-push. Branch conflicts are resolved by the operator or integration pipeline via merge in root repo.
 
-### 4.6 Root CI File Protection (v0 — Immediate)
+### 4.6 No Destructive Git in Worktrees
 
-Applies NOW, before full worktree isolation (v1+). Prevents recurring drift on CI files during quad-mode.
+FORBIDDEN in any worktree context: `git checkout -- <file>`, `git restore`, `git stash`, `git reset`, `git clean`. These commands could destroy other agents' uncommitted work in shared-resource scenarios. Already enforced by existing parallel execution rules (`no-destructive-git`).
 
-- **Read-only on master:** `.github/workflows/*.yml` in root repo master MUST NOT be modified by any agent during quad-mode. Only the operator (Doc) edits CI files on master.
-- **Dedicated branch for CI edits:** Agent CI changes go to `agent/<name>/ci-<date>` branch. If worktrees are available, use a worktree. If not, a plain branch is acceptable.
-- **Merge policy:** CI branch merges to master only after: (1) all gates GREEN on the branch, (2) evidence pack attached (diff + gate output), (3) no other agent work in flight on the same files. Silent cherry-picks are forbidden.
-- **Drift revert:** If a CI file becomes dirty on root master during a non-CI task, the current agent MUST revert it (`git checkout -- <file>`) before committing. Record the drift in the commit message or FIX-QUEUE for traceability.
+### 4.7 Integration Via Branch Only
 
-## 5. Operator Command Cookbook
+Agents NEVER merge to master directly. All agent work reaches master through the merge protocol (see `19-parallel-merge-protocol.md`). The merge flow:
 
-These commands are executed by the operator (Doc), not by agents automatically.
-
-### Create Worktree
-
-```bash
-# Create branch + worktree for agent task
-git worktree add .worktrees/model1/security-posture -b agent/model1/security-posture
-
-# Install dependencies in worktree
-cd .worktrees/model1/security-posture && composer install
+```
+ai/agent-a/task-1/a1 ──merge──→ master ←──merge── ai/agent-b/task-2/a1
 ```
 
-### Remove Worktree
+Merges happen in root repo by operator or integration pipeline.
 
-```bash
-# After merge, clean up
-git worktree remove .worktrees/model1/security-posture
-git branch -d agent/model1/security-posture
+### 4.8 Memory Folder Sacred
+
+`memory/` directory (SQLite databases) is NEVER included in worktree-specific `git add` operations. Memory is shared infrastructure, not per-task artifact.
+
+### 4.9 Worktree Cleanup Mandatory
+
+Completed worktrees MUST be cleaned up within the same session or batch. Orphaned worktrees consume disk and branch namespace.
+
+## 5. Integration with Parallel Task System
+
+### 5.1 Task Decomposition Awareness
+
+When `task:decompose` creates subtasks with `parallel: true`:
+- Brain records the target worktree path in each subtask's metadata
+- File scope (`FILES: [...]`) in task content determines which files the agent will touch
+- The 5-condition parallel isolation checklist is evaluated BEFORE worktree creation
+
+### 5.2 Task Execution Flow (v2)
+
+```
+1. task:decompose → subtasks with parallel: true, order, file scopes
+2. Brain creates worktree per parallel subtask (git worktree add)
+3. Brain installs dependencies in each worktree
+4. task:async delegates agent to worktree via Task(--workdir=<path>)
+5. Agent executes within worktree boundaries
+6. Agent registers PARALLEL SCOPE in task comment
+7. On completion: merge protocol executes (see doc 19)
+8. On success: worktree cleanup (git worktree remove)
 ```
 
-### Status Check
+### 5.3 Scope Registration Compatibility
 
-```bash
-# List all active worktrees
-git worktree list
+Existing scope registration mechanism (`PARALLEL SCOPE: [files]` in task comments) remains active. In worktree mode, scope registration serves as documentation/audit trail rather than primary isolation mechanism (physical isolation handles file conflicts).
 
-# Check for stale worktrees
-git worktree prune --dry-run
-```
+### 5.4 Global Blacklist Enforcement
 
-### Detect and Revert CI Drift (v0)
+Files on the global blacklist (dependency manifests, `.env`, config, routes, migrations, CI/CD configs) remain FORBIDDEN for parallel agent modification even with worktree isolation. Rationale: these files require serial application and integration testing (see merge protocol).
 
-Run before committing any non-CI batch during quad-mode:
+### 5.5 Circuit Breaker Compatibility
 
-```bash
-# Check for CI file drift
-CI_DIRTY=$(git diff --name-only -- '.github/workflows/*.yml')
-if [ -n "$CI_DIRTY" ]; then
-  echo "WARN: CI drift detected on root master: $CI_DIRTY"
-  echo "Action: revert if current task scope != CI"
-  # Safe revert (does not touch staged changes):
-  git checkout -- .github/workflows/
-  echo "Reverted. Record drift source in commit message or FIX-QUEUE."
-fi
-```
-
-### Cleanup All
-
-```bash
-# Remove all finished worktrees
-git worktree prune
-rm -rf .worktrees/*/  # Only after git worktree prune confirms safe
-```
+Existing circuit breaker (MAX 3 attempts per task → tag `stuck`) maps to worktree lifecycle:
+- Attempt 1: `ai/<agent>/<taskId>/a1` → new worktree
+- Attempt 2: `ai/<agent>/<taskId>/a2` → new worktree (previous removed)
+- Attempt 3: `ai/<agent>/<taskId>/a3` → new worktree (previous removed)
+- After 3: tag `stuck`, all worktrees for this task cleaned up
 
 ## 6. Risks and Mitigations
 
 | Risk | Impact | Mitigation |
 |------|--------|------------|
-| Disk usage (full checkout per worktree) | ~100MB per worktree | Prune after merge; worktrees share git objects |
-| Stale worktrees (forgotten after task) | Branch/disk clutter | Weekly `git worktree prune --dry-run` check |
-| Branch cleanup lag | Old branches accumulate | `git branch --merged master` cleanup after each batch |
-| Accidental force push from worktree | History corruption | Iron rule 4.5; `receive.denyNonFastForwards` on remote |
-| Memory SQLite contention | Write locks under parallel access | WAL mode (already enabled); retry on SQLITE_BUSY |
+| Disk usage (N worktrees × vendor/node_modules) | ~200-500MB per worktree | Shared download caches (Composer/pnpm); cleanup after merge; Layout B for heavy projects |
+| Stale worktrees (forgotten after task) | Branch/disk clutter | Mandatory cleanup rule (4.9); periodic `git worktree prune`; GC policy |
+| SQLite contention under parallel writes | `SQLITE_BUSY` errors | WAL mode + write serialization + retry with backoff |
+| Branch cleanup lag | Old branches accumulate | `git branch --list 'ai/*' --merged master` cleanup after each batch |
+| Force push from worktree | History corruption | Iron rule 4.5; `receive.denyNonFastForwards` on remote |
+| Dependency drift between worktrees | Different versions installed | Lockfile pinning; regenerate from same lockfile per worktree |
+| Hooks interference between worktrees | Unexpected behavior | Per-worktree `core.hooksPath` via `extensions.worktreeConfig` |
+| Merge conflicts at integration | Failed merge pipeline | Serial application order (dependency-based); rerere; rollback via revert |
 
-## 7. Brain Integration Notes
-
-### 7.1 Worktree Creation
-
-Brain (or operator) creates the worktree BEFORE delegating to an agent. The agent receives `--workdir` pointing to its worktree as part of the Task delegation context.
-
-### 7.2 Sub-Agent Workdir Propagation
-
-When Brain delegates via `Task()`, the worktree path is passed as context. The sub-agent inherits the workdir and all tool calls (Bash, Read, Edit, Write) operate within it.
-
-### 7.3 Race Condition Prevention
-
-- Compile lock: per-worktree `brain.lock` (flock, automatic).
-- Memory: SQLite WAL mode handles concurrent reads; writes are serialized by SQLite.
-- Git operations: each worktree has independent HEAD, index, and working tree — no git-level races.
-
-### 7.4 Merge Flow
-
-```
-agent/model1/task-a ──PR──→ master ←──PR── agent/model2/task-b
-```
-
-Merges happen in root repo (operator). Agents never merge to master directly.
-
-## 8. Relationship to Existing Contracts
+## 7. Relationship to Existing Contracts
 
 | Contract | Relationship |
 |----------|-------------|
-| Compile Safety Contract (`04-security-model.md`) | Worktree isolation makes single-writer lock per-worktree; compile races eliminated by filesystem separation |
-| Quad-Mode Drift Policy (`ENTERPRISE-DOD.md`) | Worktree isolation PREVENTS drift at source; drift policy remains as detection fallback |
+| Compile Safety (`04-security-model.md`) | Worktree isolation makes single-writer lock per-worktree; compile races eliminated by filesystem separation |
+| Parallel Merge Protocol (`19-parallel-merge-protocol.md`) | Defines HOW worktree branches are integrated back to master |
+| Worktree Lifecycle (`20-worktree-lifecycle-management.md`) | Defines HOW worktrees are created, maintained, and cleaned up |
+| Parallel Execution Architecture (`architecture/parallel-execution-architecture.md`) | E2E architecture connecting decomposition → isolation → execution → integration |
+| Quad-Mode Drift Policy (`ENTERPRISE-DOD.md`) | Worktree isolation PREVENTS drift at source; drift policy remains as detection fallback for v0 |
 | Model 2 Operating Contract (`15-model2-operating-contract.md`) | Worktree is the execution environment for Model 2 agents |
+| Repo Topology (`architecture/repo-topology.md`) | Worktree isolation applies per-repo; each repo manages its own worktrees independently |
+| Task Async (`TaskAsyncInclude`) | Parallel execution awareness integrates with worktree-based isolation |
+| Task Decompose (`TaskDecomposeInclude`) | Parallel flag and file scope determine worktree creation |
 
-## 9. Implementation Phases
+## 8. Implementation Phases
 
-| Phase | Scope | Prerequisite |
-|-------|-------|-------------|
-| v0 (current) | No isolation; quad-mode drift policy as safety net | — |
-| v1 | Operator-managed worktrees; `.worktrees/` in `.gitignore`; manual `composer install` per worktree | This contract approved |
-| v2 | Brain-managed worktrees; auto-create on Task delegation; auto-cleanup on task complete | v1 stable for 2+ weeks |
-| v3 (optional) | Container-per-agent; network namespace isolation; resource limits | v2 stable; Docker available |
+### v0 (current) — Policy-Based Isolation
 
-## 10. Repo Boundary Awareness
+No physical isolation. Parallel agents work in the same worktree. Protection via:
+- File scope registration in task comments
+- Global blacklist enforcement
+- Scoped git checkpoint (`git add {specific_files}`)
+- Drift policy as safety net
 
-Worktree isolation applies **per repo**, not per monorepo. The project contains three independent git repositories (root, core/, cli/) — each with its own `.git/`. Worktree commands (`git worktree add`) operate within a single repo. An agent working in a core/ worktree cannot commit to root, and vice versa. See `.docs/architecture/repo-topology.md` for the full topology and agent guardrails.
+### v1 — Operator-Managed Worktrees
 
-## 11. Cross-References
+**Prerequisites:** This contract approved, operator cookbook tested.
 
-- Compile Safety: `.docs/product/04-security-model.md` § "Compile Safety Contract"
-- Quad-Mode Drift: `.docs/audits/enterprise-codebase/ENTERPRISE-DOD.md` § "Quad-Mode Drift Policy"
+**Scope:**
+- `.worktrees/` directory in `.gitignore`
+- Operator creates/removes worktrees manually via cookbook commands
+- Manual `composer install` / `pnpm install` per worktree
+- Brain propagates `--workdir` to agents via Task() context
+- Memory SQLite accessed via absolute path (shared)
+- MCP servers: shared with workspace scoping (Model B)
+
+**Acceptance criteria:**
+1. `.worktrees/` in `.gitignore`
+2. Operator cookbook tested (create, install deps, remove)
+3. Brain `Task()` propagates `--workdir`
+4. Zero drift incidents in 2-week trial
+
+### v2 — Brain-Managed Worktrees
+
+**Prerequisites:** v1 stable for 2+ weeks.
+
+**Scope:**
+- Brain auto-creates worktree on parallel Task delegation
+- Brain auto-installs dependencies (cached)
+- Brain auto-cleanup on task completion
+- Per-worktree MCP instances (Model A)
+- Integration task auto-creation after parallel batch
+- `git worktree list --porcelain` as worktree registry
+
+**New components:**
+- `WorktreeManagementInclude.php` — worktree CRUD operations
+- `ParallelMergeInclude.php` — merge protocol execution
+- Brain script: `worktree:setup`, `worktree:merge`, `worktree:cleanup`
+
+### v3 (optional) — Container-Per-Agent
+
+**Prerequisites:** v2 stable; Docker available.
+
+**Scope:**
+- Container wraps each worktree for process/network isolation
+- virtiofs for macOS file sharing performance
+- Resource limits (CPU/memory) per agent
+- Code editing on host (worktree), tests/linters in container
+
+**Consideration:** macOS Docker bind mounts have performance overhead. Recommended: run tests in container, edit code on host worktree.
+
+## 9. Repo Boundary Awareness
+
+Worktree isolation applies **per repo**, not per monorepo. The project contains three independent git repositories (root, core/, cli/) — each with its own `.git/`. Worktree commands (`git worktree add`) operate within a single repo. An agent working in a core/ worktree cannot commit to root, and vice versa. See `.docs/architecture/repo-topology.md` for full topology and agent guardrails.
+
+For cross-repo tasks: create separate worktrees in each affected repo, coordinate via task system.
+
+## 10. Cross-References
+
+- Merge Protocol: `.docs/product/19-parallel-merge-protocol.md`
+- Worktree Lifecycle: `.docs/product/20-worktree-lifecycle-management.md`
+- Parallel Architecture: `.docs/architecture/parallel-execution-architecture.md`
+- Compile Safety: `.docs/product/04-security-model.md` section "Compile Safety Contract"
+- Quad-Mode Drift: `.docs/audits/enterprise-codebase/ENTERPRISE-DOD.md` section "Quad-Mode Drift Policy"
 - Model 2 Contract: `.docs/product/15-model2-operating-contract.md`
+- Repo Topology: `.docs/architecture/repo-topology.md`
+- Deep Research: `.docs/DocDiscovery/deep-research-report-isolation.md`
+- Task Workflow Research: `.docs/DocDiscovery/deep-research-report-task-workflow.md`
 - Backlog: `.docs/audits/enterprise-codebase/FIX-QUEUE.md` P2-009

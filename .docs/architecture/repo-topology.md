@@ -214,5 +214,8 @@ This does not affect current development. The three-repo topology remains the ca
 ## 9. Cross-References
 
 - Worktree Isolation: `.docs/product/17-worktree-isolation-contract.md` (per-repo boundary awareness)
+- Parallel Merge Protocol: `.docs/product/19-parallel-merge-protocol.md` (merge integration for parallel branches)
+- Worktree Lifecycle: `.docs/product/20-worktree-lifecycle-management.md` (worktree CRUD and dependency management)
+- Parallel Architecture: `.docs/architecture/parallel-execution-architecture.md` (E2E parallel execution architecture)
 - Pre-Publication: `.docs/product/10-pre-publication.md` (credential rotation spans all repos)
 - Enterprise Release Pack: `.docs/README_ENTERPRISE.md`
