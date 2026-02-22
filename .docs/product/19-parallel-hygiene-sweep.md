@@ -18,6 +18,17 @@ Keep velocity without sacrificing invariants. Run at the end of each batch or be
 - Before any GO PRE-PUB gate
 - After quad-mode stabilization (parallel agents converge to master)
 
+## Micro-Fix Batching Rule
+
+When <=3 trivial fixes are identified during any batch (missing front matter, stale doc link, allowed artifact noise):
+
+1. Delegate fix(es) to sub-agent(s) **in the same run** — do not defer to a separate batch.
+2. Trivial = no behavioral change, no code edits, no CI gate impact. Examples: YAML front matter, doc counter, stale cross-reference.
+3. Each sub-agent produces evidence: file list + `brain docs --validate` result.
+4. If fix count >3 or any fix is non-trivial: defer to dedicated hygiene sweep.
+
+This prevents micro-fix churn from accumulating across batches while keeping macro work unblocked.
+
 ## Sweep Agents
 
 Three independent sub-agents run **concurrently**. No cross-dependencies.

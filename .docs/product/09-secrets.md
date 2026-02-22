@@ -115,6 +115,18 @@ Anything beyond these two lines — investigate immediately and run `bash script
 
 **Anti-pattern: do NOT add workspace artifacts to `.gitignore`.** These items are kept untracked intentionally. Adding them to `.gitignore` silences `git status` signal — accidental files would then be hidden instead of immediately visible. The signal value of a noisy `git status` outweighs the convenience of a quiet one. If an artifact causes recurring false alarms across 3+ consecutive batches, escalate to operator for explicit policy review — do not silently suppress.
 
+### Fast Local Cleanup (Non-Destructive)
+
+Optional cleanup of allowed workspace artifacts. Non-destructive — all items regenerate automatically.
+
+```bash
+rm -f .compile-stamp         # Regenerated on next brain compile
+rm -rf .work/                # Ephemeral scratch, no persistent data
+brain docs --validate        # Must stay: invalid=0, warnings=0
+```
+
+Do not commit removal. Do not add `.gitignore` rules for these items — the signal value of visible untracked items prevents accidental file hiding (see anti-pattern note above).
+
 ## Troubleshooting
 
 ### `.mcp.json` missing after fresh clone
