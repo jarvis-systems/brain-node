@@ -50,7 +50,9 @@ Procedure:
 
 3. Output a classification table. **No automatic moves or deletions.**
 
-Allowed artifacts policy: `.compile-stamp` (build stamp), `.work/` (scratch workspace). See `.docs/architecture/workspace-artifacts-policy.md` if it exists, or `CLAUDE.md` § workspace artifacts.
+**Default stance:** classify and report. NEVER propose `.gitignore` additions for workspace artifacts unless recurring high-frequency drift is proven across 3+ consecutive batches with operator confirmation. Signal value of visible untracked items outweighs convenience of silencing them.
+
+Allowed artifacts policy: `.compile-stamp` (build stamp), `.work/` (scratch workspace). See `.docs/product/09-secrets.md` § Expected Local Workspace Artifacts.
 
 ### C. Vector Memory Hygiene Planner
 

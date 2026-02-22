@@ -88,22 +88,32 @@ status: active
 
 **Allowed (normal):**
 
-| Item | Type | Why untracked |
-|------|------|---------------|
-| `node/Includes/` | Empty directory | Scaffold created by `brain make:include`. Git does not track empty directories. |
-| `node/Skills/` | Empty directory | Scaffold created by `brain make:skill`. Git does not track empty directories. |
-| `.brain` | Symlink (this repo only) | Self-hosting dev mode: `.brain → .` so Brain tooling develops itself using its own Node structure. In other projects `.brain/` is a real directory, not a symlink. |
-| `.compile-stamp` | File | Build timestamp from `brain compile`. Safe to delete; regenerated on next compile. |
+| Item | Type | Origin | Why untracked | Safe cleanup |
+|------|------|--------|---------------|-------------|
+| `node/Includes/` | Empty directory | `brain make:include` scaffold | Git does not track empty dirs | `rmdir node/Includes/` (auto-recreated) |
+| `node/Skills/` | Empty directory | `brain make:skill` scaffold | Git does not track empty dirs | `rmdir node/Skills/` (auto-recreated) |
+| `.brain` | Symlink | Self-hosting dev mode (`.brain → .`) | This repo only; other projects use a real directory | Do not remove — required for dev |
+| `.compile-stamp` | File | `brain compile` build timestamp | Signal: confirms last compile time | `rm -f .compile-stamp` (regenerated on next compile) |
+| `.work/` | Directory | Scratch workspace for agent operations | Signal: shows active/recent agent work | `rm -rf .work/` (ephemeral, no persistent data) |
 
-**Verify:** `git clean -nd` should list ONLY items from the table above. Anything else — investigate immediately and run `bash scripts/scan-secrets.sh`.
+**Operator check** — when worktree should be clean, only these two untracked items are expected:
 
-**Red flags** (investigate if seen in `git clean -nd`):
+```bash
+git status --porcelain
+# Expected output (clean worktree):
+# ?? .compile-stamp
+# ?? .work/
+```
+
+Anything beyond these two lines — investigate immediately and run `bash scripts/scan-secrets.sh`.
+
+**Red flags** (investigate if seen in `git status --porcelain` or `git clean -nd`):
 
 - Stdout dumps (e.g. `pbcopy` from `> file` instead of `| pbcopy`) — delete after confirming content
 - Editor temp files (`*.swp`, `*.bak`, `*~`) — configure global gitignore (`~/.config/git/ignore`), not repo `.gitignore`
 - Files matching secret patterns (`github_pat_*`, `ctx7sk-*`, `*.key`) — run `scan-secrets.sh`, rotate if real
 
-**Why not .gitignore:** These items are NOT added to `.gitignore` intentionally. Keeping `git clean -nd` signal value high ensures unexpected files are immediately visible, not silently hidden.
+**Anti-pattern: do NOT add workspace artifacts to `.gitignore`.** These items are kept untracked intentionally. Adding them to `.gitignore` silences `git status` signal — accidental files would then be hidden instead of immediately visible. The signal value of a noisy `git status` outweighs the convenience of a quiet one. If an artifact causes recurring false alarms across 3+ consecutive batches, escalate to operator for explicit policy review — do not silently suppress.
 
 ## Troubleshooting
 
