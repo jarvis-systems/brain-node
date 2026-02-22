@@ -1,7 +1,7 @@
 name: Memory Hygiene
 
 # Report-only: does NOT block merges.
-# Runs against fresh vector-memory DB (empty in CI = 0/15 baseline).
+# CI has ephemeral vector store (empty DB = NO_DATA mode, skips smoke/rank).
 # Primary value: pipeline readiness, artifact upload, summary visibility.
 # For real hygiene checks, run locally: brain memory:hygiene
 
@@ -96,30 +96,39 @@ jobs:
           echo "" >> "$GITHUB_STEP_SUMMARY"
 
           if [ -f .work/memory-hygiene/smoke-results.json ]; then
-            PASSED=$(jq -r '.passed // 0' .work/memory-hygiene/smoke-results.json)
-            TOTAL=$(jq -r '.total_probes // 0' .work/memory-hygiene/smoke-results.json)
-            RATE=$(jq -r '.pass_rate // 0' .work/memory-hygiene/smoke-results.json)
-            CRIT_PASS=$(jq -r '.critical_passed // 0' .work/memory-hygiene/smoke-results.json)
-            CRIT_TOTAL=$(jq -r '.critical_total // 0' .work/memory-hygiene/smoke-results.json)
-            THRESHOLD=$(jq -r '.threshold_met // false' .work/memory-hygiene/smoke-results.json)
+            SMOKE_STATUS=$(jq -r '.status // "complete"' .work/memory-hygiene/smoke-results.json)
 
-            echo "| Metric | Value |" >> "$GITHUB_STEP_SUMMARY"
-            echo "|--------|-------|" >> "$GITHUB_STEP_SUMMARY"
-            echo "| Smoke score | ${PASSED}/${TOTAL} (${RATE}) |" >> "$GITHUB_STEP_SUMMARY"
-            echo "| Critical probes | ${CRIT_PASS}/${CRIT_TOTAL} |" >> "$GITHUB_STEP_SUMMARY"
-            echo "| Threshold met | ${THRESHOLD} |" >> "$GITHUB_STEP_SUMMARY"
+            if [ "$SMOKE_STATUS" = "no_data" ]; then
+              REASON=$(jq -r '.reason // "empty store"' .work/memory-hygiene/smoke-results.json)
+              echo "| Status | NO_DATA |" >> "$GITHUB_STEP_SUMMARY"
+              echo "|--------|---------|" >> "$GITHUB_STEP_SUMMARY"
+              echo "| Reason | ${REASON} |" >> "$GITHUB_STEP_SUMMARY"
+              echo "Memory hygiene: NO_DATA — ${REASON}"
+            else
+              PASSED=$(jq -r '.passed // 0' .work/memory-hygiene/smoke-results.json)
+              TOTAL=$(jq -r '.total_probes // 0' .work/memory-hygiene/smoke-results.json)
+              RATE=$(jq -r '.pass_rate // 0' .work/memory-hygiene/smoke-results.json)
+              CRIT_PASS=$(jq -r '.critical_passed // 0' .work/memory-hygiene/smoke-results.json)
+              CRIT_TOTAL=$(jq -r '.critical_total // 0' .work/memory-hygiene/smoke-results.json)
+              THRESHOLD=$(jq -r '.threshold_met // false' .work/memory-hygiene/smoke-results.json)
 
-            echo "Smoke: ${PASSED}/${TOTAL} | Critical: ${CRIT_PASS}/${CRIT_TOTAL} | Threshold: ${THRESHOLD}"
+              echo "| Metric | Value |" >> "$GITHUB_STEP_SUMMARY"
+              echo "|--------|-------|" >> "$GITHUB_STEP_SUMMARY"
+              echo "| Smoke score | ${PASSED}/${TOTAL} (${RATE}) |" >> "$GITHUB_STEP_SUMMARY"
+              echo "| Critical probes | ${CRIT_PASS}/${CRIT_TOTAL} |" >> "$GITHUB_STEP_SUMMARY"
+              echo "| Threshold met | ${THRESHOLD} |" >> "$GITHUB_STEP_SUMMARY"
+
+              if [ -f .work/memory-hygiene/rank-safety-results.json ]; then
+                VERDICT=$(jq -r '.verdict // "UNKNOWN"' .work/memory-hygiene/rank-safety-results.json)
+                OVERLAPS=$(jq -r '.overlap_risks_detected // 0' .work/memory-hygiene/rank-safety-results.json)
+                echo "| Rank safety | ${VERDICT} (${OVERLAPS} risks) |" >> "$GITHUB_STEP_SUMMARY"
+              fi
+
+              echo "Smoke: ${PASSED}/${TOTAL} | Critical: ${CRIT_PASS}/${CRIT_TOTAL} | Threshold: ${THRESHOLD}"
+            fi
           else
-            echo "No smoke results generated (expected on first CI run with empty DB)" >> "$GITHUB_STEP_SUMMARY"
+            echo "No smoke results generated (MCP server connection failed)" >> "$GITHUB_STEP_SUMMARY"
             echo "No smoke results generated"
-          fi
-
-          if [ -f .work/memory-hygiene/rank-safety-results.json ]; then
-            VERDICT=$(jq -r '.verdict // "UNKNOWN"' .work/memory-hygiene/rank-safety-results.json)
-            OVERLAPS=$(jq -r '.overlap_risks_detected // 0' .work/memory-hygiene/rank-safety-results.json)
-            echo "| Rank safety | ${VERDICT} (${OVERLAPS} risks) |" >> "$GITHUB_STEP_SUMMARY"
-            echo "Rank safety: ${VERDICT} | Overlap risks: ${OVERLAPS}"
           fi
 
           # TODO: Enable build failure when critical < 7/7 and DB is seeded
