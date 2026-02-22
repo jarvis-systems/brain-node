@@ -1,0 +1,114 @@
+name: Memory Hygiene
+
+# Report-only: does NOT block merges.
+# Runs against local vector-memory DB (empty in CI = 0/15 baseline).
+# Primary value: pipeline readiness, artifact upload, summary visibility.
+# For real hygiene checks, run locally: brain memory:hygiene
+
+on:
+  schedule:
+    - cron: '0 3 * * 0' # Weekly, Sunday 03:00 UTC
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  memory-hygiene:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      COMPOSER_AUTH: '{"github-oauth": {"github.com": "${{ secrets.JARVIS_REPOS_TOKEN }}"}}'
+
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@44454db4f0199b8b9685a5d763dc37cbf79108e1 # v2
+        with:
+          php-version: '8.2'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@0d4c2d60fbdc3e4210366565e6bb24b4df01e32c # v5
+        with:
+          enable-cache: false
+
+      - name: Install Brain CLI
+        run: |
+          composer global require jarvis-brain/cli --no-interaction
+          echo "$(composer global config bin-dir --absolute --quiet)" >> "$GITHUB_PATH"
+
+      - name: Generate MCP config
+        run: |
+          cat > .mcp.json << 'MCPEOF'
+          {
+            "mcpServers": {
+              "vector-memory": {
+                "type": "stdio",
+                "command": "uvx",
+                "args": [
+                  "vector-memory-mcp",
+                  "--working-dir",
+                  "."
+                ]
+              }
+            }
+          }
+          MCPEOF
+
+      - name: Run memory hygiene
+        id: hygiene
+        continue-on-error: true
+        run: brain memory:hygiene
+
+      - name: Print summary
+        if: always()
+        run: |
+          echo "## Memory Hygiene Report" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+
+          if [ -f .work/memory-hygiene/smoke-results.json ]; then
+            PASSED=$(jq -r '.passed // 0' .work/memory-hygiene/smoke-results.json)
+            TOTAL=$(jq -r '.total_probes // 0' .work/memory-hygiene/smoke-results.json)
+            RATE=$(jq -r '.pass_rate // 0' .work/memory-hygiene/smoke-results.json)
+            CRIT_PASS=$(jq -r '.critical_passed // 0' .work/memory-hygiene/smoke-results.json)
+            CRIT_TOTAL=$(jq -r '.critical_total // 0' .work/memory-hygiene/smoke-results.json)
+            THRESHOLD=$(jq -r '.threshold_met // false' .work/memory-hygiene/smoke-results.json)
+
+            echo "| Metric | Value |" >> "$GITHUB_STEP_SUMMARY"
+            echo "|--------|-------|" >> "$GITHUB_STEP_SUMMARY"
+            echo "| Smoke score | ${PASSED}/${TOTAL} (${RATE}) |" >> "$GITHUB_STEP_SUMMARY"
+            echo "| Critical probes | ${CRIT_PASS}/${CRIT_TOTAL} |" >> "$GITHUB_STEP_SUMMARY"
+            echo "| Threshold met | ${THRESHOLD} |" >> "$GITHUB_STEP_SUMMARY"
+
+            echo "Smoke: ${PASSED}/${TOTAL} | Critical: ${CRIT_PASS}/${CRIT_TOTAL} | Threshold: ${THRESHOLD}"
+          else
+            echo "No smoke results generated (expected on first CI run with empty DB)" >> "$GITHUB_STEP_SUMMARY"
+            echo "No smoke results generated"
+          fi
+
+          if [ -f .work/memory-hygiene/rank-safety-results.json ]; then
+            VERDICT=$(jq -r '.verdict // "UNKNOWN"' .work/memory-hygiene/rank-safety-results.json)
+            OVERLAPS=$(jq -r '.overlap_risks_detected // 0' .work/memory-hygiene/rank-safety-results.json)
+            echo "| Rank safety | ${VERDICT} (${OVERLAPS} risks) |" >> "$GITHUB_STEP_SUMMARY"
+            echo "Rank safety: ${VERDICT} | Overlap risks: ${OVERLAPS}"
+          fi
+
+          # TODO: Enable build failure when critical < 7/7 and DB is seeded
+          # if [ "$CRIT_PASS" -lt "$CRIT_TOTAL" ] && [ "$CRIT_TOTAL" -gt 0 ]; then
+          #   echo "::error::Critical probes failed: ${CRIT_PASS}/${CRIT_TOTAL}"
+          #   exit 1
+          # fi
+
+      - name: Upload hygiene artifacts
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: memory-hygiene-report
+          path: |
+            .work/memory-hygiene/ledger.json
+            .work/memory-hygiene/smoke-results.json
+            .work/memory-hygiene/rank-safety-results.json
+          retention-days: 30
+          if-no-files-found: warn

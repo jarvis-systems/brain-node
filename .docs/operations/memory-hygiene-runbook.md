@@ -28,6 +28,42 @@ Vector memory is the inter-session knowledge bus. Without hygiene, retrieval deg
 - After context compaction if retrieval feels degraded
 - Monthly as routine health check
 
+## Recommended Cadence
+
+| Frequency | Mode | What to do |
+|-----------|------|------------|
+| Weekly | Read-only | `brain memory:hygiene` — capture ledger + smoke + rank safety. Review artifacts. |
+| Monthly | Review | Compare smoke trends across 4 weekly snapshots. Investigate any persistent FAILs. |
+| Monthly (if needed) | Consolidation | `brain memory:hygiene --consolidate --yes` — only when topic bloat exceeds 30 memories per cluster. |
+| On-demand | Full | After any `mem:cleanup`, bulk store, or context compaction event. |
+
+### Local scheduling
+
+Cron one-liner (weekly, Sunday 03:00):
+
+```
+0 3 * * 0 cd /path/to/project && brain memory:hygiene >> .work/memory-hygiene/cron.log 2>&1
+```
+
+Or run manually in a Claude Code session at the start of each work week:
+
+```
+brain memory:hygiene
+```
+
+### Score Drop Playbook
+
+When smoke score drops below baseline (currently 12/15):
+
+| Drop | Severity | Action |
+|------|----------|--------|
+| 1 probe regressed | LOW | Check if a recent `mem:store` or `mem:cleanup` caused it. Re-run to confirm. Transient drops from MCP server cold start are possible. |
+| 2-3 probes regressed | MEDIUM | Identify affected domains. Check if memories were deleted or if new content outranks anchors. Run rank safety check. Store replacement memories if needed. |
+| Critical probe failed | HIGH | Immediate action. Verify the anchor memory still exists (`mem:get <id>`). If deleted, re-store the anchor. If outranked, check for embedding overlap and roll back the offending memory. |
+| >= 5 probes failed | CRITICAL | Likely data loss or corruption. Compare current ledger with last known-good snapshot. Consider re-seeding anchors from `.work/memory-hygiene/` artifacts. |
+
+Key principle: **always capture a ledger before remediation** so you have a rollback point.
+
 ## How to Run
 
 Since v1.3, the full hygiene workflow is automated as a CLI command.
