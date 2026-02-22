@@ -123,13 +123,24 @@ This returns the owning repo's root. If the result differs from the expected rep
 | Expecting root commit to include core changes | Core changes absent from root diff | Commit separately in core repo |
 | Running `git diff` in root after editing cli/ files | No diff shown | `cd cli && git diff` |
 
-### Decision tree for agents
+### Repo Boundary Preflight (copy-paste)
 
-1. Determine file path
-2. Run `git rev-parse --show-toplevel` from file's directory
-3. If result is root → commit in root
-4. If result is core/ or cli/ → switch to that repo, commit there
-5. Never force-add (`-f`) gitignored paths — it breaks the topology invariant
+Run before ANY task that touches files. Determines owning repo for each path:
+
+```bash
+repo_root=$(git rev-parse --show-toplevel)
+core_root=$(git -C core rev-parse --show-toplevel 2>/dev/null || true)
+cli_root=$(git -C cli rev-parse --show-toplevel 2>/dev/null || true)
+```
+
+**Decision tree:**
+
+1. Determine target file path
+2. If path starts with `core/` → owning repo is `$core_root`; commit with `git -C core add/commit`
+3. If path starts with `cli/` → owning repo is `$cli_root`; commit with `git -C cli add/commit`
+4. Otherwise → owning repo is `$repo_root`; commit normally from root
+5. Root `.gitignore` lists `core` and `cli` — root git silently ignores these paths. This is by design, not a bug.
+6. Never force-add (`-f`) gitignored paths — it breaks the topology invariant
 
 ## 6. Canonical Version Sources
 
