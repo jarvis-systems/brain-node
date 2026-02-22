@@ -5,6 +5,7 @@ on:
     paths:
       - 'core/src/**'
       - 'cli/src/**'
+      - 'cli/tests/**'
       - '.brain/node/**'
       - 'node/**'
       - 'scripts/**'
@@ -17,6 +18,7 @@ on:
     paths:
       - 'core/src/**'
       - 'cli/src/**'
+      - 'cli/tests/**'
       - '.brain/node/**'
       - 'node/**'
       - 'scripts/**'
@@ -85,6 +87,10 @@ jobs:
 
       - name: PHPStan static analysis (CLI)
         run: composer analyse
+        working-directory: cli
+
+      - name: CLI unit tests (golden + exit guard)
+        run: composer test
         working-directory: cli
 
       - name: Enterprise audit (blocking — P0 gate)
