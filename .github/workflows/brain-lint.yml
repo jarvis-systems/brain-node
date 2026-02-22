@@ -118,6 +118,28 @@ jobs:
           fi
           echo "PHPStan level guard: PASSED"
 
+      - name: PHPStan ignore policy guard
+        run: |
+          MAX_INLINE_IGNORES=2
+
+          # Check 1: every @phpstan-ignore must have a parenthesized justification on the same line
+          BAD_IGNORES=$(grep -rn '@phpstan-ignore' core/src/ --include='*.php' | grep -v '(.*)' || true)
+          if [ -n "$BAD_IGNORES" ]; then
+            echo "::error::@phpstan-ignore without parenthesized justification:"
+            echo "$BAD_IGNORES"
+            exit 1
+          fi
+
+          # Check 2: count must not exceed threshold
+          COUNT=$(grep -r '@phpstan-ignore' core/src/ --include='*.php' | wc -l | tr -d ' ')
+          echo "Inline ignores: ${COUNT} (max: ${MAX_INLINE_IGNORES})"
+          if [ "$COUNT" -gt "$MAX_INLINE_IGNORES" ]; then
+            echo "::error::Inline @phpstan-ignore count (${COUNT}) exceeds threshold (${MAX_INLINE_IGNORES}). Update threshold in CI if justified."
+            exit 1
+          fi
+
+          echo "PHPStan ignore policy: PASSED (${COUNT}/${MAX_INLINE_IGNORES})"
+
       - name: PHPStan static analysis (core)
         run: composer analyse
         working-directory: core

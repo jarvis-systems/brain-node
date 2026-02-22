@@ -223,6 +223,28 @@ A dedicated **PHPStan level guard** step in `brain-lint.yml` parses `phpstan.neo
 
 Lowering a PHPStan level requires an explicit RFC with justification, reviewed and approved before merge. Accidental downgrades are blocked by CI.
 
+### Ignore Policy
+
+Every `@phpstan-ignore-*` annotation is a debt marker. The policy below prevents silent accumulation.
+
+**Allowed ignores** (with mandatory one-line justification on the same line):
+
+| Pattern | Example |
+|---------|---------|
+| Defensive runtime type guard on external/merged data | `is_array()` on XML/JSON input typed via PHPDoc |
+| `method_exists()` guarding trait usage across archetypes | Trait used by classes with/without the guarded method |
+| Cross-package trait reported unused in isolation | `ignoreErrors` in `phpstan.neon` with path scope |
+
+**Disallowed:**
+
+- Ignoring real type bugs (wrong return type, missing null check)
+- Broad identifier suppressions without path scope in neon
+- Any `@phpstan-ignore` without a parenthesized justification on the same line
+
+**Format:** `// @phpstan-ignore <identifier> (<justification>)`
+
+**Threshold:** CI enforces a max count of inline ignores (currently 2). Increasing the threshold requires updating the guard step and adding a commit note explaining why.
+
 ### Evidence
 
 Level 3 uplift for brain-core completed in commits `9cbcb15`, `35dbd2a`, `ef8b315` (30 errors → 0, all PHPDoc-only fixes).
