@@ -120,6 +120,17 @@ If multi-agent / quad-mode was used during the release cycle:
 
 Failure: stop release until root repo is verified clean and all agent worktrees are pruned.
 
+### Touch Whitelist Preflight (Stabilization Step)
+
+Before any batch (mandatory in quad-mode), declare the exact set of files you intend to modify. After the batch, assert that only those files were touched.
+
+1. **Before editing:** `git diff --name-only` — record baseline (should be empty or known state)
+2. **Declare whitelist:** list intended files in prompt or evidence pack (e.g., `ENTERPRISE-DOD.md`, `10-pre-publication.md`)
+3. **After work:** `git diff --name-only` — must match declared whitelist exactly
+4. **Violation:** STOP. Revert unexpected files (`git checkout -- <file>`). Quarantine to `wip/` branch if changes are legitimate but out-of-scope
+
+Rationale: prevents accidental multi-file drift in constrained batches. Complements repo boundary preflight (which verifies *where* — correct repo) with file-level *what* verification (only intended files touched).
+
 ### Parallel Hygiene Sweep (Stabilization Step)
 
 Run the 3-agent parallel hygiene sweep before proceeding to version alignment. This ensures docs are valid, workspace is clean, and vector memory state is assessed. See `.docs/product/19-parallel-hygiene-sweep.md`.
