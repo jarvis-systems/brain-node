@@ -58,6 +58,11 @@ jobs:
           composer update --no-interaction --prefer-dist
         working-directory: cli
 
+      - name: Create brain working directory stub
+        run: |
+          mkdir -p .brain/node
+          echo '<?php' > .brain/node/Brain.php
+
       - name: Generate MCP config
         run: |
           cat > .mcp.json << 'MCPEOF'
