@@ -95,6 +95,13 @@ Worktree guard ignores `.phpunit.cache` and `.phpunit.result.cache` (PHPUnit art
 
 - [ ] `.docs/` files have YAML front matter
 - [ ] `brain docs --validate` = 0 errors, 0 warnings
+
+**Docs Validation Invariant (Tracked-First):**
+
+- **Gate (HARD):** `invalid=0` and `warnings=0` — these are the release gate. Any invalid doc = merge blocked.
+- **Valid count (INFORMATIONAL):** varies with worktree state (branch, untracked files, WIP quarantine branches). Not a regression signal if `invalid=0, warnings=0` and `git status` is clean for tracked files.
+- **Operator triage when counts change:** (1) `git status --porcelain` — check for untracked `.docs/` files; (2) `git branch --list 'wip/*'` — quarantined WIP branches remove docs from master's worktree; (3) if master is clean and `invalid=0` — no action needed.
+
 - [ ] SCORECARD.md and FIX-QUEUE.md updated if audit items change
 
 ## Operator Readiness
