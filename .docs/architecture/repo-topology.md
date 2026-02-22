@@ -43,7 +43,24 @@ jarvis-brain-node/                    # ROOT REPO (jarvis-systems/brain-node)
 | 4 | **Validation gates run per-repo** | `composer test` and `composer analyse` execute in core/; CLI has own phpstan.neon |
 | 5 | **Composer symlink bridges root to core** | `.brain/vendor/jarvis-brain/core -> ../../core` — root uses core via `"jarvis-brain/core": "*"` |
 
-## 3. Repo Inventory
+## 3. Source Tracking Policy
+
+Required source files MUST be tracked in git. Local-only exclusion mechanisms (`.git/info/exclude`) MUST NOT hide files that tests, audit, or CI depend on.
+
+### Rules
+
+| # | Rule | Rationale |
+|---|------|-----------|
+| 1 | **Do not use `.git/info/exclude` for required sources** | `.git/info/exclude` is local-only — it does not propagate to CI or other machines. Files excluded locally will be absent in CI, causing silent test failures. |
+| 2 | **If tests assert a file exists, it must be tracked** | `NodeIntegrityTest` asserts `node/Mcp/` is non-empty. If MCP files are excluded from tracking, CI gets an empty directory and tests fail. |
+| 3 | **MCP classes are tracked** | `node/Mcp/*.php` files are tracked in the root repo. They produce only `.mcp.json` (gitignored, contains absolute paths) — but the source classes themselves must be committed. |
+| 4 | **New MCP classes require manifest update** | `NodeIntegrityTest::testMcpFileManifestIsComplete()` asserts the exact file list. Adding or removing an MCP class requires updating the test manifest. |
+
+### Incident Reference
+
+Phase 13 root cause: `.git/info/exclude` contained `/node/Mcp/*`, hiding 6 MCP files from git. Locally all tests passed (files on disk). In CI, `node/Mcp/` was empty — `testAllMcpClassesHaveMetaId` and `testMcpIdsAreUnique` failed with "No MCP files found". Fix: removed the exclude rule and tracked the files. Guard: `testMcpFileManifestIsComplete` now asserts the exact expected set.
+
+## 4. Repo Inventory
 
 | Repo | GitHub Remote | Root .gitignore | Versioned |
 |------|---------------|-----------------|-----------|
@@ -51,7 +68,7 @@ jarvis-brain-node/                    # ROOT REPO (jarvis-systems/brain-node)
 | brain-core | `jarvis-systems/brain-core` | `core` (line 4) | `core/composer.json`: `v0.2.0` |
 | brain-cli | `jarvis-systems/brain-cli` | `cli` (line 5) | `cli/composer.json` |
 
-## 4. Operator Cookbook
+## 5. Operator Cookbook
 
 ### Committing changes in core/
 
@@ -80,7 +97,7 @@ Same pattern: `cd cli && git status && git add && git commit && cd ..`
 
 Currently: root `composer.json` uses `"jarvis-brain/core": "*"` with a local path symlink (dev mode). For production release: pin to a tagged version (`"jarvis-brain/core": "^0.2.0"`).
 
-Version pinning strategy: see section 6 (Canonical Version Sources) and `.docs/product/10-pre-publication.md` § "Version Alignment".
+Version pinning strategy: see section 7 (Canonical Version Sources) and `.docs/product/10-pre-publication.md` § "Version Alignment".
 
 ### Running gates across repos
 
@@ -99,7 +116,7 @@ cd cli && composer analyse && cd ..
 
 Note: `composer test` and `composer analyse` in root are configured to reach into core/ (and cli/ for analyse) via root `composer.json` scripts.
 
-## 5. Agent Guardrails
+## 6. Agent Guardrails
 
 ### Before editing any file
 
@@ -142,7 +159,7 @@ cli_root=$(git -C cli rev-parse --show-toplevel 2>/dev/null || true)
 5. Root `.gitignore` lists `core` and `cli` — root git silently ignores these paths. This is by design, not a bug.
 6. Never force-add (`-f`) gitignored paths — it breaks the topology invariant
 
-## 6. Canonical Version Sources
+## 7. Canonical Version Sources
 
 Two modes with different version contracts:
 
@@ -186,7 +203,7 @@ Dev mode: `.brain/composer.lock` references `dev-master` via path symlink — in
 
 As of 2026-02-22: `core/composer.json` says `v0.2.0` but core's latest git tag is `v0.0.1`. This is acceptable during dev (composer.json was bumped manually, tag was not). Before any release: either tag core `v0.2.0` or revert the composer.json version to match the tag. Tracked as release-time prerequisite, not a dev-blocking issue.
 
-## 7. Future: X-Brain Single Bundle
+## 8. Future: X-Brain Single Bundle
 
 **Status:** Informational roadmap. Not enforced. No current action required.
 
@@ -194,7 +211,7 @@ X-Brain (Go rewrite) will consolidate node + core + cli into a single binary dis
 
 This does not affect current development. The three-repo topology remains the canonical structure until X-Brain reaches feature parity.
 
-## 8. Cross-References
+## 9. Cross-References
 
 - Worktree Isolation: `.docs/product/17-worktree-isolation-contract.md` (per-repo boundary awareness)
 - Pre-Publication: `.docs/product/10-pre-publication.md` (credential rotation spans all repos)

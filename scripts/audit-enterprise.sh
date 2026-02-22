@@ -155,6 +155,11 @@ if [[ -f "$PROJECT_ROOT/core/vendor/bin/phpunit" ]]; then
             log "    $_line"
         done
         log "  ${RED}───────────────────────────────────────────────${NC}"
+        # Hint for common root cause: missing tracked files
+        if echo "$CORE_TEST_OUT" | grep -q 'No MCP files found'; then
+            log "  ${CYAN}HINT${NC}: node/Mcp/ appears empty. Check .git/info/exclude and .gitignore —"
+            log "        required source files MUST be tracked. See .docs/architecture/repo-topology.md §3."
+        fi
     fi
 else
     log "  ${YELLOW}SKIP${NC} PHPUnit not installed (run: cd core && composer install)"
