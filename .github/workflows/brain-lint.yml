@@ -125,8 +125,8 @@ jobs:
       - name: Compile discipline check
         run: |
           BASE_REF="${GITHUB_BASE_REF:-HEAD~1}"
-          # Check if .brain/node/ or node/ sources changed
-          NODE_CHANGED=$(git diff --name-only "$BASE_REF"...HEAD -- '.brain/node/' 'node/' 2>/dev/null | head -1)
+          # Check if .brain/node/ or node/ sources changed (excluding node/Mcp/ — produces only .mcp.json which is gitignored)
+          NODE_CHANGED=$(git diff --name-only "$BASE_REF"...HEAD -- '.brain/node/' 'node/' ':(exclude)node/Mcp/' 2>/dev/null | head -1)
           if [ -n "$NODE_CHANGED" ]; then
             # If node sources changed, compiled artifacts MUST also change
             COMPILED_CHANGED=$(git diff --name-only "$BASE_REF"...HEAD -- '.claude/' '.opencode/' 'AGENTS.md' 'agent-schema.json' 2>/dev/null | head -1)
@@ -135,7 +135,7 @@ jobs:
               echo "Run 'brain compile' locally and commit the compiled output."
               echo ""
               echo "Changed source files:"
-              git diff --name-only "$BASE_REF"...HEAD -- '.brain/node/' 'node/'
+              git diff --name-only "$BASE_REF"...HEAD -- '.brain/node/' 'node/' ':(exclude)node/Mcp/'
               exit 1
             fi
             echo "Compile discipline: PASSED (sources + artifacts both updated)"
