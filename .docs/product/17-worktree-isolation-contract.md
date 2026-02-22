@@ -92,6 +92,15 @@ All build artifacts (`vendor/`, `node_modules/`, `dist/`, `.claude/` compiled ou
 
 Agents NEVER force-push. Branch conflicts are resolved by the operator via merge or rebase in root repo.
 
+### 4.6 Root CI File Protection (v0 — Immediate)
+
+Applies NOW, before full worktree isolation (v1+). Prevents recurring drift on CI files during quad-mode.
+
+- **Read-only on master:** `.github/workflows/*.yml` in root repo master MUST NOT be modified by any agent during quad-mode. Only the operator (Doc) edits CI files on master.
+- **Dedicated branch for CI edits:** Agent CI changes go to `agent/<name>/ci-<date>` branch. If worktrees are available, use a worktree. If not, a plain branch is acceptable.
+- **Merge policy:** CI branch merges to master only after: (1) all gates GREEN on the branch, (2) evidence pack attached (diff + gate output), (3) no other agent work in flight on the same files. Silent cherry-picks are forbidden.
+- **Drift revert:** If a CI file becomes dirty on root master during a non-CI task, the current agent MUST revert it (`git checkout -- <file>`) before committing. Record the drift in the commit message or FIX-QUEUE for traceability.
+
 ## 5. Operator Command Cookbook
 
 These commands are executed by the operator (Doc), not by agents automatically.
@@ -122,6 +131,22 @@ git worktree list
 
 # Check for stale worktrees
 git worktree prune --dry-run
+```
+
+### Detect and Revert CI Drift (v0)
+
+Run before committing any non-CI batch during quad-mode:
+
+```bash
+# Check for CI file drift
+CI_DIRTY=$(git diff --name-only -- '.github/workflows/*.yml')
+if [ -n "$CI_DIRTY" ]; then
+  echo "WARN: CI drift detected on root master: $CI_DIRTY"
+  echo "Action: revert if current task scope != CI"
+  # Safe revert (does not touch staged changes):
+  git checkout -- .github/workflows/
+  echo "Reverted. Record drift source in commit message or FIX-QUEUE."
+fi
 ```
 
 ### Cleanup All
