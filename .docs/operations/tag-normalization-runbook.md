@@ -423,6 +423,19 @@ mcp__vector-memory__snapshot_restore({"snapshot_id": "<snapshot_id from Phase 1>
 - **Atomic apply**: all tag updates in a single transaction; rollback on any failure
 - **Snapshot survives apply**: snapshot data persists in `tag_snapshots` table, reusable for rollback
 - **Guards**: version tags, colon-prefixed tags, numeric suffix tags, and prefix-overlap tags are protected from merging
+- **Apply rejects invalid snapshot**: fake/missing snapshot_id returns `{"success": false, "error": "Snapshot not found"}`
+
+### Verified On
+
+Runtime verification completed 2026-02-22. PyPI v1.10.0. All 4 tools discoverable via MCP ToolSearch.
+
+| Step | Result |
+|------|--------|
+| snapshot_create | memory_count=207, snapshot_id=16-char hex |
+| tag_normalize_preview (max_changes=10) | 2 mappings, 4 affected memories, tags 546→544 |
+| tag_normalize_apply | 4 memories updated, tags_replaced=4 |
+| snapshot_restore | restored_count=207, tags reverted 544→546 |
+| apply with fake snapshot_id | Rejected: "Snapshot not found" |
 
 ### Rollback Instructions
 
