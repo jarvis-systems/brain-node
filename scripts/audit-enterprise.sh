@@ -141,12 +141,20 @@ log "${BOLD}[2/19] PHPUnit tests${NC}"
 TEST_FINDINGS="[]"
 TEST_COUNT=0
 if [[ -f "$PROJECT_ROOT/core/vendor/bin/phpunit" ]]; then
-    if (cd "$PROJECT_ROOT/core" && ./vendor/bin/phpunit 2>&1) >/dev/null 2>&1; then
+    if CORE_TEST_OUT=$(cd "$PROJECT_ROOT/core" && ./vendor/bin/phpunit 2>&1); then
         log "  ${GREEN}PASS${NC} Core tests passed"
     else
         TEST_COUNT=$((TEST_COUNT + 1))
-        TEST_FINDINGS=$(echo "$TEST_FINDINGS" | jq '. + [{"file": "core/", "message": "PHPUnit tests failed"}]')
+        CORE_FAIL_TAIL=$(echo "$CORE_TEST_OUT" | tail -30)
+        TEST_FINDINGS=$(echo "$TEST_FINDINGS" | jq \
+            --arg detail "$CORE_FAIL_TAIL" \
+            '. + [{"file": "core/", "message": "PHPUnit tests failed", "detail": $detail}]')
         log "  ${RED}FAIL${NC} Core tests failed"
+        log "  ${RED}──── Core PHPUnit output (last 30 lines) ────${NC}"
+        echo "$CORE_TEST_OUT" | tail -30 | while IFS= read -r _line; do
+            log "    $_line"
+        done
+        log "  ${RED}───────────────────────────────────────────────${NC}"
     fi
 else
     log "  ${YELLOW}SKIP${NC} PHPUnit not installed (run: cd core && composer install)"
@@ -157,12 +165,20 @@ if [[ -n "$CLI_DIRTY" ]]; then
     log "  ${YELLOW}WARN${NC} CLI worktree dirty — skipping CLI tests (parallel WIP detected)"
 else
     if [[ -f "$PROJECT_ROOT/cli/vendor/bin/phpunit" ]]; then
-        if (cd "$PROJECT_ROOT/cli" && ./vendor/bin/phpunit 2>&1) >/dev/null 2>&1; then
+        if CLI_TEST_OUT=$(cd "$PROJECT_ROOT/cli" && ./vendor/bin/phpunit 2>&1); then
             log "  ${GREEN}PASS${NC} CLI tests passed"
         else
             TEST_COUNT=$((TEST_COUNT + 1))
-            TEST_FINDINGS=$(echo "$TEST_FINDINGS" | jq '. + [{"file": "cli/", "message": "CLI PHPUnit tests failed"}]')
+            CLI_FAIL_TAIL=$(echo "$CLI_TEST_OUT" | tail -30)
+            TEST_FINDINGS=$(echo "$TEST_FINDINGS" | jq \
+                --arg detail "$CLI_FAIL_TAIL" \
+                '. + [{"file": "cli/", "message": "CLI PHPUnit tests failed", "detail": $detail}]')
             log "  ${RED}FAIL${NC} CLI tests failed"
+            log "  ${RED}──── CLI PHPUnit output (last 30 lines) ────${NC}"
+            echo "$CLI_TEST_OUT" | tail -30 | while IFS= read -r _line; do
+                log "    $_line"
+            done
+            log "  ${RED}────────────────────────────────────────────${NC}"
         fi
     else
         log "  ${YELLOW}SKIP${NC} CLI PHPUnit not installed (run: cd cli && composer install)"
