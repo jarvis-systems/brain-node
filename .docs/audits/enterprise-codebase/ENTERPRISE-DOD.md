@@ -16,7 +16,7 @@ Every merge to `master` MUST satisfy ALL gates below. A single FAIL = merge bloc
 | # | Gate | Command | Blocking | Source of Truth |
 |---|------|---------|----------|-----------------|
 | 1 | PHP Syntax | `php -l` on all `.php` files | YES | `brain-lint.yml` → audit-enterprise.sh Check 1 |
-| 2 | Unit Tests | `composer test` (264+ tests, 0 failures) | YES | `brain-lint.yml` → audit-enterprise.sh Check 2 |
+| 2 | Unit Tests | `composer test` (273+ tests, 0 failures) | YES | `brain-lint.yml` → audit-enterprise.sh Check 2 |
 | 3 | Static Analysis (Core) | `composer analyse` in core/ (phpstan level 2) | YES | `brain-lint.yml` → `core/phpstan.neon` |
 | 4 | Static Analysis (CLI) | `composer analyse` in cli/ (phpstan level 0) | YES | `brain-lint.yml` → `cli/phpstan.neon` |
 | 5 | Secret Scanning | `bash scripts/scan-secrets.sh` (exit 0) | YES | `brain-lint.yml` → `scripts/scan-secrets.sh` |

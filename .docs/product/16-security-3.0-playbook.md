@@ -200,7 +200,7 @@ No BFG. No force push. No history rewrite. Rotated credentials = dead values.
 git status --porcelain
 bash scripts/scan-secrets.sh                    # Gate: exit 0
 bash scripts/audit-enterprise.sh                # Gate: PASS:19
-composer test                                   # Gate: 264+ pass
+composer test                                   # Gate: 273+ pass
 # Tier-1 baseline:
 git log --all -p | grep -cE "$(grep -oP "SECRET_PATTERNS='\K[^']+" scripts/scan-secrets.sh)"
 # → Expected: >0 (documents the problem)
@@ -245,7 +245,7 @@ Gate: `.brain/.env` contains only active credentials. No C7/C8. No old values.
 ### Step C4: Full gates in new repo
 
 ```
-composer test              # 264+ pass, 0 failures
+composer test              # 273+ pass, 0 failures
 composer analyse           # 0 errors
 bash scripts/scan-secrets.sh   # Exit 0
 bash scripts/audit-enterprise.sh   # PASS:19, FAIL:0
@@ -303,7 +303,7 @@ For cases where Option C is not viable (must keep same repo URL):
 |------|---------|---------------|
 | No .git in export | `ls -la /tmp/x-brain-clean/.git` | Not found |
 | No .env in export | `ls -la /tmp/x-brain-clean/.brain/.env` | Not found |
-| Tests pass | `composer test` | 264+, 0 failures |
+| Tests pass | `composer test` | 273+, 0 failures |
 | PHPStan clean | `composer analyse` | 0 errors |
 | Secrets scan | `bash scripts/scan-secrets.sh` | Exit 0 |
 | Audit green | `bash scripts/audit-enterprise.sh` | PASS:19, FAIL:0 |
