@@ -80,6 +80,9 @@ check "cookbook governance rule present in standard" 0 "$GOVERNANCE_RULE" "gt"
 GATE5_REINTERP=$(grep -ciE 'Gate 5.*compile-time preset|NOT a runtime uncertainty trigger' "$CLAUDE_MD" 2>/dev/null || true)
 check "gate5 reinterpretation present in standard" 0 "$GATE5_REINTERP" "gt"
 
+EVIDENCE_CONTRACT=$(grep -ciE 'Evidence-contract.*CRITICAL|PLAN-ONLY.*EVIDENCE-ONLY' "$CLAUDE_MD" 2>/dev/null || true)
+check "evidence contract rule present in standard" 0 "$EVIDENCE_CONTRACT" "gt"
+
 echo ""
 
 # --- Paranoid/Exhaustive ---
@@ -107,6 +110,9 @@ check "cookbook governance rule present in exhaustive" 0 "$GOVERNANCE_RULE_EXH" 
 
 GATE5_REINTERP_EXH=$(grep -ciE 'Gate 5.*compile-time preset|NOT a runtime uncertainty trigger' "$CLAUDE_MD" 2>/dev/null || true)
 check "gate5 reinterpretation present in exhaustive" 0 "$GATE5_REINTERP_EXH" "gt"
+
+EVIDENCE_CONTRACT_EXH=$(grep -ciE 'Evidence-contract.*CRITICAL|PLAN-ONLY.*EVIDENCE-ONLY' "$CLAUDE_MD" 2>/dev/null || true)
+check "evidence contract rule present in exhaustive" 0 "$EVIDENCE_CONTRACT_EXH" "gt"
 
 echo ""
 
