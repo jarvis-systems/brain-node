@@ -55,15 +55,27 @@ jq -r '.require["jarvis-brain/core"]' composer.json  # Expected: ^v0.2.0
 
 ## Gates Snapshot
 
-| Gate | Command | Result |
-|------|---------|--------|
-| PHPUnit | `composer test` | 264 tests, 620 assertions, 0 failures |
-| PHPStan | `composer analyse` | 0 errors |
-| Enterprise Audit | `bash scripts/audit-enterprise.sh` | PASS:19, WARN:0, FAIL:0 |
-| Docs Validation | `brain docs --validate` | valid:86, invalid:0, warnings:0 |
-| Secret Scan | `bash scripts/scan-secrets.sh` | 0 secrets in tracked files |
-| Compile | `brain compile` | 4 targets (claude, codex, gemini, opencode) |
-| Clean Worktree | `git status` (tracked) | Clean in all 3 repos |
+| Gate | Repo | Command | Result |
+|------|------|---------|--------|
+| PHPUnit | core | `cd core && composer test` | 264 tests, 620 assertions, 0 failures |
+| PHPStan (core) | core | `cd core && composer analyse` | 0 errors (170 files) |
+| PHPStan (cli) | cli | audit check #12 | 0 errors |
+| Enterprise Audit | root | `bash scripts/audit-enterprise.sh` | PASS:19, WARN:0, FAIL:0 |
+| Docs Validation | root | `brain docs --validate` | valid:87, invalid:0, warnings:0 |
+| Secret Scan | root | `bash scripts/scan-secrets.sh` | 0 secrets in tracked files |
+| Compile | root | `brain compile` | 4 targets (claude, codex, gemini, opencode) |
+| Clean Worktree | all | `git status` (tracked) | Clean in all 3 repos |
+
+### Source of Truth
+
+```bash
+cd core && composer test            # PHPUnit (core)
+composer analyse                    # PHPStan (root proxies to core)
+bash scripts/audit-enterprise.sh    # Enterprise audit (root, scans all 3 repos)
+brain docs --validate               # Docs validation (root .docs/)
+bash scripts/scan-secrets.sh        # Secret scan (root tracked files)
+brain compile                       # Compilation (root, 4 targets)
+```
 
 ## Known Dev-Only Semantics
 
@@ -106,4 +118,4 @@ See: `.docs/product/10-pre-publication.md` § "Version Alignment".
 
 ## Summary
 
-Enterprise release gates: **all green**. Version-drift: **CLOSED**. Three repos aligned to `v0.2.0` with exact-match tags on HEAD, pushed to remote. Zero WIP branches. 86 valid docs. 264 tests passing. PHPStan clean. Audit PASS:19 WARN:0 FAIL:0.
+Enterprise release gates: **all green**. Version-drift: **CLOSED**. Three repos aligned to `v0.2.0` with exact-match tags on HEAD, pushed to remote. Zero WIP branches. Tests (core): 264/620. Docs (root): 87 valid. PHPStan (core+cli): 0 errors. Audit (root): PASS:19 WARN:0 FAIL:0.
