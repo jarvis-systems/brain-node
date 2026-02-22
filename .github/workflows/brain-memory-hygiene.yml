@@ -1,7 +1,7 @@
 name: Memory Hygiene
 
 # Report-only: does NOT block merges.
-# Runs against local vector-memory DB (empty in CI = 0/15 baseline).
+# Runs against fresh vector-memory DB (empty in CI = 0/15 baseline).
 # Primary value: pipeline readiness, artifact upload, summary visibility.
 # For real hygiene checks, run locally: brain memory:hygiene
 
@@ -24,6 +24,20 @@ jobs:
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
+      - name: Checkout brain-core
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          repository: jarvis-systems/brain-core
+          path: core
+          token: ${{ secrets.JARVIS_REPOS_TOKEN }}
+
+      - name: Checkout brain-cli
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          repository: jarvis-systems/brain-cli
+          path: cli
+          token: ${{ secrets.JARVIS_REPOS_TOKEN }}
+
       - name: Setup PHP
         uses: shivammathur/setup-php@44454db4f0199b8b9685a5d763dc37cbf79108e1 # v2
         with:
@@ -34,10 +48,9 @@ jobs:
         with:
           enable-cache: false
 
-      - name: Install Brain CLI
-        run: |
-          composer global require jarvis-brain/cli --no-interaction
-          echo "$(composer global config bin-dir --absolute --quiet)" >> "$GITHUB_PATH"
+      - name: Install CLI dependencies
+        run: composer install --no-interaction --prefer-dist
+        working-directory: cli
 
       - name: Generate MCP config
         run: |
@@ -60,7 +73,7 @@ jobs:
       - name: Run memory hygiene
         id: hygiene
         continue-on-error: true
-        run: brain memory:hygiene
+        run: php cli/brain memory:hygiene
 
       - name: Print summary
         if: always()
