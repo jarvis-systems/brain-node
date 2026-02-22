@@ -704,3 +704,187 @@ The remaining 47 markdownlint rules address formatting consistency (trailing spa
 **table-column-count:** Tracks table state: header row → separator row → data rows. Counts pipe-separated columns. Warns when any data row column count differs from header.
 
 **orphan-content:** Counts non-empty lines between YAML end (or file start) and first heading. If >5 lines, warns with line range. Empty lines are excluded from count.
+
+## 13. Global Documentation Discovery (`--global`)
+
+### Problem
+
+Real-world projects are rarely monolithic. Mono-repo setups, multi-package projects, and projects with embedded subprojects (git submodules, Composer path repositories, npm workspaces) spread documentation across multiple `.docs/` directories:
+
+```
+project/
+├── .docs/               ← root project docs
+├── packages/
+│   ├── auth/
+│   │   └── .docs/       ← auth package docs
+│   └── billing/
+│       └── .docs/       ← billing package docs
+├── frontend/
+│   └── .docs/           ← frontend docs
+└── vendor/              ← third-party (excluded)
+    └── laravel/
+        └── .docs/       ← NOT project docs
+```
+
+Without `--global`, an agent running `brain docs api` only sees root `.docs/`. Package-level documentation in `packages/auth/.docs/api-guide.md` is invisible — the agent either misses it entirely or the operator must know the exact subpath.
+
+### Decision: `--global` flag with `DocsDirectoryResolver` service
+
+A single `--global` flag expands the search scope from one `.docs/` directory to all `.docs/` directories found recursively in the project tree (depth 1-3), excluding package manager directories.
+
+### Why a separate service (`DocsDirectoryResolver`)
+
+The directory discovery logic is isolated in `DocsDirectoryResolver` rather than inlined in `DocsCommand` for three reasons:
+
+1. **Testability.** The resolver accepts an injectable `$projectDir` parameter (same pattern as `DriftDetector::detect($content, $projectDir)`), enabling unit tests with temp directories without mocking the `Brain` facade.
+
+2. **Consistency.** Every other docs concern has its own service class: `ContentScorer`, `MarkdownParser`, `SecurityValidator`, `UndocumentedScanner`, `DocScaffolder`, `DriftDetector`. A resolver for directory discovery follows the established architecture.
+
+3. **Single responsibility.** The command orchestrates operations; the resolver answers "which directories to scan." Mixing these concerns would violate the same principle that separates scoring from parsing.
+
+### Discovery mechanism: Symfony Finder
+
+The resolver uses Symfony Finder (already a project dependency via Laravel) to discover `.docs/` directories:
+
+```
+Finder->directories()
+      ->in($projectDir)
+      ->ignoreDotFiles(false)  // .docs starts with dot
+      ->ignoreVCS(false)       // don't skip .git subtrees automatically
+      ->name('.docs')
+      ->depth('>= 1')          // skip root .docs (added separately)
+      ->depth('<= 3')          // max depth from project root
+      ->exclude(EXCLUDE_DIRS)  // vendor, node_modules, etc.
+```
+
+**Why `ignoreDotFiles(false)`:** Symfony Finder ignores dot-files by default. Since `.docs` starts with a dot, the default configuration would find nothing. This is the only non-obvious configuration requirement.
+
+**Why `ignoreVCS(false)`:** The default `ignoreVCS(true)` excludes `.git` directories. While we also exclude `.git` via `EXCLUDE_DIRS`, disabling VCS ignore ensures Finder doesn't apply its own exclusion rules that could interact unpredictably with our explicit exclusion list.
+
+**Why not raw `glob()` or `scandir()`:** Finder provides depth limiting, directory exclusion, and cross-platform path handling in a single declarative API. A manual recursive scan would require ~30 lines of boilerplate code doing the same thing less reliably.
+
+### Depth limit: why 3
+
+The maximum discovery depth of 3 levels from project root covers all practical mono-repo structures:
+
+| Depth | Example | Covered? |
+|-------|---------|----------|
+| 0 | `.docs/` | Yes (added separately, always first) |
+| 1 | `frontend/.docs/` | Yes |
+| 2 | `packages/auth/.docs/` | Yes |
+| 3 | `packages/auth/sub/.docs/` | Yes |
+| 4+ | `packages/auth/sub/deep/.docs/` | No |
+
+Depth 4+ implies a deeply nested project structure where `.docs/` folders are unlikely to exist in practice. If a project has documentation 4+ levels deep, the project structure itself needs refactoring — not the tool's depth limit.
+
+The depth is defined as a class constant (`MAX_DEPTH = 3`) for clarity, not as a configurable option. Configurability would add complexity (CLI flag, env var, validation) for a boundary that is unlikely to need adjustment.
+
+### Exclusion list
+
+The resolver excludes directories that contain third-party or generated content — not project documentation:
+
+| Directory | Reason |
+|-----------|--------|
+| `vendor` | PHP package manager (Composer) |
+| `node_modules` | JavaScript package manager (npm/yarn/pnpm) |
+| `.git` | Version control internals |
+| `.idea` | IDE configuration (JetBrains) |
+| `storage` | Laravel storage (logs, cache, uploads) |
+| `cache` | Generic cache directory |
+| `dist` | Build output |
+| `build` | Build output |
+| `__pycache__` | Python bytecode cache |
+| `.venv` | Python virtual environment |
+
+The exclusion list aligns with `UndocumentedScanner::EXCLUDE_PATTERNS` but uses directory names (for Finder's `exclude()`) rather than path substrings (for `Str::contains()`). The lists are maintained independently because they serve different purposes and may diverge in the future (e.g., the scanner might exclude `tests/` while the resolver should not — tests can have `.docs/`).
+
+### Why NOT search vendor/node_modules
+
+The initial idea considered searching `.md` files in `vendor/` and `node_modules/` for package documentation. This was rejected for five reasons:
+
+1. **Scale.** `node_modules` can contain 50,000+ files. `vendor` typically has 1,000-10,000. Scanning all `.md` files in these directories would take seconds instead of milliseconds — degrading the tool's responsiveness by orders of magnitude.
+
+2. **Noise.** Every package contains `CHANGELOG.md`, `LICENSE.md`, `CONTRIBUTING.md`, `SECURITY.md`, `UPGRADE.md`. At 200 packages, that's 1,000+ non-documentation files mixed with 200 useful READMEs.
+
+3. **No metadata.** Package READMEs lack YAML front matter. All scoring degrades to auto-name/auto-description extraction, producing significantly lower search quality than curated `.docs/` content.
+
+4. **Existing solutions.** The `context7` MCP server provides library documentation search from official sources. The `--download` flag imports specific docs with proper YAML front matter. Both are superior to raw vendor scanning.
+
+5. **Different data nature.** `.docs/` contains curated project documentation with consistent structure. `vendor/*.md` contains external documents with varying formats, languages, and quality levels. Mixing them in one search index degrades results for both.
+
+The correct approach for package documentation is targeted: `brain docs --download=<url>` for specific docs, or `context7` for library reference lookup.
+
+### Merge strategy for multi-directory results
+
+When `--global` is active, results from all `.docs/` directories are collected, merged, and re-processed:
+
+1. **Per-directory scan.** Each directory is scanned via `getFileList()` with its own `$pathPrefix` (e.g., `packages/auth/.docs`). Files are scored, filtered, and deduplicated within each directory.
+
+2. **Merge.** All per-directory results are concatenated into a single array.
+
+3. **Global deduplication.** `unique('path')` ensures no duplicate paths across directories (theoretically impossible since prefixes differ, but defensive).
+
+4. **Global re-sort.** Results are re-sorted by score (DESC) across all directories. A high-scoring result from `packages/auth/.docs/` ranks above a low-scoring result from root `.docs/`.
+
+5. **Global limit.** The `--limit` is applied to the merged, re-sorted set — not per directory. This ensures the top-N results are the globally best matches, regardless of which directory they come from.
+
+**Why limit is applied globally, not per-directory:** If `--limit=5` were applied per directory with 4 directories, each directory would return up to 5 results (20 total), then the merge would cut to 5. But a high-scoring result in directory 3 might be cut by the per-directory limit in directory 3 before the merge, while a lower-scoring result in directory 1 survives. To prevent this, `getFileList()` returns all results (no limit), and the limit is applied only after the global merge and re-sort.
+
+### Affected operations
+
+| Operation | Affected by `--global`? | Reason |
+|-----------|------------------------|--------|
+| Search (default) | Yes | Core use case — search across all subproject docs |
+| `--validate` | Yes | Validate YAML front matter, structure, drift across all docs |
+| `--update` | Yes | Refresh downloaded docs across all `.docs/` directories |
+| `--download` | No | Downloads always save to root `.docs/sources/` — single target |
+| `--undocumented` | No | Scans source code, not `.docs/` directories |
+| `--scaffold` | No | Generates files to root `.docs/` — single target |
+
+The `--download` and `--scaffold` operations write files, and writing to multiple `.docs/` directories would require a target selection mechanism ("which `.docs/` should this go to?"). This adds complexity without clear benefit — the operator can always move files after creation.
+
+### Path format in output
+
+Without `--global`, paths are relative to `.docs/`:
+```json
+{"path": ".docs/api-guide.md"}
+```
+
+With `--global`, paths are relative to project root, preserving the subdirectory context:
+```json
+{"path": "packages/auth/.docs/api-guide.md"}
+```
+
+This ensures paths are always resolvable from the project root, regardless of which `.docs/` directory the file came from. The `processFile()` method accepts a `$pathPrefix` parameter (default `'.docs'`) that controls the prefix, maintaining backward compatibility for non-global mode.
+
+### Backward compatibility
+
+The `--global` flag is purely additive:
+
+- Without `--global`: behavior is identical to pre-feature code. `DocsDirectoryResolver::resolve(false)` returns a single-element array with root `.docs/`. All existing code paths produce the same results.
+- `processFile()` has `$pathPrefix = '.docs'` default — existing callers don't need changes.
+- `getFileList()` has `$pathPrefix = '.docs'` default — same.
+- If root `.docs/` doesn't exist and `--global` is not set, the command creates it (existing behavior preserved).
+
+### Edge cases
+
+| Scenario | Behavior |
+|----------|----------|
+| Root `.docs/` missing, subdirs have `.docs/` | `--global` finds subdirs. Without `--global`, creates root `.docs/`. |
+| No `.docs/` anywhere + `--global` | Warning: "No .docs/ directories found." Return 0. |
+| `--global` + `--download` | `--global` silently ignored. Download goes to root `.docs/sources/`. |
+| `--global` + `--scaffold` | `--global` silently ignored. Scaffold writes to root `.docs/`. |
+| Duplicate YAML `name` across directories | Detected by existing duplicate name logic in `--validate`. |
+| Symlinked `.docs/` in subdirectory | Finder follows symlinks — discovered and scanned. |
+| `.docs/` inside `.docs/` (nested) | Found at depth 1 from root `.docs/`. Unusual but handled correctly. |
+
+### Test coverage
+
+`DocsDirectoryResolverTest` (11 tests):
+- Default mode: returns root `.docs/` only, returns empty when missing
+- Global mode: finds nested dirs, excludes vendor/node_modules/.git/all package dirs, respects depth limit, includes root first, sorts by prefix, works without root `.docs/`, returns empty when no dirs anywhere, returns absolute paths
+
+`DocsCommandGoldenTest` (3 new tests):
+- `--global` flag present in signature
+- `DocsDirectoryResolver` integration in source
+- `--global` documented in help text
