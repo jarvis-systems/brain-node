@@ -90,15 +90,43 @@ Write results to `.work/memory-hygiene/smoke-results.json`.
 | delegation-rules | No | async/sync threshold (30s/5s) |
 | bug-fix-recall | No | Historical bug fix retrieval |
 
-## Batch 2: Semantic Dedup Policy (Pending)
+## Batch 2: Semantic Dedup Analysis (2026-02-22)
 
-Deferred until baseline is established. Design:
+Phase 2A dry run complete. Key finding: **zero pairs reach 0.85 cosine similarity threshold**.
 
-- **Threshold**: cosine similarity > 0.85 between two memories = candidate for merge
-- **Policy**: UPDATE existing memory (append new info) instead of CREATE new
-- **Scope**: Start with `code-solution` category (124/200 = 62% of total)
-- **Safety**: Snapshot before any destructive operation
-- **Rollback**: Keep deleted memory IDs in ledger for 30 days
+### Threshold Scan Results
+
+| Threshold | Clusters | Pairs | Action |
+|-----------|----------|-------|--------|
+| >= 0.90 | 0 | 0 | No near-identical memories |
+| >= 0.85 | 0 | 0 | Original threshold — no candidates |
+| >= 0.80 | 0 | 0 | Closest: #239↔#240 at 0.788 |
+| >= 0.75 | 1 | 1 | #239↔#240 YAML env vars (LOW risk) |
+| >= 0.70 | 4 | 5 | All within CustomRunCommand domain |
+
+### Root Cause: Topic Concentration, Not Duplication
+
+The real issue is **topic bloat** — 51% of code-solution memories cover 2 feature areas:
+
+| Topic | Memories | % of code-solution | Consolidation |
+|-------|----------|-------------------|---------------|
+| CustomRunCommand features | 31 | 25% | HIGH potential |
+| Lab Screen / Tab Bar UI | 32 | 26% | HIGH potential |
+| Task validation reports | 15 | 12% | MEDIUM potential |
+
+### Recommended Next Steps (Batch 2B)
+
+1. **Consolidate step-by-step memories**: #64-#68 → 1 record, #130-#135 → 1 record (~10 merges)
+2. **Consolidate validation pairs**: keep re-validation only (#119→delete, keep #123, etc.) (~7 deletes)
+3. **Consolidate CustomRunCommand subtopics**: 8 ternary memories → 1-2 summaries (~6 merges)
+4. **Expected net reduction**: ~25 memories (204 → ~179)
+
+### Artifacts
+
+| File | Purpose |
+|------|---------|
+| `.work/memory-hygiene/dedup-snapshot.json` | Pre-dedup baseline (204 memories, categories, smoke test) |
+| `.work/memory-hygiene/dedup-plan.json` | Full analysis: thresholds, clusters, topic concentration, strategies |
 
 ## Anti-Patterns
 
