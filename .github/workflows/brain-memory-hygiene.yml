@@ -48,6 +48,9 @@ jobs:
         with:
           enable-cache: false
 
+      - name: Pre-install vector-memory-mcp
+        run: uv tool install vector-memory-mcp
+
       - name: Install core dependencies
         run: composer install --no-interaction --prefer-dist
         working-directory: core
