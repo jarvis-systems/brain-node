@@ -73,7 +73,7 @@ Run ALL gates and confirm green:
 
 ```bash
 # Core quality gates
-composer test           # Expected: 244+ tests, 0 failures
+composer test           # Expected: 245+ tests, 0 failures
 composer analyse        # Expected: 0 errors (core + CLI)
 
 # Security gates
