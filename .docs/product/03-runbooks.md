@@ -26,7 +26,50 @@ STRICT_MODE=paranoid brain compile
 BRAIN_CLI_DEBUG=1 brain compile
 ```
 
-## 2. Run Benchmarks
+## 2. Compile Diff Preview
+
+Preview compilation changes without modifying output files. Useful for CI gates and pre-merge checks.
+
+```
+brain compile --diff
+```
+
+**How it works:** backup current output → compile → diff backup vs new → restore original files.
+
+**Exit codes:**
+
+| Code | Meaning | Use in scripts |
+|------|---------|----------------|
+| 0 | No differences — compiled output is up to date | `brain compile --diff && echo "clean"` |
+| 1 | Compilation error — diff aborted | Treat as build failure |
+| 2 | Differences found — source and compiled output diverged | `brain compile --diff; [ $? -eq 2 ] && echo "needs recompile"` |
+
+**JSON output for scripting:**
+```
+brain compile --diff --json
+```
+
+Returns a stable schema with `status` (`no_diff` / `diff`), `exit_code`, per-file summary with `hash_before` / `hash_after` (sha256, 12 chars), and line-level counts.
+
+**CI gate example:**
+```bash
+brain compile --diff --json > /tmp/diff.json
+STATUS=$(jq -r '.status' /tmp/diff.json)
+if [ "$STATUS" = "diff" ]; then
+  echo "Compile output is stale. Run: brain compile"
+  jq '.files[] | "\(.status) \(.path)"' /tmp/diff.json
+  exit 1
+fi
+```
+
+**Volatile exclusions** (automatically ignored during diff):
+- `.phpunit.cache` — PHPUnit result cache
+- `.phpstan` — PHPStan cache directory
+- `compile.lock` — compilation lock file
+
+**Safety:** Restore runs in a `finally` block — original files are always restored, even on compilation failure.
+
+## 3. Run Benchmarks
 
 Ordered by scope — run the smallest sufficient suite first.
 
@@ -49,7 +92,7 @@ composer benchmark:dry
 composer benchmark:regression
 ```
 
-## 3. Update MCP Server Versions
+## 4. Update MCP Server Versions
 
 1. Check current pins: `cat pins.json`
 2. Update version in `pins.json`
@@ -58,7 +101,7 @@ composer benchmark:regression
 5. Run telemetry benchmark: `composer benchmark:telemetry`
 6. If all pass, commit changes
 
-## 4. Rollback to Previous Version
+## 5. Rollback to Previous Version
 
 ```
 git checkout <tag> -- .mcp.json .claude/ .codex/ .opencode/
@@ -71,7 +114,7 @@ git checkout <tag>
 brain compile
 ```
 
-## 5. Add New Benchmark Scenario
+## 6. Add New Benchmark Scenario
 
 1. Create scenario JSON in `.docs/benchmarks/scenarios/`
 2. Validate: `composer benchmark:dry`
@@ -79,7 +122,7 @@ brain compile
 4. Update baselines if needed: add entry to `.docs/benchmarks/baselines/baselines.json`
 5. Commit all changes
 
-## 6. Debug CI Failure
+## 7. Debug CI Failure
 
 1. Read CI artifacts/logs for the failing step
 2. Reproduce locally:
