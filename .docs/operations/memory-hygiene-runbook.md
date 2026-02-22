@@ -3,7 +3,7 @@ name: "Memory Hygiene Runbook"
 description: "Operational procedure for vector memory health: ledger snapshots, compaction survival smoke tests, and semantic dedup policy"
 type: runbook
 date: 2026-02-22
-version: "1.1.0"
+version: "1.2.0"
 status: active
 ---
 
@@ -69,6 +69,39 @@ For each FAIL probe:
 ### Step 5: Update Results
 
 Write results to `.work/memory-hygiene/smoke-results.json`.
+
+### Step 6: Rank Safety Check (Post-Consolidation Gate)
+
+**When:** After ANY topic consolidation (storing new canonical memories). Run BEFORE declaring consolidation success.
+
+**Purpose:** Verify new canonicals do not outrank critical anchors or expected top-1 memories for sensitive probes. Catches embedding overlap — the primary risk when storing consolidated content.
+
+**Scope:** 7 critical probes + sensitive non-critical probes (P04, P11, P12 minimum).
+
+**Procedure:**
+
+1. For each probe in scope, run `search_memories(query=..., limit=5)`
+2. Record top-5 results with IDs and similarity scores
+3. Check each probe:
+   - Is the expected anchor/memory at position 1?
+   - Does any new canonical appear in top-5?
+   - If a canonical appears: calculate `anchor_similarity - canonical_similarity` = margin
+4. Apply overlap threshold (default: 0.01):
+
+| Margin | Verdict | Action |
+|--------|---------|--------|
+| > 0.01 | SAFE | No action needed |
+| <= 0.01 and > 0 | OVERLAP_RISK | Flag for review. Recommend: add keyword to anchor OR update probe expectations |
+| <= 0 (canonical outranks) | OVERLAP_FAIL | Immediate rollback of offending canonical. Defer cluster. |
+
+5. Write results to `.work/memory-hygiene/rank-safety-results.json`
+
+**Acceptance criteria:**
+- All 7 critical probes: expected memory at position 1
+- Zero OVERLAP_FAIL results
+- Any OVERLAP_RISK documented with actionable mitigation
+
+**Key finding (Batch 2B.1):** MiniLM-L6-v2 embedding space has tight semantic neighborhoods. Adjacent content domains (expression syntax vs pseudo-syntax) can interfere at margins as small as 0.001-0.002. Content rewording alone may not resolve overlap — cluster deferral is the safe fallback.
 
 ## Probe Domains
 
@@ -177,6 +210,40 @@ MiniLM-L6-v2 (384-dim) has tight semantic neighborhoods. Adjacent content domain
 | Validation reports | ~15 memories | Keep re-validation only, delete initial runs | MEDIUM |
 | Remaining CustomRunCommand | ~24 memories (post C1 consolidation) | Further topic-level merges | MEDIUM |
 
+## Batch 2C: Rank Safety Gate (2026-02-22)
+
+First execution of the Rank Safety Check (Step 6) against 10 probes (7 critical + P04, P12, P13).
+
+### Results
+
+| Probe | Critical | Expected | Top-1 | Sim | Canonical in Top-5 | Margin | Verdict |
+|-------|----------|----------|-------|-----|---------------------|--------|---------|
+| P01 | Yes | #276 | #276 | 0.743 | None | — | SAFE |
+| P02 | Yes | #277 | #277 | 0.598 | None | — | SAFE |
+| P03 | Yes | #278 | #278 | 0.664 | None | — | SAFE |
+| P06 | Yes | #17 | #17 | 0.456 | None | — | SAFE |
+| P07 | Yes | #3 | #3 | 0.664 | None | — | SAFE |
+| P11 | Yes | #267 | #267 | 0.598 | #282 @ rank 5 (0.538) | 0.060 | SAFE |
+| P14 | Yes | #279 | #279 | 0.593 | None | — | SAFE |
+| P04 | No | — | #120 | 0.500 | None | — | BASELINE_FAIL |
+| P12 | No | — | #118 | 0.570 | None | — | BASELINE_FAIL |
+| P13 | No | #261 | #261 | 0.528 | None | — | SAFE |
+
+**Verdict:** ALL_CLEAR. Zero overlap risks. All 7 critical anchors at position 1.
+
+### Findings
+
+1. **Canonical #282 (C1 conditional syntax)** appears only in P11 at rank 5 with margin 0.060 — well above 0.01 threshold
+2. **Canonicals #280, #281** do not appear in any probe's top-5 — fully isolated embedding neighborhoods
+3. **Weakest margin** is P07 at 0.019 (#3 vs #16) but both are delegation-relevant — not a false positive risk
+4. **Superseded memories** (#225, #218) still appear in P11 top-5 (logical supersede only, no physical delete)
+
+### Artifacts
+
+| File | Purpose |
+|------|---------|
+| `.work/memory-hygiene/rank-safety-results.json` | Full top-5 results per probe with margins and overlap analysis |
+
 ## Anti-Patterns
 
 | Do NOT | Why |
@@ -185,6 +252,7 @@ MiniLM-L6-v2 (384-dim) has tight semantic neighborhoods. Adjacent content domain
 | Store Iron Rules in memory | They live in CLAUDE.md, not vector memory |
 | Over-index on similarity score | Semantic relevance matters more than raw score |
 | Run dedup without smoke test baseline | No way to measure if dedup improved or degraded retrieval |
+| Store canonicals without rank safety check | New content can outrank critical anchors by slim cosine margins |
 
 ## Baseline (2026-02-22)
 
