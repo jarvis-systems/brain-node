@@ -361,6 +361,29 @@ status: active
 | Phase | v1 = operator-managed; v2 = Brain-managed; v3 = container (optional) |
 | Reference | ENTERPRISE-DOD.md § "Quad-Mode Drift Policy"; `04-security-model.md` § "Compile Safety Contract" |
 
+### P2-010: Demo script stale doc count (valid:72 → 75)
+
+| Field | Value |
+|-------|-------|
+| File | `.docs/product/18-enterprise-demo-script.md:47` |
+| Issue | `valid:72` hardcoded — reality is 75 after DocDiscovery tracking + front matter fixes |
+| Fix | Update `valid:72` → `valid:75` and `all 72 docs` → `all 75 docs` |
+| Size | 1 line |
+| Status | **OPEN** |
+| Validate | `brain docs --validate` count matches demo script expected value |
+
+### P2-011: CI brain-lint.yml — add CLI tests + paths triggers
+
+| Field | Value |
+|-------|-------|
+| File | `.github/workflows/brain-lint.yml` |
+| Issue | CLI unit tests not in CI; `cli/tests/**` not in trigger paths. Change was authored in prior session, reverted as drift in current cleanup. |
+| Fix | Add `cli/tests/**` to push/PR paths triggers + add CLI unit tests step (`composer test` in cli/ working-directory) |
+| Size | ~10 lines |
+| Status | **OPEN** |
+| Dependency | Requires CLI worktree clean (no dirty master) for step to pass; coordinate with CLI dd() cleanup batch (#47, #48) |
+| Validate | CI triggers on cli/tests/ changes + CLI tests run in pipeline |
+
 ## Refactor Batches
 
 ### Refactor Batch 1 (commit 08124c3)
@@ -514,11 +537,11 @@ Regression prevention: `audit-enterprise.sh` Check 18 (mcp-schema-bypass) + `Nod
 |----------|-------|-------|--------------|------|
 | P0 | 15 | 13 | 2 (to P2) | 0 |
 | P1 | 8 | 7 | 1 (to P2) | 0 |
-| P2 | 3+2+1+1+3+1+1 | 7 | 0 | 4 |
+| P2 | 3+2+1+1+3+1+1+2 | 7 | 0 | 6 |
 | Cat-B | 2 | 2 | 0 | 0 |
-| **Total** | **34** | **29** | **3** | **4** |
+| **Total** | **36** | **29** | **3** | **6** |
 
-Remaining P2 open: P2-003 (error_log in ConvertCommand — acceptable, env-gated), P2-008 (history contamination — mitigated, cleanup deferred to Option C), P2-009 (worktree isolation — planned, contract written), DocChallenge.md paths.
+Remaining P2 open: P2-003 (error_log in ConvertCommand — acceptable, env-gated), P2-008 (history contamination — mitigated, cleanup deferred to Option C), P2-009 (worktree isolation — planned, contract written), P2-010 (demo script stale valid:72→75), P2-011 (CI CLI tests + paths triggers), DocChallenge.md paths.
 
 **Non-P0/P1 fixes (contract consistency):** commands-no-includes rule amended (false positive eliminated), AgentArchetype::id() and McpArchitecture::id() silent fallbacks replaced with RuntimeException (compile-time safety), 7 script shebangs normalized, Category B MCP schema bypass annotated (2 sites).
 
