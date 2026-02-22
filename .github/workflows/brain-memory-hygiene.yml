@@ -30,7 +30,7 @@ jobs:
           php-version: '8.2'
 
       - name: Install uv
-        uses: astral-sh/setup-uv@0d4c2d60fbdc3e4210366565e6bb24b4df01e32c # v5
+        uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
         with:
           enable-cache: false
 
