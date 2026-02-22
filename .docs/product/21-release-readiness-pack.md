@@ -61,7 +61,7 @@ jq -r '.require["jarvis-brain/core"]' composer.json  # Expected: ^v0.2.0
 | PHPStan (core) | core | `cd core && composer analyse` | 0 errors (170 files) |
 | PHPStan (cli) | cli | audit check #12 | 0 errors |
 | Enterprise Audit | root | `bash scripts/audit-enterprise.sh` | PASS:19, WARN:0, FAIL:0 |
-| Docs Validation | root | `brain docs --validate` | valid:87, invalid:0, warnings:0 |
+| Docs Validation | root | `brain docs --validate` | valid:90, invalid:0, warnings:0 |
 | Secret Scan | root | `bash scripts/scan-secrets.sh` | 0 secrets in tracked files |
 | Compile | root | `brain compile` | 4 targets (claude, codex, gemini, opencode) |
 | Clean Worktree | all | `git status` (tracked) | Clean in all 3 repos |
@@ -118,7 +118,7 @@ See: `.docs/product/10-pre-publication.md` § "Version Alignment".
 
 ## Summary
 
-Enterprise release gates: **all green**. Version-drift: **CLOSED**. Three repos aligned to `v0.2.0` with exact-match tags on HEAD, pushed to remote. Zero WIP branches. Tests (core): 273/645. Docs (root): 87 valid. PHPStan (core+cli): 0 errors. Audit (root): PASS:19 WARN:0 FAIL:0.
+Enterprise release gates: **all green**. Version-drift: **CLOSED**. Three repos aligned to `v0.2.0` with exact-match tags on HEAD, pushed to remote. Zero WIP branches. Tests (core): 273/645. Docs (root): 90 valid. PHPStan (core+cli): 0 errors. Audit (root): PASS:19 WARN:0 FAIL:0.
 
 **Canonical source:** Release snapshot semantics, reproduce commands, and known dev deltas live in `22-release-capsule-v0.2.0.md`.
 

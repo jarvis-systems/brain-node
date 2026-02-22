@@ -148,7 +148,7 @@ This is an explicit criteria variant, not a redefinition. It applies only when A
 
 | Package | Test Files | Source Files | Tests | Assertions | Status |
 |---------|-----------|--------------|-------|------------|--------|
-| Core | 19 | 170 | 264 | 620 | 264/264 PASS |
+| Core | 19 | 170 | 273 | 645 | 273/273 PASS |
 | Node | 0 (tested via Core) | 43 | 13 | 30 | via NodeIntegrityTest |
 | CLI | 31 | 124 | 444 | 853 | 444/444 PASS, PHPStan L2 0 errors |
 
