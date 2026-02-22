@@ -703,19 +703,25 @@ else
     log "  ${GREEN}PASS${NC} root=$ROOT_VERSION, core=$CORE_VERSION — consistent"
 fi
 
-# ── Check 17b: CLI version vs root (WARN-only) ──
+# Category: version-consistency — pass/fail determined ONLY by root vs core mismatch.
+add_category "version-consistency" "$([ $VER_COUNT -eq 0 ] && echo pass || echo fail)" "$VER_COUNT" "$VER_FINDINGS"
+
+# ── Check 17b/17c: Version drift (separate WARN category) ──
 VER_WARN_COUNT=0
+VER_DRIFT_FINDINGS="[]"
+
+# 17b: CLI version vs root
 CLI_VERSION=$(jq -r '.version // "missing"' "$PROJECT_ROOT/cli/composer.json" 2>/dev/null || echo "missing")
 if [[ "$CLI_VERSION" != "$ROOT_VERSION" ]]; then
     VER_WARN_COUNT=$((VER_WARN_COUNT + 1))
-    VER_FINDINGS=$(echo "$VER_FINDINGS" | jq \
+    VER_DRIFT_FINDINGS=$(echo "$VER_DRIFT_FINDINGS" | jq \
         --arg root "$ROOT_VERSION" \
         --arg cli "$CLI_VERSION" \
-        '. + [{"cli_version": $cli, "root_version": $root, "severity": "warn", "message": "CLI version differs from root — allowed in dev, must align for release"}]')
+        '. + [{"cli_version": $cli, "root_version": $root, "message": "CLI version differs from root — allowed in dev, must align for release"}]')
     log "  ${YELLOW}WARN${NC} cli=$CLI_VERSION differs from root=$ROOT_VERSION — dev OK, release requires alignment"
 fi
 
-# ── Check 17c: Per-repo tag vs composer.json (WARN-only) ──
+# 17c: Per-repo tag vs composer.json
 for repo_name in root core cli; do
     case "$repo_name" in
         root) repo_dir="$PROJECT_ROOT"; repo_composer="$PROJECT_ROOT/composer.json" ;;
@@ -727,25 +733,26 @@ for repo_name in root core cli; do
     tag_ver=$(git -C "$repo_dir" describe --tags --exact-match 2>/dev/null || echo "")
     if [[ -z "$tag_ver" ]]; then
         VER_WARN_COUNT=$((VER_WARN_COUNT + 1))
-        VER_FINDINGS=$(echo "$VER_FINDINGS" | jq \
+        VER_DRIFT_FINDINGS=$(echo "$VER_DRIFT_FINDINGS" | jq \
             --arg repo "$repo_name" \
             --arg ver "$composer_ver" \
-            '. + [{"repo": $repo, "composer_version": $ver, "tag": "none", "severity": "warn", "message": "HEAD not tagged; dev OK, release requires exact tag"}]')
+            '. + [{"repo": $repo, "composer_version": $ver, "tag": "none", "message": "HEAD not tagged; dev OK, release requires exact tag"}]')
         log "  ${YELLOW}WARN${NC} $repo_name: HEAD not tagged; composer.json=$composer_ver — dev OK, release requires tag"
     elif [[ "$tag_ver" != "$composer_ver" ]]; then
         VER_WARN_COUNT=$((VER_WARN_COUNT + 1))
-        VER_FINDINGS=$(echo "$VER_FINDINGS" | jq \
+        VER_DRIFT_FINDINGS=$(echo "$VER_DRIFT_FINDINGS" | jq \
             --arg repo "$repo_name" \
             --arg tag "$tag_ver" \
             --arg ver "$composer_ver" \
-            '. + [{"repo": $repo, "tag": $tag, "composer_version": $ver, "severity": "warn", "message": "Tag differs from composer.json version"}]')
+            '. + [{"repo": $repo, "tag": $tag, "composer_version": $ver, "message": "Tag differs from composer.json version"}]')
         log "  ${YELLOW}WARN${NC} $repo_name: tag=$tag_ver != composer.json=$composer_ver — drift detected"
     fi
 done
 
-# Category status: pass/fail determined ONLY by root vs core mismatch (VER_COUNT).
-# WARN subchecks (17b/17c) are informational — logged + in JSON findings, but do NOT affect category status.
-add_category "version-consistency" "$([ $VER_COUNT -eq 0 ] && echo pass || echo fail)" "$VER_COUNT" "$VER_FINDINGS"
+# Separate WARN category — only registered when drift exists, so PASS count is unaffected.
+if [[ $VER_WARN_COUNT -gt 0 ]]; then
+    add_category "version-drift" "warn" "$VER_WARN_COUNT" "$VER_DRIFT_FINDINGS"
+fi
 
 # ── Check 18: MCP schema bypass enforcement ─────────────────────────────
 
