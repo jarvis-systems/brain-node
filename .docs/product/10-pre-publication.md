@@ -116,6 +116,7 @@ If multi-agent / quad-mode was used during the release cycle:
 - [ ] Root repo worktree is clean: `git status --porcelain` in root = empty
 - [ ] No stale worktrees: `git worktree list` shows only root (or explicitly active tasks)
 - [ ] Agent branches merged or cleaned: `git branch --merged master | grep agent/`
+- [ ] Root CI files clean (no quad-mode drift): `git diff --name-only -- '.github/workflows/*.yml'` — must be empty. See `17-worktree-isolation-contract.md` § Hard Rule 4.6.
 
 Failure: stop release until root repo is verified clean and all agent worktrees are pruned.
 
