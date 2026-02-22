@@ -119,3 +119,15 @@ See: `.docs/product/10-pre-publication.md` § "Version Alignment".
 ## Summary
 
 Enterprise release gates: **all green**. Version-drift: **CLOSED**. Three repos aligned to `v0.2.0` with exact-match tags on HEAD, pushed to remote. Zero WIP branches. Tests (core): 264/620. Docs (root): 87 valid. PHPStan (core+cli): 0 errors. Audit (root): PASS:19 WARN:0 FAIL:0.
+
+**Canonical source:** Release snapshot semantics, reproduce commands, and known dev deltas live in `22-release-capsule-v0.2.0.md`.
+
+### Truth-Sync Policy
+
+Counter updates in this pack and related docs happen ONLY when:
+
+1. **Tag-time gates change** — new tag cut, gates re-verified at tag
+2. **Test/assertion counts change** — tests added or removed in core
+3. **Audit category count changes** — checks added or removed in audit script
+
+Post-tag documentation commits, doc-count increments, and transient HEAD-vs-tag drift do NOT trigger truth-sync edits. The release capsule defines the invariant boundary.

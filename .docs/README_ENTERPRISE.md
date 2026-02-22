@@ -133,6 +133,12 @@ bash scripts/benchmark-llm-suite.sh --scenario MT-002 --model haiku --yolo
 
 This project consists of three independent git repositories co-located on disk (not a monorepo). See `.docs/architecture/repo-topology.md` for the full topology diagram, operator cookbook, and agent guardrails.
 
+## Release State
+
+- **Release capsule (frozen):** `.docs/product/22-release-capsule-v0.2.0.md` — tag-time invariant, reproduce commands, known dev deltas
+- **Full gate evidence:** `.docs/product/21-release-readiness-pack.md` — repo-scoped counters, audit detail
+- **Pre-publication runbook:** `.docs/product/10-pre-publication.md` — GO PRE-PUB version alignment procedure
+
 ## Cost Estimates (haiku)
 
 | Profile | Scenarios | Est. tokens | Est. time | Est. cost |
