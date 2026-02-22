@@ -112,6 +112,7 @@ Worktree guard ignores `.phpunit.cache` and `.phpunit.result.cache` (PHPUnit art
 - [ ] **Worktree isolation (when quad-mode active):** agents run in dedicated worktrees, not root repo; no cross-agent writes; artifacts local to worktree; no force push. See `.docs/product/17-worktree-isolation-contract.md`. Evidence: `git worktree list` + clean root `git status`.
 - [ ] **Root CI protection (quad-mode):** `.github/workflows/*.yml` read-only on root master during quad-mode; CI edits in isolated `agent/<name>/ci-*` branch only. See `17-worktree-isolation-contract.md` § Hard Rule 4.6.
 - [ ] **Repo boundary preflight (manual):** before editing, confirm correct repo root. Three independent repos share the disk — edits must be committed in the owning repo. Commands: `git rev-parse --show-toplevel` (from file's directory); for sub-repos: `cd core && git rev-parse --show-toplevel` / `cd cli && git rev-parse --show-toplevel`. See `.docs/architecture/repo-topology.md`.
+- [ ] **Parallel hygiene sweep (end-of-batch):** run 3-agent sweep (docs, workspace, vector memory) to maintain invariants between batches. See `.docs/product/19-parallel-hygiene-sweep.md`.
 
 ## Quad-Mode Drift Policy
 

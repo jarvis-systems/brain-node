@@ -120,6 +120,14 @@ If multi-agent / quad-mode was used during the release cycle:
 
 Failure: stop release until root repo is verified clean and all agent worktrees are pruned.
 
+### Parallel Hygiene Sweep (Stabilization Step)
+
+Run the 3-agent parallel hygiene sweep before proceeding to version alignment. This ensures docs are valid, workspace is clean, and vector memory state is assessed. See `.docs/product/19-parallel-hygiene-sweep.md`.
+
+- [ ] Docs Sweeper: `brain docs --validate` = invalid=0, warnings=0
+- [ ] Workspace Sweeper: `git status --porcelain` = allowed artifacts only
+- [ ] Vector Memory Planner: stats reviewed, no destructive action without GO PRE-PUB
+
 ### CLI Worktree Stabilization (Required for Release)
 
 Audit sub-checks for CLI tests and PHPStan skip when `cli/` worktree is dirty (dev-safe). For release, CLI MUST be clean so these sub-checks actually execute:
