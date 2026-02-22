@@ -3,8 +3,8 @@ name: "Tag Normalization Runbook"
 description: "Non-destructive tag normalization procedure for vector memory hygiene"
 type: runbook
 date: 2026-02-22
-version: "1.0.0"
-status: draft
+version: "2.0.0"
+status: active
 ---
 
 # Tag Normalization Runbook
@@ -341,107 +341,100 @@ mcp__vector-memory__search_memories({"query": "custom run command", "tags": ["cu
 
 ## Step 3: Apply Mode (Tags-Only)
 
-### Tool Availability Assessment
+### Tool Availability
 
-| Tool | MCP Server | Available |
-|------|-----------|-----------|
-| `tag_normalize_preview` | vector-memory | **NO** |
-| `tag_normalize_apply` | vector-memory | **NO** |
-| `tag_normalize_preview` | vector-task | YES |
-| `tag_normalize_apply` | vector-task | YES |
+Implemented in `vector-memory-mcp >= v1.10.0` (shipped 2026-02-22).
 
-**Critical finding**: The vector-memory MCP server does NOT have `tag_normalize_preview` or `tag_normalize_apply` tools. These tools exist ONLY in the vector-task MCP server.
+| Tool | MCP Server | Available | Since |
+|------|-----------|-----------|-------|
+| `tag_normalize_preview` | vector-memory | YES | v1.10.0 |
+| `tag_normalize_apply` | vector-memory | YES | v1.10.0 |
+| `snapshot_create` | vector-memory | YES | v1.10.0 |
+| `snapshot_restore` | vector-memory | YES | v1.10.0 |
+| `tag_normalize_preview` | vector-task | YES | v1.x |
+| `tag_normalize_apply` | vector-task | YES | v1.x |
 
-### Available Approach: Manual Per-Memory Tag Update
+### Upgrade Checklist
 
-Since vector-memory lacks batch tag normalization tools, the only available method is:
+Before using these tools, ensure the MCP server is at v1.10.0+:
 
-1. **Search** for memories with the old tag
-2. **Read** each memory to get its full tag list
-3. **Update** each memory's tags individually (if such an update tool exists)
+1. Check current version: `uvx --version vector-memory-mcp` or check `pyproject.toml`
+2. Upgrade: `uvx upgrade vector-memory-mcp` (or `pip install --upgrade vector-memory-mcp`)
+3. Restart Claude Desktop / MCP client to reload tools
+4. Verify: call `mcp__vector-memory__snapshot_create({"description": "version check"})` — should return `{"success": true, ...}`
 
-**Second critical finding**: The vector-memory MCP also lacks a `update_memory` or `edit_memory_tags` tool. The available write operations are:
-- `store_memory` — creates new memory
-- `clear_old_memories` — deletes old memories
+### Exact MCP Commands (Full Workflow)
 
-This means **tag normalization on vector-memory requires a server-side feature addition**.
-
-### Recommended Implementation Path
-
-#### Option A: Server-Side Feature Request (Recommended)
-
-Request addition of these tools to the vector-memory MCP server, mirroring the vector-task implementation:
-
-```python
-# Tools to add to vector-memory MCP:
-tag_normalize_preview(threshold=0.90, dry_run=True, require_predefined=False)
-tag_normalize_apply(threshold=0.90, dry_run=False, require_predefined=False)
-```
-
-These should support the same guards as vector-task:
-- Version guard: tags with different versions never merge
-- Numeric guard: tags with different numbers never merge
-- Substring boost: auto-merge if one tag is substring of another
-- Drift prevention: `require_predefined=True` for canonical freeze
-
-#### Option B: Direct Database Access (If Server Permits)
-
-If the vector-memory SQLite database is directly accessible:
-
-```bash
-# Locate the database
-# Typically: ~/.vector-memory/memories.db or similar
-
-# Preview tag changes (read-only SQL)
-# SELECT id, tags FROM memories WHERE tags LIKE '%customruncommand%';
-
-# Apply tag rename (SQL UPDATE on tags JSON array)
-# UPDATE memories SET tags = REPLACE(tags, '"customruncommand"', '"custom-run-command"')
-#   WHERE tags LIKE '%customruncommand%';
-```
-
-**Warning**: Direct database manipulation bypasses MCP validation. Use only if no other option exists.
-
-#### Option C: Re-Store with Corrected Tags (Last Resort)
-
-For each memory requiring tag changes:
-1. Read full content via `search_memories`
-2. Note the memory ID, content, category, and tags
-3. Store a new memory with corrected tags
-4. The old memory remains (no delete available without `clear_old_memories`)
-
-**Warning**: This creates duplicates. NOT recommended without a deletion mechanism.
-
-### Exact MCP Commands (Option A, When Available)
+**Phase 1: Create rollback snapshot**
 
 ```
-# Step 3a: Preview all proposed merges
-mcp__vector-memory__tag_normalize_preview({"threshold": 0.90})
-
-# Step 3b: Preview with predefined-only (safe mode)
-mcp__vector-memory__tag_normalize_preview({"threshold": 0.90, "require_predefined": true})
-
-# Step 3c: Apply predefined mappings only (safest)
-mcp__vector-memory__tag_normalize_apply({"threshold": 0.90, "require_predefined": true, "dry_run": false})
-
-# Step 3d: Apply all (including vector-similarity grouping)
-mcp__vector-memory__tag_normalize_apply({"threshold": 0.90, "dry_run": false})
+mcp__vector-memory__snapshot_create({"description": "pre-normalize baseline 2026-02-22"})
+# Returns: { "success": true, "snapshot_id": "<16-char hex>", "memory_count": 207 }
+# SAVE the snapshot_id — required for apply step
 ```
+
+**Phase 2: Preview normalization (non-destructive)**
+
+```
+mcp__vector-memory__tag_normalize_preview({"threshold": 0.90, "max_changes": 200})
+# Returns: {
+#   "success": true,
+#   "preview_id": "<64-char hex>",
+#   "total_memories_scanned": 207,
+#   "unique_tags_before": 548,
+#   "unique_tags_after": <lower>,
+#   "planned_updates_count": <N>,
+#   "affected_memories_count": <N>,
+#   "changes": [ { "memory_id": ..., "old_tags": [...], "new_tags": [...] }, ... ],
+#   "threshold": 0.90
+# }
+# VERIFY: review changes list. SAVE preview_id.
+```
+
+**Phase 3: Apply normalization (requires both IDs)**
+
+```
+mcp__vector-memory__tag_normalize_apply({
+  "preview_id": "<preview_id from Phase 2>",
+  "snapshot_id": "<snapshot_id from Phase 1>",
+  "threshold": 0.90,
+  "max_changes": 200
+})
+# Returns: { "success": true, "applied_count": <N>, "memories_updated": <N> }
+# Apply re-computes the mapping internally and VERIFIES preview_id matches.
+# If state drifted between preview and apply → rejected.
+```
+
+**Phase 4: Post-apply verification**
+
+Run the 15-probe smoke test (see Evidence section below). If pass rate drops below 12/15:
+
+```
+mcp__vector-memory__snapshot_restore({"snapshot_id": "<snapshot_id from Phase 1>"})
+# Returns: { "success": true, "restored_count": 207 }
+# Restores EXACT pre-normalization tag state. Content/embeddings untouched.
+```
+
+### Safety Guarantees
+
+- **Tags-only**: content and embeddings are NEVER modified by normalize or snapshot tools
+- **Deterministic preview_id**: same state produces same preview_id (SHA256 of sorted mapping JSON)
+- **Deterministic snapshot_id**: same tag state produces same snapshot_id
+- **Atomic apply**: all tag updates in a single transaction; rollback on any failure
+- **Snapshot survives apply**: snapshot data persists in `tag_snapshots` table, reusable for rollback
+- **Guards**: version tags, colon-prefixed tags, numeric suffix tags, and prefix-overlap tags are protected from merging
 
 ### Rollback Instructions
 
-Since tag normalization does not delete memories, rollback is an inverse mapping operation:
+**Primary method (snapshot restore)**:
 
-**Inverse mapping** (apply if normalization degrades retrieval):
+```
+mcp__vector-memory__snapshot_restore({"snapshot_id": "<snapshot_id>"})
+```
 
-| Applied Mapping | Inverse Mapping |
-|----------------|-----------------|
-| `customruncommand` -> `custom-run-command` | `custom-run-command` -> `customruncommand` |
-| `flock` -> `single-writer` | `single-writer` -> `flock` (on memories that had `flock`) |
-| `tab-bar` -> `lab-ui` | `lab-ui` -> `tab-bar` (on memories that had `tab-bar`) |
-| `navigation` -> `lab-ui` | `lab-ui` -> `navigation` (on memories that had `navigation`) |
+This is a LOSSLESS rollback — restores the exact per-memory tag arrays captured at snapshot time. No inverse mapping ambiguity.
 
-**Important**: Rollback of many-to-one merges is LOSSY. If `tab-bar`, `navigation`, and `tab-switching` all merge into `lab-ui`, we cannot distinguish which memories had which original tag. **Mitigation**: The pre-normalize snapshot preserves the original tag assignments per memory.
+**Important**: Always create a snapshot BEFORE applying. Without a snapshot, rollback requires manual reconstruction from `.work/memory-hygiene/pre-normalize-snapshot-*.json` artifacts.
 
 ### Post-Apply Safety Checks
 
@@ -578,7 +571,7 @@ From the 548 unique tags, these appear frequently across memories but lack canon
 
 | Priority | Action | Impact | Effort |
 |----------|--------|--------|--------|
-| P0 | Request `tag_normalize_preview/apply` for vector-memory MCP | Unlocks all subsequent steps | Server-side change |
+| ~~P0~~ | ~~Request `tag_normalize_preview/apply` for vector-memory MCP~~ | DONE — shipped in v1.10.0 | Completed 2026-02-22 |
 | P1 | Rename `customruncommand` -> `custom-run-command` | Fixes worst kebab-case violation (freq=2) | 2 memories |
 | P2 | Merge `flock` -> `single-writer` | Reduces semantic overlap | 1 memory |
 | P3 | Merge tab/navigation tags -> `lab-ui` | Consolidates UI tags | ~10 memories |
