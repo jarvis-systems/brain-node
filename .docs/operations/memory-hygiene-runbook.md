@@ -3,7 +3,7 @@ name: "Memory Hygiene Runbook"
 description: "Operational procedure for vector memory health: ledger snapshots, compaction survival smoke tests, and semantic dedup policy"
 type: runbook
 date: 2026-02-22
-version: "1.2.0"
+version: "1.3.0"
 status: active
 ---
 
@@ -27,6 +27,55 @@ Vector memory is the inter-session knowledge bus. Without hygiene, retrieval deg
 - Before starting a new roadmap (baseline capture)
 - After context compaction if retrieval feels degraded
 - Monthly as routine health check
+
+## How to Run
+
+Since v1.3, the full hygiene workflow is automated as a CLI command.
+
+### Default (non-destructive)
+
+```
+brain memory:hygiene
+```
+
+Runs all three phases (ledger, smoke, rank safety) and writes artifacts to `.work/memory-hygiene/`.
+
+### Custom probe set
+
+```
+brain memory:hygiene --probe-set=path/to/custom-probe-set.json
+```
+
+### Consolidation (destructive, requires confirmation)
+
+```
+brain memory:hygiene --consolidate --yes
+```
+
+Consolidation is gated: smoke tests must pass threshold before it proceeds.
+
+### PASS Criteria
+
+| Criterion | Requirement |
+|-----------|-------------|
+| Critical probes | 7/7 must PASS |
+| Overall pass rate | >= 12/15 (80%) recommended |
+| Rank safety | ALL_CLEAR verdict (zero OVERLAP_FAIL) |
+| Overlap threshold | Margins <= 0.01 flagged as OVERLAP_RISK |
+
+### Artifacts Generated
+
+All written to `.work/memory-hygiene/`:
+
+| File | Phase | Content |
+|------|-------|---------|
+| `ledger.json` | Ledger | Memory stats, categories, tags, recent activity |
+| `smoke-results.json` | Smoke | Per-probe PASS/FAIL with similarity scores |
+| `rank-safety-results.json` | Rank Safety | Top-5 per probe with anchor margins and overlap verdicts |
+
+### Manual procedure (legacy)
+
+The original manual procedure is retained below for reference or when the CLI is unavailable.
 
 ## Procedure
 
@@ -243,6 +292,15 @@ First execution of the Rank Safety Check (Step 6) against 10 probes (7 critical 
 | File | Purpose |
 |------|---------|
 | `.work/memory-hygiene/rank-safety-results.json` | Full top-5 results per probe with margins and overlap analysis |
+
+## Security Boundary
+
+The `brain memory:hygiene` command spawns the MCP server as a local subprocess via `proc_open()`. Key constraints:
+
+- **Trusted binary only.** The command and args are read from `.mcp.json` — a checked-in config file. Never construct command strings from untrusted user input without escaping.
+- **Read-only by default.** The standard run (ledger + smoke + rank safety) performs only `search_memories`, `get_memory_stats`, `get_unique_tags`, `get_canonical_tags`, and `list_recent_memories`. No writes.
+- **Consolidation requires explicit opt-in.** The `--consolidate` flag is gated behind `--yes`. Without both flags, no memory mutations occur.
+- **Process isolation.** The MCP server runs as a child process with stdin/stdout pipes. stderr is closed. The process is terminated in a `finally` block on both success and failure.
 
 ## Anti-Patterns
 

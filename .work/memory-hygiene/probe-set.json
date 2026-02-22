@@ -1,0 +1,130 @@
+{
+  "version": "1.1.0",
+  "description": "Compaction Survival Smoke Test — 15 probes covering critical project invariants",
+  "pass_threshold": 12,
+  "total_probes": 15,
+  "similarity_floor": 0.40,
+  "relevance_rule": "Top result must be semantically relevant to probe target AND similarity >= floor",
+  "probes": [
+    {
+      "id": "P01",
+      "domain": "compile-safety",
+      "query": "brain compile single-writer lock mutex flock concurrent compilation forbidden",
+      "expected_concept": "Single-writer lock for brain compile, flock() mutex",
+      "expected_memory_id": 276,
+      "critical": true
+    },
+    {
+      "id": "P02",
+      "domain": "ci-gates",
+      "query": "composer test composer analyse quality gates PHPStan PHPUnit",
+      "expected_concept": "Quality gates: composer test + composer analyse mandatory",
+      "expected_memory_id": 277,
+      "critical": true
+    },
+    {
+      "id": "P03",
+      "domain": "project-structure",
+      "query": "project root directory brain-node cli core dual repository structure",
+      "expected_concept": "Dual-repo: brain-node (root) + brain-cli (cli/) + brain-core",
+      "expected_memory_id": 278,
+      "critical": true
+    },
+    {
+      "id": "P04",
+      "domain": "static-analysis",
+      "query": "PHPStan level analysis zero errors 170 files 124 files static analysis",
+      "expected_concept": "PHPStan L2 zero errors across core (170 files) and CLI (124 files)",
+      "expected_memory_id": null,
+      "critical": false
+    },
+    {
+      "id": "P05",
+      "domain": "release-ritual",
+      "query": "roadmap release closure phases batch testing coverage assertions",
+      "expected_concept": "Roadmap closure with phases, evidence, next candidates",
+      "expected_memory_id": null,
+      "critical": false
+    },
+    {
+      "id": "P06",
+      "domain": "memory-rules",
+      "query": "vector memory search before store iron rules MCP json payload mandatory",
+      "expected_concept": "search-before-store, mcp-json-only, multi-probe-mandatory",
+      "expected_memory_id": 17,
+      "critical": true
+    },
+    {
+      "id": "P07",
+      "domain": "delegation",
+      "query": "Brain delegation protocol agent orchestration workflow request analysis synthesis",
+      "expected_concept": "Brain as delegation orchestrator, not executor",
+      "expected_memory_id": 3,
+      "critical": true
+    },
+    {
+      "id": "P08",
+      "domain": "bridge-pattern",
+      "query": "CommandBridgeAbstract handle bridge autoupdate checkWorkingDir abstract command",
+      "expected_concept": "CommandBridgeAbstract handle() → handleBridge() pattern",
+      "expected_memory_id": 83,
+      "critical": false
+    },
+    {
+      "id": "P09",
+      "domain": "lab-architecture",
+      "query": "Lab Screen REPL interactive CLI TUI keyboard event loop ReactPHP",
+      "expected_concept": "Lab REPL with ReactPHP async event loop, drawAsync()",
+      "expected_memory_id": 86,
+      "critical": false
+    },
+    {
+      "id": "P10",
+      "domain": "semantic-tags",
+      "query": "semantic tags purpose execute mission provides XML compilation archetype",
+      "expected_concept": "Context-specific tags: execute (Command), mission (Agent), provides (Include)",
+      "expected_memory_id": 268,
+      "critical": false
+    },
+    {
+      "id": "P11",
+      "domain": "pseudo-syntax",
+      "query": "Operator.php pseudo-syntax IF FOREACH END-IF standardization format",
+      "expected_concept": "Pseudo-syntax standardization with END markers, 60-char threshold",
+      "expected_memory_id": 267,
+      "critical": true
+    },
+    {
+      "id": "P12",
+      "domain": "benchmark",
+      "query": "benchmark JSONL tool_use DTO scenario validation runner suite",
+      "expected_concept": "Benchmark system with JSONL output, tool_use DTOs, scenario runner",
+      "expected_memory_id": null,
+      "critical": false
+    },
+    {
+      "id": "P13",
+      "domain": "delegation-rules",
+      "query": "async sync delegation threshold 30 seconds checklist when to use agent",
+      "expected_concept": "Async >30s, sync <5s, gray zone decision framework",
+      "expected_memory_id": 261,
+      "critical": false
+    },
+    {
+      "id": "P14",
+      "domain": "security",
+      "query": "security model compile safety secret output prevention no-secret-output",
+      "expected_concept": "No-secret-output policy, compile safety contract",
+      "expected_memory_id": 279,
+      "critical": true
+    },
+    {
+      "id": "P15",
+      "domain": "bug-fix-recall",
+      "query": "flattenArray Array to string conversion warning CompileStandartsTrait fix",
+      "expected_concept": "flattenArray() fix for nested arrays in compilation",
+      "expected_memory_id": 9,
+      "critical": false
+    }
+  ]
+}
