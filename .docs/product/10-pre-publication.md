@@ -123,7 +123,27 @@ Failure: stop release until root repo is verified clean and all agent worktrees 
 
 All three repos must have matching git tags and matching `composer.json` version fields before publication. This gate applies only at release time (GO PRE-PUB). During normal dev batches, version drift is non-blocking — do not tag during regular work.
 
+### Iron Rules
+
+- **No remote retag.** If the target tag already exists on a remote (`git ls-remote --tags origin | grep vX.Y.Z`), do NOT delete and recreate it. Bump to the next version (`v0.2.1`, `v0.3.0`, etc.) instead. Retagging a pushed tag is forbidden except under explicit GO PRE-PUB with separate incident-style approval.
+- **Preflight: jq required.** All steps below use `jq`. Verify availability before starting: `command -v jq >/dev/null || { echo "BLOCKED: jq not installed"; exit 1; }`. Fallback: `php -r "echo json_decode(file_get_contents('composer.json'))->version;"`.
+
+### Lock Semantics (dev vs release)
+
+- **Dev mode (path repo):** `.brain/composer.lock` may show `dev-master` with a commit reference for `jarvis-brain/core`. This is informational only — the path symlink resolves at runtime.
+- **Packagist / publication mode:** Root and CLI `composer.json` constraints MUST be semver tags (no `"*"`), and `composer.lock` must be regenerated from the registry (not from the path symlink). Run `composer update jarvis-brain/core` after switching the constraint from `"*"` to `"^v0.2.0"`.
+
 ### Steps
+
+0. Preflight — verify `jq` and check remote tags:
+
+```bash
+command -v jq >/dev/null || { echo "BLOCKED: jq not installed"; exit 1; }
+git ls-remote --tags origin | grep 'v0\.2\.0' || echo "Tag not on remote — safe to use"
+git -C core ls-remote --tags origin | grep 'v0\.2\.0' || echo "Tag not on remote — safe to use"
+git -C cli ls-remote --tags origin | grep 'v0\.2\.0' || echo "Tag not on remote — safe to use"
+# If ANY tag exists on remote: choose next version. Do NOT retag.
+```
 
 1. Verify `composer.json` version fields match across repos:
 

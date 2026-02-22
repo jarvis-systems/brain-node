@@ -163,6 +163,14 @@ git -C core describe --tags --always            # core
 git -C cli describe --tags --always             # cli
 ```
 
+### Retag policy
+
+Never retag a version that has been pushed to a remote. If the target tag exists on remote (`git ls-remote --tags origin | grep vX.Y.Z`), bump to the next version instead. Full procedure: `10-pre-publication.md` § "Version Alignment" Iron Rules.
+
+### Lock semantics
+
+Dev mode: `.brain/composer.lock` references `dev-master` via path symlink — informational only. Release mode: constraints must be semver (`"^v0.2.0"`), lock regenerated from registry. See `10-pre-publication.md` § "Lock Semantics".
+
 ### Known mismatch (release-time debt)
 
 As of 2026-02-22: `core/composer.json` says `v0.2.0` but core's latest git tag is `v0.0.1`. This is acceptable during dev (composer.json was bumped manually, tag was not). Before any release: either tag core `v0.2.0` or revert the composer.json version to match the tag. Tracked as release-time prerequisite, not a dev-blocking issue.
