@@ -94,8 +94,6 @@ status: active
 | `node/Skills/` | Empty directory | Scaffold created by `brain make:skill`. Git does not track empty directories. |
 | `.brain` | Symlink (this repo only) | Self-hosting dev mode: `.brain → .` so Brain tooling develops itself using its own Node structure. In other projects `.brain/` is a real directory, not a symlink. |
 | `.compile-stamp` | File | Build timestamp from `brain compile`. Safe to delete; regenerated on next compile. |
-| `.work/` | Directory | Workspace scratch area for quarantined/archived files. Not scanned by `brain docs`. |
-| `.docs/DocDiscovery/` (untracked) | Directory | Knowledge discovery drafts. Fails `brain docs --validate` until YAML front matter added. Track only when publication-ready. |
 
 **Verify:** `git clean -nd` should list ONLY items from the table above. Anything else — investigate immediately and run `bash scripts/scan-secrets.sh`.
 
@@ -104,7 +102,6 @@ status: active
 - Stdout dumps (e.g. `pbcopy` from `> file` instead of `| pbcopy`) — delete after confirming content
 - Editor temp files (`*.swp`, `*.bak`, `*~`) — configure global gitignore (`~/.config/git/ignore`), not repo `.gitignore`
 - Files matching secret patterns (`github_pat_*`, `ctx7sk-*`, `*.key`) — run `scan-secrets.sh`, rotate if real
-- Compiled outputs outside `.claude/` (random `.md`, `.json`, `.xml` dumps) — delete after confirming not user work
 
 **Why not .gitignore:** These items are NOT added to `.gitignore` intentionally. Keeping `git clean -nd` signal value high ensures unexpected files are immediately visible, not silently hidden.
 
