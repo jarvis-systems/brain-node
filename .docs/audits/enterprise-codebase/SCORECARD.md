@@ -27,13 +27,13 @@ status: active
 | 3 | Input Validation | 3 | 3 | -- | 3.0 | MCP schema validator (3 modes); 244 validated call sites; 2 compile-time bypass sites annotated with @mcp-schema-bypass; audit Check 18 enforces regression gate |
 | 4 | Security | 3 | 3 | 3 | 3.0 | All controls met; mitigated-history variant applied (private repo, all guardrails met 2026-02-21); ~~No static analysis~~ **FIXED** (phpstan level 2); ~~API keys in MCP files~~ **FIXED** (getenv()); ~~CI actions tag-pinned~~ **FIXED** (SHA-pinned); **NEW**: Secret scanning CI gate, release bundle .mcp.json exclusion, upload.sh/settings.json untracked, threat model doc, CI concurrency guards, pre-publication kill-switch |
 | 5 | Docs Parity | 3 | 3 | -- | 3.0 | ~~`composer test`/`analyse` missing at root~~ **FIXED**; ~~LegacyParityTest referenced but never existed~~ **FIXED** (removed from CLAUDE.md, actual test list updated); ~~docs validation 1 invalid~~ **FIXED** (YAML front matter added); `brain docs --validate` = 0 invalid |
-| 6 | Testability | 3 | 3 | 1 | 2.3 | 253/253 tests, 594 assertions; **Refactor Batch 8**: +3 tests (command include policy, agent ID uniqueness, MCP ID uniqueness); **Refactor Batch 7**: NodeIntegrityTest +1 test (testNoTestStubMcpFiles) + Meta('model') assertion; **Refactor Batch 5**: id() contract fix + 4 id-method tests, XmlBuilder edge cases (15 new tests), SnapshotTest golden-file regression (12 tests); **Refactor Batch 4**: BlueprintTest (44→48 tests); **Refactor Batch 3**: MDTest (30), CoreTest (28), VarChainTest (20); Node: 12 tests via NodeIntegrityTest; CLI: phpstan level 0 |
+| 6 | Testability | 3 | 3 | 3 | 3.0 | Core: 253 tests, 594 assertions (19 files); CLI: 444 tests, 853 assertions (31 files); Node: 13 tests via NodeIntegrityTest; PHPStan L2 across core+CLI (0 errors); **Roadmap 15.4**: 4 batches of CLI test expansion (docs services, traits, make commands, make:mcp deep) |
 | 7 | Release Discipline | 3 | 3 | -- | 3.0 | Pinning, manifest, bundle, release CI -- all good |
 | 8 | Operability | 3 | 3 | -- | 3.0 | Benchmarks, runbooks, ops-evidence, demo -- comprehensive; **Refactor Batch 6**: 3 P0 script bugs fixed (jq key mismatch, md5 portability, version consistency check) |
 | 9 | Footguns | 3 | 3 | -- | 3.0 | ~~Debug artifacts~~ **FIXED**; ~~typo in class name~~ **FIXED**; ~~dead scaffold~~ **FIXED**; ~~hardcoded MCP paths~~ **FIXED** (generator emits getcwd()); **Refactor Batch 2**: awesome-mcp.json `--save-as` → `--as` CLI bug fix; **Refactor Batch 4**: ~~Guideline::workflow() dead method~~ **REMOVED**; **Refactor Batch 5**: ~~BlueprintArchitecture::id() broken~~ **FIXED** (→ set()); **Refactor Batch 6**: ~~Core::getVariable @return scalar lie~~ **FIXED**, ~~McpArchitecture::id() copy-paste docblock~~ **FIXED**; **Refactor Batch 7**: ~~Test2Mcp.php stub artifact~~ **REMOVED**; **Refactor Batch 8**: ~~AgentArchetype::id() silent 'explore' fallback~~ **FIXED** (→ throw), ~~McpArchitecture::id() silent 'unknown' fallback~~ **FIXED** (→ throw) |
 | 10 | Maintainability | 3 | 3 | -- | 3.0 | ~~strict_types~~ **FIXED**; ~~CompileStandartsTrait typo~~ **FIXED**; ~~faker in prod~~ **FIXED**; ~~hardcoded paths~~ **FIXED** (generator + test); **Refactor Batch 1**: var-dumper→require-dev (17 prod deps); **Refactor Batch 2**: workspace.json portable paths, both Compilation traits 100% return-typed (verified); **Refactor Batch 4**: BlueprintArchitecture::mutateToString() `: mixed` return type added; **Refactor Batch 6**: core/composer.json version v0.0.1→v0.2.0, `^v12.0`→`^12.0` normalize; **Refactor Batch 7**: all 8 agents now have `#[Meta('model')]`; **Refactor Batch 8**: ~~commands-no-includes false rule~~ **AMENDED** (→ commands-no-brain-includes), shebang consistency (7 scripts normalized to `#!/usr/bin/env bash`) |
 
-**Overall Score: 30.0 / 30 (100%)**
+**Overall Score: 30.0 / 30 (100%)** — Testability CLI upgraded 1→3 (Roadmap 15.4 complete)
 
 ## Category Details
 
@@ -150,7 +150,7 @@ This is an explicit criteria variant, not a redefinition. It applies only when A
 |---------|-----------|--------------|-------|------------|--------|
 | Core | 19 | 170 | 253 | 594 | 253/253 PASS |
 | Node | 0 (tested via Core) | 43 | 13 | 30 | via NodeIntegrityTest |
-| CLI | 8 | ~30+ | ~20 | ~50 | Separate repo + PHPStan level 0 |
+| CLI | 31 | 124 | 444 | 853 | 444/444 PASS, PHPStan L2 0 errors |
 
 **Node upgrade (2→3, Batch 13B):** All 11 NodeIntegrityTest criteria met. Node is declarative configuration — PHP files declare metadata via attributes and `handle()` builders. 13 Reflection-based tests verify every structural invariant: strict_types, Meta attributes, MCP contracts (defaultCommand, defaultArgs), no secrets, no stubs, include policy, ID uniqueness, schema bypass. No runtime logic exists to test beyond these contracts. "Enterprise-ready, minor improvements only" = accurate.
 
@@ -248,7 +248,7 @@ This is an explicit criteria variant, not a redefinition. It applies only when A
 - `VERIFICATION.md`: 3 duplicate checklist entries removed (Init DTO, Resume, ST-001 — lines 332-334 duplicated 313-315), full suite scenario count 28→38
 - Score unchanged (doc-only, zero runtime impact)
 
-Remaining gaps: CLI runtime tests require Laravel framework.
+Remaining gaps: CLI integration tests requiring full Laravel bootstrap (e.g. artisan commands with service container). Unit coverage complete via Roadmap 15.4.
 
 ### 7. Release Discipline (3/3)
 

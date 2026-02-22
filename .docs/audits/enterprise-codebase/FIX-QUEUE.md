@@ -170,9 +170,9 @@ status: active
 | Fix (batch 1) | **FIXED**: MergerTest (3 errors → 0, Reflection-based), TomlBuilderTest (2 errors → 0, removed stale `->build()` chain), Merger stale-index bug (1 failure → 0, rebuild index after splice). Suite: 19/19 PASS. |
 | Fix (batch 2 — Proof Pack v1) | **NEW**: `BuilderDeterminismTest` (5 tests: XmlBuilder/TomlBuilder idempotency, ordering, newline contract), `MergerInvariantsTest` (4 tests: no child loss, empty includes, 3-level nesting, determinism), `CompilationOutputTest` (13 tests: Store format, Operator format, BrainCLI constants/methods, chaining, determinism). Suite: 40/40 PASS, 95 assertions. |
 | Fix (batch 3 — Node + CLI) | **NEW**: `NodeIntegrityTest` (8 tests: strict_types, agent/command/MCP attributes, MCP contracts, no secrets, pins.json). CLI phpstan level 0 (7 ignoreErrors, 2 excludePaths). Suite: 48/48 PASS, 117 assertions. |
-| Remaining | CLI runtime tests (requires Laravel framework) |
+| Remaining | CLI runtime/integration tests (requires Laravel framework bootstrap) |
 | Status | **FIXED** |
-| Validate | `composer test` = 245 tests, 582 assertions, 0 failures |
+| Validate | Core: `composer test` = 253 tests, 594 assertions; CLI: `composer test` = 444 tests, 853 assertions |
 
 ### P1-003a: MergerTest broken — protected handle()
 
