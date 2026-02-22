@@ -157,6 +157,7 @@ All three repos must have matching git tags and matching `composer.json` version
 ### Iron Rules
 
 - **No remote retag.** If the target tag already exists on a remote (`git ls-remote --tags origin | grep vX.Y.Z`), do NOT delete and recreate it. Bump to the next version (`v0.2.1`, `v0.3.0`, etc.) instead. Retagging a pushed tag is forbidden except under explicit GO PRE-PUB with separate incident-style approval.
+- **Post-rewrite version bump.** After a history rewrite (BFG/filter-repo), the rewrite tag may fall behind HEAD due to subsequent doc/CI commits. Do NOT move the existing tag. Cut the next patch version (vX.Y.(Z+1)) across all three repos. Precedent: v0.2.1 was created during history scrub; v0.2.2 became the aligned release tag after HEAD advanced.
 - **Preflight: jq required.** All steps below use `jq`. Verify availability before starting: `command -v jq >/dev/null || { echo "BLOCKED: jq not installed"; exit 1; }`. Fallback: `php -r "echo json_decode(file_get_contents('composer.json'))->version;"`.
 
 ### Lock Semantics (dev vs release)

@@ -285,6 +285,8 @@ For cases where Option C is not viable (must keep same repo URL):
 5. Tier-1 + Tier-2 verification (both must = 0).
 6. `git push --force` [DESTRUCTIVE — point of no return]
 7. Full gate verification.
+8. Expect remote tag SHAs to change; prefer "new tag bump" over retagging (see `10-pre-publication.md` § Version Alignment).
+9. Run Version Alignment (§4 of `10-pre-publication.md`) to close WARN: version-drift across all repos.
 
 ## Evidence Gates
 
