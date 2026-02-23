@@ -67,7 +67,7 @@ jobs:
           composer install --no-interaction --prefer-dist --no-progress
 
       - name: Compile Brain (generates .mcp.json for pin verification)
-        run: brain compile
+        run: brain compile claude --no-interaction
         env:
           PIN_STRICT: '1'
 
