@@ -61,6 +61,11 @@ jobs:
           fi
           echo "Version match: $TAG"
 
+      - name: Install root dependencies (compiler needs symfony/yaml, toml)
+        run: |
+          ln -s . .brain
+          composer install --no-interaction --prefer-dist --no-progress
+
       - name: Compile Brain (generates .mcp.json for pin verification)
         run: brain compile
         env:
