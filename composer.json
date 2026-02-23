@@ -1,54 +1,58 @@
 {
-  "name": "jarvis-brain/node",
-  "description": "The Brain Node for Agent Management",
-  "keywords": ["jarvis", "brain", "node"],
-  "type": "project",
-  "version": "v0.2.2",
-  "license": "MIT",
-  "authors": [
-    {
-      "name": "Xsaven",
-      "email": "xsaven@gmail.com",
-      "role": "Developer/Maintainer"
+    "name": "jarvis-brain/node",
+    "description": "The Brain Node for Agent Management",
+    "keywords": [
+        "jarvis",
+        "brain",
+        "node"
+    ],
+    "type": "project",
+    "version": "v0.3.0",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Xsaven",
+            "email": "xsaven@gmail.com",
+            "role": "Developer/Maintainer"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "BrainNode\\": "node/",
+            "BrainScripts\\": "scripts/"
+        }
+    },
+    "scripts": {
+        "test": "cd core && ./vendor/bin/phpunit",
+        "analyse": "cd core && ./vendor/bin/phpstan analyse && cd ../cli && ./vendor/bin/phpstan analyse",
+        "benchmark": "bash scripts/benchmark-llm-suite.sh",
+        "benchmark:ci": "bash scripts/benchmark-llm-suite.sh --json --profile ci --model haiku",
+        "benchmark:telemetry": "bash scripts/benchmark-llm-suite.sh --json --profile telemetry-ci --model haiku",
+        "benchmark:dry": "bash scripts/benchmark-llm-suite.sh --dry-run --json",
+        "benchmark:smoke": "bash scripts/benchmark-llm-suite.sh --scenario S00 --json --model haiku",
+        "benchmark:mt": "bash scripts/benchmark-llm-suite.sh --scenario MT --json --model haiku",
+        "benchmark:matrix": "bash scripts/benchmark-llm-suite.sh --matrix --json --model haiku",
+        "benchmark:adversarial": "bash scripts/benchmark-llm-suite.sh --profile adversarial-matrix --json --model haiku",
+        "benchmark:free": "bash scripts/benchmark-llm-suite.sh --json --profile free-live --agent opencode --model opencode/glm-4.7-free --model-tier haiku --yolo",
+        "benchmark:golden": "bash scripts/benchmark-llm-suite.sh --json --profile golden-live --agent claude --model claude-opus-4-6 --model-tier opus --yolo",
+        "benchmark:regression": "bash scripts/benchmark-regression-check.sh",
+        "demo:enterprise": "bash scripts/demo-enterprise.sh"
+    },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "./core",
+            "options": {
+                "symlink": true
+            }
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "jarvis-brain/core": "*",
+        "symfony/yaml": "^7.3",
+        "yosymfony/toml": "^1.0",
+        "ext-posix": "*",
+        "ext-pcntl": "*"
     }
-  ],
-  "autoload": {
-    "psr-4": {
-      "BrainNode\\": "node/",
-      "BrainScripts\\": "scripts/"
-    }
-  },
-  "scripts": {
-    "test": "cd core && ./vendor/bin/phpunit",
-    "analyse": "cd core && ./vendor/bin/phpstan analyse && cd ../cli && ./vendor/bin/phpstan analyse",
-    "benchmark": "bash scripts/benchmark-llm-suite.sh",
-    "benchmark:ci": "bash scripts/benchmark-llm-suite.sh --json --profile ci --model haiku",
-    "benchmark:telemetry": "bash scripts/benchmark-llm-suite.sh --json --profile telemetry-ci --model haiku",
-    "benchmark:dry": "bash scripts/benchmark-llm-suite.sh --dry-run --json",
-    "benchmark:smoke": "bash scripts/benchmark-llm-suite.sh --scenario S00 --json --model haiku",
-    "benchmark:mt": "bash scripts/benchmark-llm-suite.sh --scenario MT --json --model haiku",
-    "benchmark:matrix": "bash scripts/benchmark-llm-suite.sh --matrix --json --model haiku",
-    "benchmark:adversarial": "bash scripts/benchmark-llm-suite.sh --profile adversarial-matrix --json --model haiku",
-    "benchmark:free": "bash scripts/benchmark-llm-suite.sh --json --profile free-live --agent opencode --model opencode/glm-4.7-free --model-tier haiku --yolo",
-    "benchmark:golden": "bash scripts/benchmark-llm-suite.sh --json --profile golden-live --agent claude --model claude-opus-4-6 --model-tier opus --yolo",
-    "benchmark:regression": "bash scripts/benchmark-regression-check.sh",
-    "demo:enterprise": "bash scripts/demo-enterprise.sh"
-  },
-  "repositories": [
-    {
-      "type": "path",
-      "url": "./core",
-      "options": {
-        "symlink": true
-      }
-    }
-  ],
-  "require": {
-    "php": "^8.2",
-    "jarvis-brain/core": "*",
-    "symfony/yaml": "^7.3",
-    "yosymfony/toml": "^1.0",
-    "ext-posix": "*",
-    "ext-pcntl": "*"
-  }
 }

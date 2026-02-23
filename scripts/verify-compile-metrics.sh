@@ -20,6 +20,10 @@ NC='\033[0m'
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 CLAUDE_MD="$PROJECT_ROOT/.claude/CLAUDE.md"
+AGENTS_MD="$PROJECT_ROOT/AGENTS.md"
+GEMINI_MD="$PROJECT_ROOT/GEMINI.md"
+QWEN_MD="$PROJECT_ROOT/QWEN.md"
+CODEX_DOC_MAX=32768
 
 ERRORS=0
 
@@ -83,6 +87,28 @@ check "gate5 reinterpretation present in standard" 0 "$GATE5_REINTERP" "gt"
 EVIDENCE_CONTRACT=$(grep -ciE 'Evidence-contract.*CRITICAL|PLAN-ONLY.*EVIDENCE-ONLY' "$CLAUDE_MD" 2>/dev/null || true)
 check "evidence contract rule present in standard" 0 "$EVIDENCE_CONTRACT" "gt"
 
+# Multi-surface brain instruction checks (all clients)
+if [ -f "$AGENTS_MD" ]; then
+    EC_AGENTS=$(grep -ciE 'Evidence-contract.*CRITICAL' "$AGENTS_MD" 2>/dev/null || true)
+    check "evidence contract in AGENTS.md (codex/opencode)" 0 "$EC_AGENTS" "gt"
+    AGENTS_BYTES=$(wc -c < "$AGENTS_MD" | tr -d ' ')
+    check "AGENTS.md size <= codex doc limit ($CODEX_DOC_MAX)" "$CODEX_DOC_MAX" "$AGENTS_BYTES" "le"
+else
+    echo -e "${RED}[FAIL]${NC} AGENTS.md missing after compile"; ERRORS=$((ERRORS + 1))
+fi
+
+if [ -f "$GEMINI_MD" ]; then
+    EC_GEMINI=$(grep -ciE 'Evidence-contract.*CRITICAL' "$GEMINI_MD" 2>/dev/null || true)
+    check "evidence contract in GEMINI.md (gemini)" 0 "$EC_GEMINI" "gt"
+else
+    echo -e "${RED}[FAIL]${NC} GEMINI.md missing after compile"; ERRORS=$((ERRORS + 1))
+fi
+
+if [ -f "$QWEN_MD" ]; then
+    EC_QWEN=$(grep -ciE 'Evidence-contract.*CRITICAL' "$QWEN_MD" 2>/dev/null || true)
+    check "evidence contract in QWEN.md (qwen)" 0 "$EC_QWEN" "gt"
+fi
+
 echo ""
 
 # --- Paranoid/Exhaustive ---
@@ -113,6 +139,27 @@ check "gate5 reinterpretation present in exhaustive" 0 "$GATE5_REINTERP_EXH" "gt
 
 EVIDENCE_CONTRACT_EXH=$(grep -ciE 'Evidence-contract.*CRITICAL|PLAN-ONLY.*EVIDENCE-ONLY' "$CLAUDE_MD" 2>/dev/null || true)
 check "evidence contract rule present in exhaustive" 0 "$EVIDENCE_CONTRACT_EXH" "gt"
+
+# Multi-surface brain instruction checks (all clients, exhaustive)
+# Note: AGENTS.md size check omitted in exhaustive — Codex uses standard mode only
+if [ -f "$AGENTS_MD" ]; then
+    EC_AGENTS_EXH=$(grep -ciE 'Evidence-contract.*CRITICAL' "$AGENTS_MD" 2>/dev/null || true)
+    check "evidence contract in AGENTS.md (exhaustive)" 0 "$EC_AGENTS_EXH" "gt"
+else
+    echo -e "${RED}[FAIL]${NC} AGENTS.md missing after exhaustive compile"; ERRORS=$((ERRORS + 1))
+fi
+
+if [ -f "$GEMINI_MD" ]; then
+    EC_GEMINI_EXH=$(grep -ciE 'Evidence-contract.*CRITICAL' "$GEMINI_MD" 2>/dev/null || true)
+    check "evidence contract in GEMINI.md (exhaustive)" 0 "$EC_GEMINI_EXH" "gt"
+else
+    echo -e "${RED}[FAIL]${NC} GEMINI.md missing after exhaustive compile"; ERRORS=$((ERRORS + 1))
+fi
+
+if [ -f "$QWEN_MD" ]; then
+    EC_QWEN_EXH=$(grep -ciE 'Evidence-contract.*CRITICAL' "$QWEN_MD" 2>/dev/null || true)
+    check "evidence contract in QWEN.md (exhaustive)" 0 "$EC_QWEN_EXH" "gt"
+fi
 
 echo ""
 

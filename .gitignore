@@ -12,6 +12,8 @@ upload.sh
 # Build outputs (compiled artifacts from brain compile)
 AGENTS.md
 GEMINI.md
+QWEN.md
 .mcp.json
 .claude
+.qwen
 settings.json
