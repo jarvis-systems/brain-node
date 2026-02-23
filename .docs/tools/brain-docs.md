@@ -25,10 +25,11 @@ OR logic, case-insensitive. Score: name match = +10, description = +5, content =
 
 ### JSON Output (v2 schema)
 
-Search returns a JSON object with two fields:
+Search returns a versioned JSON object:
 
 ```json
 {
+  "schema_version": 2,
   "total_matches": 49,
   "files": [
     {"path": ".docs/architecture/api.md", "name": "API Design", "score": 15, ...},
@@ -39,10 +40,15 @@ Search returns a JSON object with two fields:
 
 | Field | Type | Description |
 |-------|------|-------------|
+| `schema_version` | int | Schema contract version (currently 2). Use this to detect breaking changes. |
 | `total_matches` | int | Count of all matching documents (before limit) |
 | `files` | array | Top-K results, limited by `--limit` (default: 5) |
 
-**Breaking change (v0.5):** Previous versions returned a bare array `[...]`. Consumers expecting the old format should pin to v0.4 or adapt to the new schema.
+**Version history:**
+- v2 (current): Object with `schema_version`, `total_matches`, `files`
+- v1 (deprecated): Bare array `[...]` — removed in v0.5
+
+Consumers should check `schema_version` before parsing to handle future schema changes gracefully.
 
 ### Cache Observability
 
