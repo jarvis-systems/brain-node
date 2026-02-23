@@ -2,7 +2,7 @@
 name: "Brain Docs CLI"
 description: "Complete reference for brain docs — project documentation discovery, search, download, validation, and gap analysis tool"
 type: "tool"
-date: "2026-02-20"
+date: "2026-02-23"
 ---
 
 # Brain Docs CLI
@@ -45,12 +45,76 @@ Each flag adds a layer of metadata to the JSON output:
 | `--keywords` | Top 10 frequent terms | Understand document focus |
 | `--matches` | Keyword locations with 50-char context | Find WHERE in doc |
 
+### Global Search
+
+Discovers all `.docs/` directories at depth 1-3 from project root. Useful for mono-repo projects with multiple subprojects.
+
+    brain docs api --global              # search across all subproject .docs/
+    brain docs --validate --global       # validate all docs in project tree
+
+Works with: search, `--validate`, `--update`. Does NOT affect: `--download`, `--undocumented`, `--scaffold` (always use root `.docs/`). Results merged, deduplicated by path, re-sorted by score.
+
+### Trust and Freshness Filters
+
+Filter results by document age or trustworthiness. Additive — both can be combined.
+
+| Flag | Description | Example |
+|------|-------------|---------|
+| `--freshness=N` | Include only docs modified within N days | `--freshness=7` (last week) |
+| `--trust=LEVEL` | Minimum trust level: `low`, `med`, `high` | `--trust=high` (local only) |
+
+    brain docs api --freshness=30         # docs about "api" modified in last 30 days
+    brain docs --trust=high --limit=0     # all local project docs, skip downloads
+
+### Per-Result Fields
+
+Every search result includes three additional fields — `source`, `freshness`, and `trust`:
+
+**source** — origin classification:
+- `local` — authored in root `.docs/`, no external URL
+- `downloaded` — in `sources/` subdirectory or has `url` in YAML front matter
+- `external` — from a non-root `.docs/` directory (mono-repo subproject)
+
+**freshness** — document age based on git log (batch per directory, ~38ms), filemtime fallback:
+- `modified_at` — ISO 8601 timestamp of last modification
+- `days_ago` — integer days since last change
+- `bucket` — `fresh` (0-7d), `recent` (8-30d), `aging` (31-90d), `stale` (91+d)
+
+**trust** — reliability indicator derived from source and URL presence:
+- `high` — local project documentation
+- `med` — downloaded from known URL, or external subproject docs
+- `low` — downloaded without source URL
+
+Example result:
+
+    {
+      "path": ".docs/operations/release-prepare.md",
+      "name": "Release Prepare",
+      "score": 15,
+      "source": "local",
+      "freshness": {"modified_at": "2026-02-23T10:00:00Z", "days_ago": 0, "bucket": "fresh"},
+      "trust": {"level": "high", "reason": "Local project documentation"}
+    }
+
+Example downloaded doc result:
+
+    {
+      "path": ".docs/sources/laravel-11.md",
+      "name": "Laravel 11 Docs",
+      "score": 8,
+      "source": "downloaded",
+      "freshness": {"modified_at": "2026-01-15T08:30:00Z", "days_ago": 39, "bucket": "aging"},
+      "trust": {"level": "med", "reason": "Downloaded from known URL"}
+    }
+
 ### Common Patterns
 
     brain docs query --limit=3                                   # quick search
     brain docs query --headers=2 --stats --code --keywords       # deep analysis
     brain docs query --matches --limit=1                         # find exact location
     brain docs --headers=2 --limit=0                             # full index with structure
+    brain docs api --freshness=7                                 # fresh docs about "api"
+    brain docs --trust=high --global                             # high-trust docs across project
 
 ## Download and Update
 
