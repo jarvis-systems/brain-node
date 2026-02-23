@@ -158,6 +158,48 @@ check_schema_model_ids_canonical() {
     fi
 }
 
+# ── Check: OpenCode settings.json exists and is valid JSON ──────────────────
+# Usage: check_opencode_settings
+# OpenCode requires settings.json for MCP and model configuration.
+check_opencode_settings() {
+    local settings="$PROJECT_ROOT/.opencode/settings.json"
+    if [ ! -f "$settings" ]; then
+        fail "opencode settings.json missing (.opencode/settings.json)"
+        return
+    fi
+    if ! python3 -c "import json; json.load(open('$settings'))" 2>/dev/null; then
+        fail "opencode settings.json is not valid JSON"
+        return
+    fi
+    pass "opencode settings.json exists and is valid JSON"
+}
+
+# ── Check: client skills directory exists if agents exist ───────────────────
+# Usage: check_skills_dir_if_agents <client_name> <agents_dir> <skills_dir>
+# Skills are required for full client compatibility.
+check_skills_dir_if_agents() {
+    local client="$1" agents_dir="$2" skills_dir="$3"
+    if [ ! -d "$agents_dir" ]; then
+        return
+    fi
+    local agent_count
+    agent_count=$(find "$agents_dir" -maxdepth 1 -name "*.md" 2>/dev/null | wc -l | tr -d ' ')
+    if [ "$agent_count" -eq 0 ]; then
+        return
+    fi
+    if [ ! -d "$skills_dir" ]; then
+        fail "$client skills directory missing ($skills_dir) — agents exist but no skills dir"
+        return
+    fi
+    local skill_count
+    skill_count=$(find "$skills_dir" -maxdepth 1 -name "*.md" 2>/dev/null | wc -l | tr -d ' ')
+    if [ "$skill_count" -eq 0 ]; then
+        fail "$client skills directory empty ($skills_dir) — expected at least one skill"
+        return
+    fi
+    pass "$client skills directory exists with $skill_count file(s)"
+}
+
 echo "=========================================="
 echo "Client Format Drift Detection"
 echo "=========================================="
@@ -214,6 +256,19 @@ echo ""
 # ── Schema ─────────────────────────────────────────────────────────────────
 echo -e "${YELLOW}Schema${NC}"
 check_schema_model_ids_canonical
+echo ""
+
+# ── OpenCode Settings ──────────────────────────────────────────────────────
+echo -e "${YELLOW}OpenCode Config${NC}"
+check_opencode_settings
+echo ""
+
+# ── Cross-Client Skills Integrity ──────────────────────────────────────────
+echo -e "${YELLOW}Skills Integrity${NC}"
+check_skills_dir_if_agents "claude" "$PROJECT_ROOT/.claude/agents" "$PROJECT_ROOT/.claude/skills"
+check_skills_dir_if_agents "qwen" "$PROJECT_ROOT/.qwen/agents" "$PROJECT_ROOT/.qwen/skills"
+check_skills_dir_if_agents "gemini" "$PROJECT_ROOT/.gemini/agents" "$PROJECT_ROOT/.gemini/skills"
+check_skills_dir_if_agents "opencode" "$OC_AGT" "$PROJECT_ROOT/.opencode/skills"
 echo ""
 
 # ── Codex ────────────────────────────────────────────────────────────────
