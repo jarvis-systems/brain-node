@@ -907,7 +907,7 @@ add_category "compile-clean" "$([ $COMPILECLEAN_COUNT -eq 0 ] && echo pass || ec
 log "${BOLD}[20/20] Agent schema enabled set${NC}"
 
 SCHEMA_FILE="$PROJECT_ROOT/agent-schema.json"
-CANON_AGENTS="commit-master documentation-master explore-master vector-master web-research-master"
+CANON_AGENTS="agent-master commit-master documentation-master explore-master prompt-master"
 AGENTSCHEMA_FINDINGS="[]"
 AGENTSCHEMA_COUNT=0
 
