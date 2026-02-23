@@ -197,3 +197,17 @@ brain compile
    - Pins: `PIN_STRICT=1 bash scripts/verify-pins.sh`
    - Compile discipline: check if `.brain/node/` changed without `.claude/` update
 3. Fix and re-run locally before pushing
+
+## 9. Maintenance Cadence
+
+For routine system health (weekly/monthly/pre-release), see the dedicated runbook:
+
+→ [Maintenance Cadence Runbook](../operations/maintenance-cadence.md)
+
+**Quick reference:**
+
+| Frequency | Key Commands |
+|-----------|--------------|
+| Weekly | `brain readiness:check`, `brain memory:status` |
+| Monthly | `brain memory:hygiene --human` |
+| Pre-release | `brain release:prepare vX.Y.Z --evidence --json` |
