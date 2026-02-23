@@ -11,6 +11,7 @@ dist
 upload.sh
 
 # Build outputs (compiled artifacts from brain compile)
+.compile-stamp
 AGENTS.md
 GEMINI.md
 QWEN.md
