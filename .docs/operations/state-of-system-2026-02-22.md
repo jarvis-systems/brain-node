@@ -23,7 +23,7 @@ status: "active"
 | Metric | Value |
 |--------|-------|
 | PHPStan level | 2 |
-| Tests | 470 tests, 904 assertions |
+| Tests | 640 tests, 1390 assertions |
 | Composer audit | Clean (0 advisories) |
 | CI gates | Lock sync guard, private repo guard, PHPStan, PHPUnit, security audit |
 

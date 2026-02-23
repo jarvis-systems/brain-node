@@ -27,7 +27,7 @@ Three independent git repos co-located on disk. Not a monorepo. See `.docs/archi
 
 | # | Gate | Command | Result |
 |---|------|---------|--------|
-| 1 | Docs Validation | `brain docs --validate` | valid:90, invalid:0, warnings:0 |
+| 1 | Docs Validation | `brain docs --validate` | valid:98, invalid:0, warnings:0 |
 | 2 | PHPUnit (core) | `composer test` | 273 tests, 645 assertions, 0 failures |
 | 3 | PHPStan (core) | `composer analyse` (core) | 0 errors (170 files) |
 | 4 | PHPStan (CLI) | `composer analyse` (cli) | 0 errors (131 files) |

@@ -13,7 +13,7 @@ status: active
 
 | Gate | Command | Result |
 |------|---------|--------|
-| Docs Validation | `brain docs --validate` | valid:91, invalid:0, warnings:0 |
+| Docs Validation | `brain docs --validate` | valid:98, invalid:0, warnings:0 |
 | Enterprise Audit | `bash scripts/audit-enterprise.sh` | PASS:19, WARN:0, FAIL:0 |
 | Core Tests | `composer test` | 273 tests, 645 assertions, 0 failures |
 | PHPStan (core) | `composer analyse` (core/) | 0 errors (170 files) |
