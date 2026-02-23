@@ -153,6 +153,17 @@ if [ -d "$PROJECT_ROOT/.agents/skills" ]; then
 else
     skip "codex skills — .agents/skills/ not found"
 fi
+# Trust stanza: ensures Codex runs non-interactive (no "trust this directory?" prompt)
+CODEX_TOML="$PROJECT_ROOT/.codex/config.toml"
+if [ -f "$CODEX_TOML" ]; then
+    if grep -q 'trust_level\s*=\s*"trusted"' "$CODEX_TOML"; then
+        pass "codex config has trust_level = trusted"
+    else
+        fail "codex config missing trust_level = trusted (interactive prompt risk)"
+    fi
+else
+    fail "codex config.toml missing (.codex/config.toml)"
+fi
 echo ""
 
 # ── Summary ──────────────────────────────────────────────────────────────
