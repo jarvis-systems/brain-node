@@ -83,6 +83,45 @@ check_yaml_frontmatter() {
     fi
 }
 
+# ── Check: model IDs in compiled artifacts contain "/" (full provider/model format)
+# Usage: check_model_ids_have_slash <dir> <label>
+# Enforces enterprise strictness: model IDs must be provider-prefixed (e.g., "anthropic/claude-sonnet-4-5")
+# Bare aliases like "sonnet" or "gpt-4o" are rejected.
+check_model_ids_have_slash() {
+    local dir="$1" label="$2"
+    if [ ! -d "$dir" ]; then
+        skip "$label — directory missing"
+        return
+    fi
+    local bad_count=0
+    local total_count=0
+    for f in "$dir"/*.md; do
+        [ -f "$f" ] || continue
+        # Extract model value from YAML front matter
+        # Handles: model: "value" (with possible escaped slashes \/)
+        local model_line
+        model_line=$(grep '^model:' "$f" 2>/dev/null | head -1)
+        if [ -z "$model_line" ]; then
+            # No model field - skip (not all artifacts need model)
+            continue
+        fi
+        total_count=$((total_count + 1))
+        # Extract the value after "model:" - strip leading/trailing whitespace and quotes
+        local model_value
+        model_value=$(echo "$model_line" | sed 's/^model:[[:space:]]*//' | sed 's/^"//' | sed 's/"$//' | sed "s/^'//" | sed "s/'$//" | sed 's/\\//g')
+        # Check: must contain "/" (after unescaping)
+        if [[ "$model_value" != *"/"* ]]; then
+            fail "$label — $(basename "$f") has bare model ID: \"$model_value\" (expected provider/model format)"
+            bad_count=$((bad_count + 1))
+        fi
+    done
+    if [ "$bad_count" -eq 0 ] && [ "$total_count" -gt 0 ]; then
+        pass "$label — $total_count model(s) have valid provider/model format"
+    elif [ "$bad_count" -eq 0 ] && [ "$total_count" -eq 0 ]; then
+        pass "$label — no model fields found (ok)"
+    fi
+}
+
 echo "=========================================="
 echo "Client Format Drift Detection"
 echo "=========================================="
@@ -130,6 +169,8 @@ check_has_ext "$OC_CMD" "md" "opencode commands are .md"
 check_no_ext "$OC_CMD" "toml" "opencode commands have no .toml"
 check_has_ext "$OC_AGT" "md" "opencode agents are .md"
 check_yaml_frontmatter "$OC_AGT" "opencode agents have YAML front matter"
+check_model_ids_have_slash "$OC_AGT" "opencode agents have full model IDs"
+check_model_ids_have_slash "$OC_CMD" "opencode commands have full model IDs"
 check_has_ext "$PROJECT_ROOT/.opencode/skills" "md" "opencode skills are .md"
 check_yaml_frontmatter "$PROJECT_ROOT/.opencode/skills" "opencode skills have YAML front matter"
 echo ""
