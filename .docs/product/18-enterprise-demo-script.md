@@ -18,6 +18,36 @@ Prove enterprise quality in 2-3 minutes. Copy-paste commands, observe green gate
 - Repo boundary confirmed: `git rev-parse --show-toplevel` returns root repo path. If demo touches core/ or cli/, verify sub-repo boundary: `cd core && git rev-parse --show-toplevel && cd ..`. Three independent repos share the disk — see `.docs/architecture/repo-topology.md`. For copy-paste preflight snippet and commit decision tree, see § "Repo Boundary Preflight" in the same doc.
 - All dependencies installed (`composer install` in core/ and cli/)
 
+## One-Command Demo Runner
+
+Run all gates with a single command and produce an evidence bundle:
+
+```bash
+bash scripts/run-enterprise-gates.sh
+```
+
+**What it does:**
+1. Runs 7 gates: secret scan, enterprise audit, compile clean, compile metrics, docs validate, tests, PHPStan
+2. Creates timestamped evidence bundle: `dist/evidence/enterprise-gates-YYYYMMDD-HHMMSS/`
+3. Exits 0 if all gates pass, 1 if any fail
+
+**Evidence bundle contents:**
+
+| File | Content |
+|------|---------|
+| `gates-summary.txt` | PASS/FAIL table for all 7 gates |
+| `versions.txt` | Root/core/cli version snapshot |
+| `audit-output.txt` | Full enterprise audit output |
+| `compile-metrics.txt` | Line counts for standard/exhaustive modes |
+
+**Expected output:**
+```
+TOTAL: 7/7 PASS
+RESULT: PASS (all gates green)
+```
+
+No secrets are printed. No external network calls.
+
 ## Demo Steps
 
 ### 1. Worktree
@@ -62,13 +92,13 @@ composer analyse
 
 Expected: `0 errors` for both core (170 files) and CLI (145 files). Proves: type safety across entire codebase at PHPStan L4 (core) + L2 (cli).
 
-### 6. Enterprise Audit (19 checks)
+### 6. Enterprise Audit (20 checks)
 
 ```bash
 bash scripts/audit-enterprise.sh
 ```
 
-Expected: `PASS:19, WARN:0, FAIL:0`. All three repos are version-aligned to `v0.4.0` with exact-match tags — version-drift is CLOSED. Proves: strict_types, no debug artifacts, no secret patterns, no unsafe exec, version consistency, compile clean-worktree, MCP schema enforcement.
+Expected: `PASS:20, WARN:0, FAIL:0`. All three repos are version-aligned to `v0.4.0` with exact-match tags — version-drift is CLOSED. Proves: strict_types, no debug artifacts, no secret patterns, no unsafe exec, version consistency, compile clean-worktree, MCP schema enforcement, agent-schema consistency.
 
 ### 7. Secret Scan (tracked files)
 
@@ -105,7 +135,7 @@ Expected: `42/42`, `12/12`, `28/28` — all 82 unique scenarios pass schema vali
 | Docs validate | 100 documents with consistent metadata |
 | 284 tests green | Core logic, compilation determinism, node contracts |
 | PHPStan 0 errors | Type safety across 315 files (core + CLI) |
-| 19/19 audit PASS | Enterprise checklist: strict_types, no secrets, no debug, clean compile. WARN:0 — version-drift CLOSED |
+| 20/20 audit PASS | Enterprise checklist: strict_types, no secrets, no debug, clean compile, agent-schema. WARN:0 — version-drift CLOSED |
 | Secret scan clean | Zero credentials in tracked files |
 | History scan mitigated | Known debt tracked, credentials revoked, upgrade path documented |
 | 82 benchmark scenarios | Full governance coverage: knowledge, commands, multi-turn, adversarial schemas |
