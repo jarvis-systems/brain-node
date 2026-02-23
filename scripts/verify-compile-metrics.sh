@@ -167,6 +167,15 @@ echo ""
 echo -e "${YELLOW}Restoring standard/standard${NC}"
 STRICT_MODE=standard COGNITIVE_LEVEL=standard brain compile >/dev/null 2>&1
 
+# --- Dev baseline audit guard ---
+echo -e "${YELLOW}Phase 3: Dev audit baseline${NC}"
+AUDIT_OUTPUT=$(bash "$PROJECT_ROOT/scripts/audit-enterprise.sh" 2>&1 || true)
+AUDIT_CLEAN=$(echo "$AUDIT_OUTPUT" | sed $'s/\x1b\\[[0-9;]*m//g')
+AUDIT_WARN=$(echo "$AUDIT_CLEAN" | grep -E '^\s*WARN:' | head -1 | tr -dc '0-9')
+AUDIT_FAIL=$(echo "$AUDIT_CLEAN" | grep -E '^\s*FAIL:' | head -1 | tr -dc '0-9')
+check "dev audit WARN count" 0 "${AUDIT_WARN:-99}"
+check "dev audit FAIL count" 0 "${AUDIT_FAIL:-99}"
+
 echo ""
 echo "=========================================="
 echo "Summary: standard=$LINES_STD lines, exhaustive=$LINES_EXH lines, delta=$((LINES_EXH - LINES_STD))"
