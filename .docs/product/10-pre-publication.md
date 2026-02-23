@@ -268,3 +268,7 @@ Any "Evidence Pack" missing live output from these commands is PLAN-ONLY by defi
 |------|----------|-----------|
 | 2026-02-21 | Created kill-switch checklist | Pre-publication safety net for credential rotation and history cleanup |
 | 2026-02-21 | Added mitigated-history private exception | Aligns history scan gate with SCORECARD "Mitigated History Variant" for private repos; publication rule unchanged |
+
+## See Also
+
+- `.docs/operations/task-contract-templates.md` — Template 4 (Release / GO PRE-PUB) provides a copy-paste execution contract for pre-publication tasks.
