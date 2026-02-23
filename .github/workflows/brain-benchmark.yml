@@ -101,7 +101,11 @@ jobs:
           node-version: '20'
 
       - name: Install Brain CLI
-        run: composer global require jarvis-brain/cli --no-interaction
+        run: |
+          composer global config github-oauth.github.com "${{ secrets.JARVIS_REPOS_TOKEN }}"
+          composer global config repositories.brain-cli vcs https://github.com/jarvis-systems/brain-cli.git
+          composer global config repositories.brain-core vcs https://github.com/jarvis-systems/brain-core.git
+          composer global require jarvis-brain/cli --no-interaction
 
       - name: Install Claude Code
         run: npm install -g @anthropic-ai/claude-code
@@ -136,7 +140,11 @@ jobs:
           node-version: '20'
 
       - name: Install Brain CLI
-        run: composer global require jarvis-brain/cli --no-interaction
+        run: |
+          composer global config github-oauth.github.com "${{ secrets.JARVIS_REPOS_TOKEN }}"
+          composer global config repositories.brain-cli vcs https://github.com/jarvis-systems/brain-cli.git
+          composer global config repositories.brain-core vcs https://github.com/jarvis-systems/brain-core.git
+          composer global require jarvis-brain/cli --no-interaction
 
       - name: Install Claude Code
         run: npm install -g @anthropic-ai/claude-code
@@ -197,7 +205,11 @@ jobs:
           node-version: '20'
 
       - name: Install Brain CLI
-        run: composer global require jarvis-brain/cli --no-interaction
+        run: |
+          composer global config github-oauth.github.com "${{ secrets.JARVIS_REPOS_TOKEN }}"
+          composer global config repositories.brain-cli vcs https://github.com/jarvis-systems/brain-cli.git
+          composer global config repositories.brain-core vcs https://github.com/jarvis-systems/brain-core.git
+          composer global require jarvis-brain/cli --no-interaction
 
       - name: Install Claude Code
         run: npm install -g @anthropic-ai/claude-code
@@ -256,7 +268,11 @@ jobs:
           node-version: '20'
 
       - name: Install Brain CLI
-        run: composer global require jarvis-brain/cli --no-interaction
+        run: |
+          composer global config github-oauth.github.com "${{ secrets.JARVIS_REPOS_TOKEN }}"
+          composer global config repositories.brain-cli vcs https://github.com/jarvis-systems/brain-cli.git
+          composer global config repositories.brain-core vcs https://github.com/jarvis-systems/brain-core.git
+          composer global require jarvis-brain/cli --no-interaction
 
       - name: Install Claude Code
         run: npm install -g @anthropic-ai/claude-code
@@ -324,7 +340,11 @@ jobs:
           node-version: '20'
 
       - name: Install Brain CLI
-        run: composer global require jarvis-brain/cli --no-interaction
+        run: |
+          composer global config github-oauth.github.com "${{ secrets.JARVIS_REPOS_TOKEN }}"
+          composer global config repositories.brain-cli vcs https://github.com/jarvis-systems/brain-cli.git
+          composer global config repositories.brain-core vcs https://github.com/jarvis-systems/brain-core.git
+          composer global require jarvis-brain/cli --no-interaction
 
       - name: Install Claude Code
         run: npm install -g @anthropic-ai/claude-code
@@ -392,7 +412,11 @@ jobs:
           node-version: '20'
 
       - name: Install Brain CLI
-        run: composer global require jarvis-brain/cli --no-interaction
+        run: |
+          composer global config github-oauth.github.com "${{ secrets.JARVIS_REPOS_TOKEN }}"
+          composer global config repositories.brain-cli vcs https://github.com/jarvis-systems/brain-cli.git
+          composer global config repositories.brain-core vcs https://github.com/jarvis-systems/brain-core.git
+          composer global require jarvis-brain/cli --no-interaction
 
       - name: Install OpenCode CLI
         run: npm install -g opencode-ai@latest
@@ -443,7 +467,11 @@ jobs:
           node-version: '20'
 
       - name: Install Brain CLI
-        run: composer global require jarvis-brain/cli --no-interaction
+        run: |
+          composer global config github-oauth.github.com "${{ secrets.JARVIS_REPOS_TOKEN }}"
+          composer global config repositories.brain-cli vcs https://github.com/jarvis-systems/brain-cli.git
+          composer global config repositories.brain-core vcs https://github.com/jarvis-systems/brain-core.git
+          composer global require jarvis-brain/cli --no-interaction
 
       - name: Install Claude Code
         run: npm install -g @anthropic-ai/claude-code
