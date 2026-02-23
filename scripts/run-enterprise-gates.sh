@@ -170,6 +170,56 @@ fi
     fi
 } > "$BUNDLE_DIR/gates-summary.txt"
 
+# ── Evidence Manifest ─────────────────────────────────────────────────────
+
+MANIFEST_JSON="$BUNDLE_DIR/manifest.json"
+MANIFEST_TXT="$BUNDLE_DIR/manifest.txt"
+GENERATED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+
+# Build file list with hashes (sorted by filename)
+FILES_JSON="[]"
+FILES_TXT=""
+
+for f in $(ls "$BUNDLE_DIR"/*.txt 2>/dev/null | sort); do
+    fname=$(basename "$f")
+    fsize=$(wc -c < "$f" | tr -d ' ')
+    fhash=$(shasum -a 256 "$f" | cut -d' ' -f1)
+    
+    FILES_JSON=$(echo "$FILES_JSON" | jq \
+        --arg path "$fname" \
+        --argjson bytes "$fsize" \
+        --arg sha256 "$fhash" \
+        '. + [{"path": $path, "bytes": $bytes, "sha256": $sha256}]')
+    
+    FILES_TXT="${FILES_TXT}${fname}\t${fsize}\t${fhash}\n"
+done
+
+# Write manifest.json
+jq -n \
+    --arg generated_at "$GENERATED_AT" \
+    --arg bundle "$(basename "$BUNDLE_DIR")" \
+    --argjson pass "$PASS_COUNT" \
+    --argjson fail "$FAIL_COUNT" \
+    --argjson files "$FILES_JSON" \
+    '{
+        "generated_at": $generated_at,
+        "bundle": $bundle,
+        "gates": {"pass": $pass, "fail": $fail},
+        "files": $files
+    }' > "$MANIFEST_JSON"
+
+# Write manifest.txt (human-readable)
+{
+    echo "=== Evidence Bundle Manifest ==="
+    echo "Generated: $GENERATED_AT"
+    echo "Bundle: $(basename "$BUNDLE_DIR")"
+    echo "Gates: ${PASS_COUNT}/7 PASS"
+    echo ""
+    echo -e "File\tBytes\tSHA256"
+    echo -e "----\t-----\t------"
+    echo -e "$FILES_TXT"
+} > "$MANIFEST_TXT"
+
 # ── Final Output ─────────────────────────────────────────────────────────
 
 echo ""
@@ -177,7 +227,8 @@ echo -e "${BOLD}=== Summary ===${NC}"
 cat "$BUNDLE_DIR/gates-summary.txt" | tail -3
 echo ""
 echo "Evidence bundle: ${BUNDLE_DIR}/"
-ls -la "$BUNDLE_DIR" | tail -5
+echo "Manifest: ${BUNDLE_DIR}/manifest.json"
+ls -la "$BUNDLE_DIR" | tail -7
 
 # Exit code
 if [[ "$FAIL_COUNT" -gt 0 ]]; then

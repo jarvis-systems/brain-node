@@ -39,6 +39,8 @@ bash scripts/run-enterprise-gates.sh
 | `versions.txt` | Root/core/cli version snapshot |
 | `audit-output.txt` | Full enterprise audit output |
 | `compile-metrics.txt` | Line counts for standard/exhaustive modes |
+| `manifest.json` | Tamper-evident file hashes (SHA256) |
+| `manifest.txt` | Human-readable manifest |
 
 **Expected output:**
 ```
@@ -47,6 +49,24 @@ RESULT: PASS (all gates green)
 ```
 
 No secrets are printed. No external network calls.
+
+### Verifying Evidence Integrity
+
+The `manifest.json` contains SHA256 hashes for all evidence files:
+
+```bash
+# Verify a specific file
+cd dist/evidence/enterprise-gates-XXXXXX/
+shasum -a 256 -c <(jq -r '.files[] | "\(.sha256)  \(.path)"' manifest.json)
+```
+
+### Sharing Evidence Safely
+
+The evidence bundle is safe to share by design:
+- **No secrets**: Gate outputs contain only counts, status, and file names — never env values or credentials
+- **No network calls**: Runner is completely offline
+- **Tamper-evident**: Manifest hashes let recipients verify bundle integrity
+- **Warning**: Never include `.brain/.env`, `settings.json`, or other credential files
 
 ## Demo Steps
 
