@@ -372,9 +372,9 @@ status: active
 |-------|-------|
 | File | `.docs/product/18-enterprise-demo-script.md:47` |
 | Issue | `valid:72` hardcoded — reality is 75 after DocDiscovery tracking + front matter fixes |
-| Fix | Update `valid:72` → `valid:75` and `all 72 docs` → `all 75 docs` |
-| Size | 1 line |
-| Status | **OPEN** |
+| Fix | Updated to `valid:100`, test counts `284/656`, PHPStan files `315`, version `v0.4.0` |
+| Size | 6 lines |
+| Status | **FIXED** |
 | Validate | `brain docs --validate` count matches demo script expected value |
 
 ### P2-011: CI brain-lint.yml — add CLI tests + paths triggers
@@ -383,10 +383,9 @@ status: active
 |-------|-------|
 | File | `.github/workflows/brain-lint.yml` |
 | Issue | CLI unit tests not in CI; `cli/tests/**` not in trigger paths. Change was authored in prior session, reverted as drift in current cleanup. |
-| Fix | Add `cli/tests/**` to push/PR paths triggers + add CLI unit tests step (`composer test` in cli/ working-directory) |
-| Size | ~10 lines |
-| Status | **OPEN** |
-| Dependency | Requires CLI worktree clean (no dirty master) for step to pass; coordinate with CLI dd() cleanup batch (#47, #48) |
+| Fix | Already fixed in prior commit — `cli/tests/**` in paths triggers, CLI tests step exists |
+| Size | 0 lines (pre-existing) |
+| Status | **FIXED** |
 | Validate | CI triggers on cli/tests/ changes + CLI tests run in pipeline |
 
 ## Refactor Batches
@@ -546,9 +545,9 @@ Regression prevention: `audit-enterprise.sh` Check 18 (mcp-schema-bypass) + `Nod
 | Cat-B | 2 | 2 | 0 | 0 |
 | **Total** | **36** | **30** | **3** | **5** |
 
-Remaining P2 open: P2-003 (error_log in ConvertCommand — acceptable, env-gated), P2-009 (worktree isolation — planned, contract written), P2-010 (demo script stale valid:72→75), P2-011 (CI CLI tests + paths triggers), DocChallenge.md paths.
+Remaining P2 open: P2-003 (error_log in ConvertCommand — acceptable, env-gated), P2-009 (worktree isolation — planned, contract written), DocChallenge.md paths. P2-010/P2-011 CLOSED (demo counts refreshed, CI already had CLI paths/tests).
 
-**Current baseline (2026-02-23):** Core PHPStan level 4 (0 errors, 170 files, documented suppressions + constants bootstrap); CLI PHPStan level 2 (0 errors, 143 files). Level policy locked in `ENTERPRISE-DOD.md` § "PHPStan Level Policy (Cross-Repo)".
+**Current baseline (2026-02-23):** Core PHPStan level 4 (0 errors, 170 files, documented suppressions + constants bootstrap); CLI PHPStan level 2 (0 errors, 145 files). Level policy locked in `ENTERPRISE-DOD.md` § "PHPStan Level Policy (Cross-Repo)".
 
 **Non-P0/P1 fixes (contract consistency):** commands-no-includes rule amended (false positive eliminated), AgentArchetype::id() and McpArchitecture::id() silent fallbacks replaced with RuntimeException (compile-time safety), 7 script shebangs normalized, Category B MCP schema bypass annotated (2 sites).
 
@@ -623,3 +622,9 @@ Remaining P2 open: P2-003 (error_log in ConvertCommand — acceptable, env-gated
 | Batch 12 (README doc truth) | 15+ stale scenario/pipeline claims in README_ENTERPRISE.md updated to match reality |
 | Batch 12 (DOD checkboxes) | CI Supply Chain 3× `[ ]` → `[x]` (SHA pinning, concurrency, no secrets — verified from workflow source) |
 | Batch 12 (VERIFICATION dedup) | 3 duplicate checklist entries removed, full suite count 28→38 |
+
+## Intentionally Kept WIP
+
+| Repo | Location | Theme | Status | Decision |
+|------|----------|-------|--------|----------|
+| CLI | stash@{0} | exit→exception refactoring | KEEP | Behavior change — requires GO signal before salvage |

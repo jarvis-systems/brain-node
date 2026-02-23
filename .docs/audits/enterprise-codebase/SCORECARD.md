@@ -27,7 +27,7 @@ status: active
 | 3 | Input Validation | 3 | 3 | -- | 3.0 | MCP schema validator (3 modes); 244 validated call sites; 2 compile-time bypass sites annotated with @mcp-schema-bypass; audit Check 18 enforces regression gate |
 | 4 | Security | 3 | 3 | 3 | 3.0 | All controls met; history fully clean (scrubbed 2026-02-23, standard criteria); ~~No static analysis~~ **FIXED** (phpstan level 4); ~~API keys in MCP files~~ **FIXED** (getenv()); ~~CI actions tag-pinned~~ **FIXED** (SHA-pinned); **NEW**: Secret scanning CI gate, release bundle .mcp.json exclusion, upload.sh/settings.json untracked, threat model doc, CI concurrency guards, pre-publication kill-switch, git history scrub via git-filter-repo |
 | 5 | Docs Parity | 3 | 3 | -- | 3.0 | ~~`composer test`/`analyse` missing at root~~ **FIXED**; ~~LegacyParityTest referenced but never existed~~ **FIXED** (removed from CLAUDE.md, actual test list updated); ~~docs validation 1 invalid~~ **FIXED** (YAML front matter added); `brain docs --validate` = 0 invalid |
-| 6 | Testability | 3 | 3 | 3 | 3.0 | Core: 273 tests, 645 assertions (19 files); CLI: 696 tests, 1494 assertions (31 files); Node: 13 tests via NodeIntegrityTest; PHPStan L4 (core) + L2 (cli) (0 errors); **Roadmap 15.4**: 4 batches of CLI test expansion (docs services, traits, make commands, make:mcp deep) |
+| 6 | Testability | 3 | 3 | 3 | 3.0 | Core: 284 tests, 656 assertions (19 files); CLI: 696 tests, 1494 assertions (31 files); Node: 13 tests via NodeIntegrityTest; PHPStan L4 (core) + L2 (cli) (0 errors); **Roadmap 15.4**: 4 batches of CLI test expansion (docs services, traits, make commands, make:mcp deep) |
 | 7 | Release Discipline | 3 | 3 | -- | 3.0 | Pinning, manifest, bundle, release CI -- all good |
 | 8 | Operability | 3 | 3 | -- | 3.0 | Benchmarks, runbooks, ops-evidence, demo -- comprehensive; **Refactor Batch 6**: 3 P0 script bugs fixed (jq key mismatch, md5 portability, version consistency check) |
 | 9 | Footguns | 3 | 3 | -- | 3.0 | ~~Debug artifacts~~ **FIXED**; ~~typo in class name~~ **FIXED**; ~~dead scaffold~~ **FIXED**; ~~hardcoded MCP paths~~ **FIXED** (generator emits getcwd()); **Refactor Batch 2**: awesome-mcp.json `--save-as` → `--as` CLI bug fix; **Refactor Batch 4**: ~~Guideline::workflow() dead method~~ **REMOVED**; **Refactor Batch 5**: ~~BlueprintArchitecture::id() broken~~ **FIXED** (→ set()); **Refactor Batch 6**: ~~Core::getVariable @return scalar lie~~ **FIXED**, ~~McpArchitecture::id() copy-paste docblock~~ **FIXED**; **Refactor Batch 7**: ~~Test2Mcp.php stub artifact~~ **REMOVED**; **Refactor Batch 8**: ~~AgentArchetype::id() silent 'explore' fallback~~ **FIXED** (→ throw), ~~McpArchitecture::id() silent 'unknown' fallback~~ **FIXED** (→ throw) |
@@ -133,9 +133,9 @@ All controls met under standard criteria (no mitigated-history variant needed):
 
 | Package | Test Files | Source Files | Tests | Assertions | Status |
 |---------|-----------|--------------|-------|------------|--------|
-| Core | 19 | 170 | 273 | 645 | 273/273 PASS |
+| Core | 19 | 170 | 284 | 656 | 284/284 PASS |
 | Node | 0 (tested via Core) | 43 | 13 | 30 | via NodeIntegrityTest |
-| CLI | 31 | 124 | 444 | 853 | 444/444 PASS, PHPStan L2 0 errors |
+| CLI | 31 | 145 | 696 | 1494 | 696/696 PASS, PHPStan L2 0 errors |
 
 **Node upgrade (2→3, Batch 13B):** All 11 NodeIntegrityTest criteria met. Node is declarative configuration — PHP files declare metadata via attributes and `handle()` builders. 13 Reflection-based tests verify every structural invariant: strict_types, Meta attributes, MCP contracts (defaultCommand, defaultArgs), no secrets, no stubs, include policy, ID uniqueness, schema bypass. No runtime logic exists to test beyond these contracts. "Enterprise-ready, minor improvements only" = accurate.
 

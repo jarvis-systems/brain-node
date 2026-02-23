@@ -44,7 +44,7 @@ Expected: three version strings, e.g. `v0.2.0-51-gabcdef0`. The `-N-gXXXXXXX` su
 brain docs --validate
 ```
 
-Expected: `valid:98, invalid:0, warnings:0`. Proves: all 98 docs have YAML front matter, no broken references.
+Expected: `valid:100, invalid:0, warnings:0`. Proves: all 100 docs have YAML front matter, no broken references.
 
 ### 4. Tests
 
@@ -52,7 +52,7 @@ Expected: `valid:98, invalid:0, warnings:0`. Proves: all 98 docs have YAML front
 composer test
 ```
 
-Expected: `273 tests, 645 assertions, 0 failures`. Proves: full test coverage, deterministic compilation, merger invariants, node integrity, MCP schema validation.
+Expected: `284 tests, 656 assertions, 0 failures`. Proves: full test coverage, deterministic compilation, merger invariants, node integrity, MCP schema validation.
 
 ### 5. Static Analysis
 
@@ -60,7 +60,7 @@ Expected: `273 tests, 645 assertions, 0 failures`. Proves: full test coverage, d
 composer analyse
 ```
 
-Expected: `0 errors` for both core (170 files) and CLI (143 files). Proves: type safety across entire codebase at PHPStan L4 (core) + L2 (cli).
+Expected: `0 errors` for both core (170 files) and CLI (145 files). Proves: type safety across entire codebase at PHPStan L4 (core) + L2 (cli).
 
 ### 6. Enterprise Audit (19 checks)
 
@@ -68,7 +68,7 @@ Expected: `0 errors` for both core (170 files) and CLI (143 files). Proves: type
 bash scripts/audit-enterprise.sh
 ```
 
-Expected: `PASS:19, WARN:0, FAIL:0`. All three repos are version-aligned to `v0.2.0` with exact-match tags — version-drift is CLOSED. Proves: strict_types, no debug artifacts, no secret patterns, no unsafe exec, version consistency, compile clean-worktree, MCP schema enforcement.
+Expected: `PASS:19, WARN:0, FAIL:0`. All three repos are version-aligned to `v0.4.0` with exact-match tags — version-drift is CLOSED. Proves: strict_types, no debug artifacts, no secret patterns, no unsafe exec, version consistency, compile clean-worktree, MCP schema enforcement.
 
 ### 7. Secret Scan (tracked files)
 
@@ -102,9 +102,9 @@ Expected: `42/42`, `12/12`, `28/28` — all 82 unique scenarios pass schema vali
 |------|---------------|
 | Clean worktree | No drift, no forgotten changes |
 | Version signals | All three repos accessible, version history intact |
-| Docs validate | 98 documents with consistent metadata |
-| 273 tests green | Core logic, compilation determinism, node contracts |
-| PHPStan 0 errors | Type safety across 295 files (core + CLI) |
+| Docs validate | 100 documents with consistent metadata |
+| 284 tests green | Core logic, compilation determinism, node contracts |
+| PHPStan 0 errors | Type safety across 315 files (core + CLI) |
 | 19/19 audit PASS | Enterprise checklist: strict_types, no secrets, no debug, clean compile. WARN:0 — version-drift CLOSED |
 | Secret scan clean | Zero credentials in tracked files |
 | History scan mitigated | Known debt tracked, credentials revoked, upgrade path documented |
