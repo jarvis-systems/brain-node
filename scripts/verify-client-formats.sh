@@ -100,7 +100,7 @@ check_model_ids_have_slash() {
         # Extract model value from YAML front matter
         # Handles: model: "value" (with possible escaped slashes \/)
         local model_line
-        model_line=$(grep '^model:' "$f" 2>/dev/null | head -1)
+        model_line=$(grep '^model:' "$f" 2>/dev/null | head -1) || true
         if [ -z "$model_line" ]; then
             # No model field - skip (not all artifacts need model)
             continue
@@ -119,6 +119,42 @@ check_model_ids_have_slash() {
         pass "$label — $total_count model(s) have valid provider/model format"
     elif [ "$bad_count" -eq 0 ] && [ "$total_count" -eq 0 ]; then
         pass "$label — no model fields found (ok)"
+    fi
+}
+
+# ── Check: agent-schema.json model IDs match canonical list ────────────────
+# Usage: check_schema_model_ids_canonical
+# Validates that model IDs in agent-schema.json don't contain known-wrong patterns.
+# Focus: catches drift like "glm-5.0" vs canonical "glm-5".
+check_schema_model_ids_canonical() {
+    local schema="$PROJECT_ROOT/agent-schema.json"
+    if [ ! -f "$schema" ]; then
+        skip "schema model IDs — agent-schema.json not found"
+        return
+    fi
+    
+    local bad_count=0
+    
+    # Known-wrong model ID patterns (add more as discovered)
+    # Format: "wrong_pattern" -> canonical is "correct_pattern"
+    local wrong_patterns=(
+        "zai-coding-plan/glm-5.0"
+    )
+    local correct_patterns=(
+        "zai-coding-plan/glm-5"
+    )
+    
+    local i=0
+    for wrong in "${wrong_patterns[@]}"; do
+        if grep -qF "\"$wrong\"" "$schema" 2>/dev/null; then
+            fail "schema has non-canonical model ID: \"$wrong\" (should be \"${correct_patterns[$i]}\")"
+            bad_count=$((bad_count + 1))
+        fi
+        i=$((i + 1))
+    done
+    
+    if [ "$bad_count" -eq 0 ]; then
+        pass "schema model IDs pass canonical check (${#wrong_patterns[@]} patterns checked)"
     fi
 }
 
@@ -173,6 +209,11 @@ check_model_ids_have_slash "$OC_AGT" "opencode agents have full model IDs"
 check_model_ids_have_slash "$OC_CMD" "opencode commands have full model IDs"
 check_has_ext "$PROJECT_ROOT/.opencode/skills" "md" "opencode skills are .md"
 check_yaml_frontmatter "$PROJECT_ROOT/.opencode/skills" "opencode skills have YAML front matter"
+echo ""
+
+# ── Schema ─────────────────────────────────────────────────────────────────
+echo -e "${YELLOW}Schema${NC}"
+check_schema_model_ids_canonical
 echo ""
 
 # ── Codex ────────────────────────────────────────────────────────────────
