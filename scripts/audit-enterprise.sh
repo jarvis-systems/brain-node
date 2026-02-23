@@ -869,7 +869,7 @@ add_category "mcp-schema-bypass" "$([ $MCPBYPASS_COUNT -eq 0 ] && echo pass || e
 
 # ── Check 19: Compile clean-worktree gate ────────────────────────────────
 
-log "${BOLD}[19/19] Compile clean-worktree gate${NC}"
+log "${BOLD}[19/20] Compile clean-worktree gate${NC}"
 
 COMPILECLEAN_FINDINGS="[]"
 COMPILECLEAN_COUNT=0
@@ -901,6 +901,36 @@ else
     log "  ${YELLOW}SKIP${NC} brain CLI not available"
 fi
 add_category "compile-clean" "$([ $COMPILECLEAN_COUNT -eq 0 ] && echo pass || echo fail)" "$COMPILECLEAN_COUNT" "$COMPILECLEAN_FINDINGS"
+
+# ── Check 20: Agent schema enabled set consistency ───────────────────────────
+
+log "${BOLD}[20/20] Agent schema enabled set${NC}"
+
+SCHEMA_FILE="$PROJECT_ROOT/agent-schema.json"
+CANON_AGENTS="commit-master documentation-master explore-master vector-master web-research-master"
+AGENTSCHEMA_FINDINGS="[]"
+AGENTSCHEMA_COUNT=0
+
+if [[ -f "$SCHEMA_FILE" ]]; then
+    SCHEMA_AGENTS=$(grep -oE '"(agent|commit|documentation|explore|prompt|script|vector|web-research)-master"' "$SCHEMA_FILE" 2>/dev/null | tr -d '"' | sort -u | tr '\n' ' ' | sed 's/ $//')
+    CANON_SORTED=$(echo "$CANON_AGENTS" | tr ' ' '\n' | sort | tr '\n' ' ' | sed 's/ $//')
+    
+    if [[ "$SCHEMA_AGENTS" != "$CANON_SORTED" ]]; then
+        AGENTSCHEMA_COUNT=1
+        AGENTSCHEMA_FINDINGS=$(echo "$AGENTSCHEMA_FINDINGS" | jq \
+            --arg schema "$SCHEMA_AGENTS" \
+            --arg canon "$CANON_SORTED" \
+            '. + [{"message": "agent-schema.json enabled set mismatch", "schema_has": $schema, "canon_expects": $canon}]')
+        log "  ${RED}FAIL${NC} enabled set mismatch"
+        log "    Schema has: $SCHEMA_AGENTS"
+        log "    Canon expects: $CANON_SORTED"
+    else
+        log "  ${GREEN}PASS${NC} enabled agents match canon ($SCHEMA_AGENTS)"
+    fi
+else
+    log "  ${YELLOW}SKIP${NC} agent-schema.json not found"
+fi
+add_category "agent-schema" "$([ $AGENTSCHEMA_COUNT -eq 0 ] && echo pass || echo fail)" "$AGENTSCHEMA_COUNT" "$AGENTSCHEMA_FINDINGS"
 
 # ── Output JSON report ──────────────────────────────────────────────────
 

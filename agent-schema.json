@@ -72,14 +72,14 @@
         },
         "agentReference": {
             "type": "string",
-            "description": "Reference to a compiled agent. Available agents: agent-master, commit-master, documentation-master, explore-master, prompt-master, script-master, vector-master, web-research-master",
-            "pattern": "^(agent\\-master|commit\\-master|documentation\\-master|explore\\-master|prompt\\-master|script\\-master|vector\\-master|web\\-research\\-master)$",
+            "description": "Reference to a compiled agent. Available agents: commit-master, documentation-master, explore-master, vector-master, web-research-master",
+            "pattern": "^(commit\\-master|documentation\\-master|explore\\-master|vector\\-master|web\\-research\\-master)$",
             "examples": [
-                "agent-master",
                 "commit-master",
                 "documentation-master",
                 "explore-master",
-                "prompt-master"
+                "vector-master",
+                "web-research-master"
             ]
         },
         "commandReference": {
@@ -647,10 +647,6 @@
             "type": "object",
             "description": "Environment variables for .brain/.env file. Configure rules, guidelines, models, and disable flags per archetype.",
             "properties": {
-                "AGENTS_AGENT_MASTER_DISABLE": {
-                    "type": "string",
-                    "description": "Disable AgentMaster from compilation (true/false)"
-                },
                 "AGENTS_COMMIT_MASTER_DISABLE": {
                     "type": "string",
                     "description": "Disable CommitMaster from compilation (true/false)"
@@ -663,14 +659,6 @@
                     "type": "string",
                     "description": "Disable ExploreMaster from compilation (true/false)"
                 },
-                "AGENTS_PROMPT_MASTER_DISABLE": {
-                    "type": "string",
-                    "description": "Disable PromptMaster from compilation (true/false)"
-                },
-                "AGENTS_SCRIPT_MASTER_DISABLE": {
-                    "type": "string",
-                    "description": "Disable ScriptMaster from compilation (true/false)"
-                },
                 "AGENTS_VECTOR_MASTER_DISABLE": {
                     "type": "string",
                     "description": "Disable VectorMaster from compilation (true/false)"
@@ -678,34 +666,6 @@
                 "AGENTS_WEB_RESEARCH_MASTER_DISABLE": {
                     "type": "string",
                     "description": "Disable WebResearchMaster from compilation (true/false)"
-                },
-                "AGENT_MASTER_GUIDELINE_0": {
-                    "type": "string",
-                    "description": "Custom guideline #0 for AgentMaster"
-                },
-                "AGENT_MASTER_GUIDELINE_1": {
-                    "type": "string",
-                    "description": "Custom guideline #1 for AgentMaster"
-                },
-                "AGENT_MASTER_GUIDELINE_2": {
-                    "type": "string",
-                    "description": "Custom guideline #2 for AgentMaster"
-                },
-                "AGENT_MASTER_MODEL": {
-                    "type": "string",
-                    "description": "Model override for AgentMaster"
-                },
-                "AGENT_MASTER_RULE_0": {
-                    "type": "string",
-                    "description": "Custom CRITICAL rule #0 for AgentMaster"
-                },
-                "AGENT_MASTER_RULE_1": {
-                    "type": "string",
-                    "description": "Custom CRITICAL rule #1 for AgentMaster"
-                },
-                "AGENT_MASTER_RULE_2": {
-                    "type": "string",
-                    "description": "Custom CRITICAL rule #2 for AgentMaster"
                 },
                 "ASYNC_COMMAND_GUIDELINE_0": {
                     "type": "string",
@@ -826,6 +786,34 @@
                 "CLEANUP_COMMAND_RULE_2": {
                     "type": "string",
                     "description": "Custom CRITICAL rule #2 for CleanupCommand"
+                },
+                "CLIENT_FORMAT_TRIAGE_SKILL_GUIDELINE_0": {
+                    "type": "string",
+                    "description": "Custom guideline #0 for ClientFormatTriageSkill"
+                },
+                "CLIENT_FORMAT_TRIAGE_SKILL_GUIDELINE_1": {
+                    "type": "string",
+                    "description": "Custom guideline #1 for ClientFormatTriageSkill"
+                },
+                "CLIENT_FORMAT_TRIAGE_SKILL_GUIDELINE_2": {
+                    "type": "string",
+                    "description": "Custom guideline #2 for ClientFormatTriageSkill"
+                },
+                "CLIENT_FORMAT_TRIAGE_SKILL_MODEL": {
+                    "type": "string",
+                    "description": "Model override for ClientFormatTriageSkill"
+                },
+                "CLIENT_FORMAT_TRIAGE_SKILL_RULE_0": {
+                    "type": "string",
+                    "description": "Custom CRITICAL rule #0 for ClientFormatTriageSkill"
+                },
+                "CLIENT_FORMAT_TRIAGE_SKILL_RULE_1": {
+                    "type": "string",
+                    "description": "Custom CRITICAL rule #1 for ClientFormatTriageSkill"
+                },
+                "CLIENT_FORMAT_TRIAGE_SKILL_RULE_2": {
+                    "type": "string",
+                    "description": "Custom CRITICAL rule #2 for ClientFormatTriageSkill"
                 },
                 "CODEX_MASTER_MODEL": {
                     "type": "string",
@@ -1031,6 +1019,34 @@
                     "type": "string",
                     "description": "Custom CRITICAL rule #2 for DecomposeCommand"
                 },
+                "DOCS_TRUTH_SYNC_SKILL_GUIDELINE_0": {
+                    "type": "string",
+                    "description": "Custom guideline #0 for DocsTruthSyncSkill"
+                },
+                "DOCS_TRUTH_SYNC_SKILL_GUIDELINE_1": {
+                    "type": "string",
+                    "description": "Custom guideline #1 for DocsTruthSyncSkill"
+                },
+                "DOCS_TRUTH_SYNC_SKILL_GUIDELINE_2": {
+                    "type": "string",
+                    "description": "Custom guideline #2 for DocsTruthSyncSkill"
+                },
+                "DOCS_TRUTH_SYNC_SKILL_MODEL": {
+                    "type": "string",
+                    "description": "Model override for DocsTruthSyncSkill"
+                },
+                "DOCS_TRUTH_SYNC_SKILL_RULE_0": {
+                    "type": "string",
+                    "description": "Custom CRITICAL rule #0 for DocsTruthSyncSkill"
+                },
+                "DOCS_TRUTH_SYNC_SKILL_RULE_1": {
+                    "type": "string",
+                    "description": "Custom CRITICAL rule #1 for DocsTruthSyncSkill"
+                },
+                "DOCS_TRUTH_SYNC_SKILL_RULE_2": {
+                    "type": "string",
+                    "description": "Custom CRITICAL rule #2 for DocsTruthSyncSkill"
+                },
                 "DOCUMENTATION_MASTER_GUIDELINE_0": {
                     "type": "string",
                     "description": "Custom guideline #0 for DocumentationMaster"
@@ -1086,6 +1102,34 @@
                 "DO_COMMAND_RULE_2": {
                     "type": "string",
                     "description": "Custom CRITICAL rule #2 for DoCommand"
+                },
+                "EVIDENCE_PACK_BUILDER_SKILL_GUIDELINE_0": {
+                    "type": "string",
+                    "description": "Custom guideline #0 for EvidencePackBuilderSkill"
+                },
+                "EVIDENCE_PACK_BUILDER_SKILL_GUIDELINE_1": {
+                    "type": "string",
+                    "description": "Custom guideline #1 for EvidencePackBuilderSkill"
+                },
+                "EVIDENCE_PACK_BUILDER_SKILL_GUIDELINE_2": {
+                    "type": "string",
+                    "description": "Custom guideline #2 for EvidencePackBuilderSkill"
+                },
+                "EVIDENCE_PACK_BUILDER_SKILL_MODEL": {
+                    "type": "string",
+                    "description": "Model override for EvidencePackBuilderSkill"
+                },
+                "EVIDENCE_PACK_BUILDER_SKILL_RULE_0": {
+                    "type": "string",
+                    "description": "Custom CRITICAL rule #0 for EvidencePackBuilderSkill"
+                },
+                "EVIDENCE_PACK_BUILDER_SKILL_RULE_1": {
+                    "type": "string",
+                    "description": "Custom CRITICAL rule #1 for EvidencePackBuilderSkill"
+                },
+                "EVIDENCE_PACK_BUILDER_SKILL_RULE_2": {
+                    "type": "string",
+                    "description": "Custom CRITICAL rule #2 for EvidencePackBuilderSkill"
                 },
                 "EXPLORE_MASTER_GUIDELINE_0": {
                     "type": "string",
@@ -1379,65 +1423,37 @@
                     "type": "string",
                     "description": "Default model for OpenRouter CLI agents"
                 },
-                "PROMPT_MASTER_GUIDELINE_0": {
-                    "type": "string",
-                    "description": "Custom guideline #0 for PromptMaster"
-                },
-                "PROMPT_MASTER_GUIDELINE_1": {
-                    "type": "string",
-                    "description": "Custom guideline #1 for PromptMaster"
-                },
-                "PROMPT_MASTER_GUIDELINE_2": {
-                    "type": "string",
-                    "description": "Custom guideline #2 for PromptMaster"
-                },
-                "PROMPT_MASTER_MODEL": {
-                    "type": "string",
-                    "description": "Model override for PromptMaster"
-                },
-                "PROMPT_MASTER_RULE_0": {
-                    "type": "string",
-                    "description": "Custom CRITICAL rule #0 for PromptMaster"
-                },
-                "PROMPT_MASTER_RULE_1": {
-                    "type": "string",
-                    "description": "Custom CRITICAL rule #1 for PromptMaster"
-                },
-                "PROMPT_MASTER_RULE_2": {
-                    "type": "string",
-                    "description": "Custom CRITICAL rule #2 for PromptMaster"
-                },
                 "QWEN_MASTER_MODEL": {
                     "type": "string",
                     "description": "Default model for Qwen CLI agents"
                 },
-                "SCRIPT_MASTER_GUIDELINE_0": {
+                "REPO_BOUNDARY_PREFLIGHT_SKILL_GUIDELINE_0": {
                     "type": "string",
-                    "description": "Custom guideline #0 for ScriptMaster"
+                    "description": "Custom guideline #0 for RepoBoundaryPreflightSkill"
                 },
-                "SCRIPT_MASTER_GUIDELINE_1": {
+                "REPO_BOUNDARY_PREFLIGHT_SKILL_GUIDELINE_1": {
                     "type": "string",
-                    "description": "Custom guideline #1 for ScriptMaster"
+                    "description": "Custom guideline #1 for RepoBoundaryPreflightSkill"
                 },
-                "SCRIPT_MASTER_GUIDELINE_2": {
+                "REPO_BOUNDARY_PREFLIGHT_SKILL_GUIDELINE_2": {
                     "type": "string",
-                    "description": "Custom guideline #2 for ScriptMaster"
+                    "description": "Custom guideline #2 for RepoBoundaryPreflightSkill"
                 },
-                "SCRIPT_MASTER_MODEL": {
+                "REPO_BOUNDARY_PREFLIGHT_SKILL_MODEL": {
                     "type": "string",
-                    "description": "Model override for ScriptMaster"
+                    "description": "Model override for RepoBoundaryPreflightSkill"
                 },
-                "SCRIPT_MASTER_RULE_0": {
+                "REPO_BOUNDARY_PREFLIGHT_SKILL_RULE_0": {
                     "type": "string",
-                    "description": "Custom CRITICAL rule #0 for ScriptMaster"
+                    "description": "Custom CRITICAL rule #0 for RepoBoundaryPreflightSkill"
                 },
-                "SCRIPT_MASTER_RULE_1": {
+                "REPO_BOUNDARY_PREFLIGHT_SKILL_RULE_1": {
                     "type": "string",
-                    "description": "Custom CRITICAL rule #1 for ScriptMaster"
+                    "description": "Custom CRITICAL rule #1 for RepoBoundaryPreflightSkill"
                 },
-                "SCRIPT_MASTER_RULE_2": {
+                "REPO_BOUNDARY_PREFLIGHT_SKILL_RULE_2": {
                     "type": "string",
-                    "description": "Custom CRITICAL rule #2 for ScriptMaster"
+                    "description": "Custom CRITICAL rule #2 for RepoBoundaryPreflightSkill"
                 },
                 "SEARCH_COMMAND_GUIDELINE_0": {
                     "type": "string",
@@ -1495,9 +1511,25 @@
                     "type": "string",
                     "description": "Custom CRITICAL rule #2 for SequentialThinkingMcp"
                 },
+                "SKILLS_CLIENT_FORMAT_TRIAGE_SKILL_DISABLE": {
+                    "type": "string",
+                    "description": "Disable ClientFormatTriageSkill from compilation (true/false)"
+                },
+                "SKILLS_DOCS_TRUTH_SYNC_SKILL_DISABLE": {
+                    "type": "string",
+                    "description": "Disable DocsTruthSyncSkill from compilation (true/false)"
+                },
+                "SKILLS_EVIDENCE_PACK_BUILDER_SKILL_DISABLE": {
+                    "type": "string",
+                    "description": "Disable EvidencePackBuilderSkill from compilation (true/false)"
+                },
                 "SKILLS_HEALTH_CHECK_SKILL_DISABLE": {
                     "type": "string",
                     "description": "Disable HealthCheckSkill from compilation (true/false)"
+                },
+                "SKILLS_REPO_BOUNDARY_PREFLIGHT_SKILL_DISABLE": {
+                    "type": "string",
+                    "description": "Disable RepoBoundaryPreflightSkill from compilation (true/false)"
                 },
                 "STATS_COMMAND_GUIDELINE_0": {
                     "type": "string",
@@ -1837,26 +1869,26 @@
                 }
             },
             "examples": [
-                "AGENTS_AGENT_MASTER_DISABLE",
                 "AGENTS_COMMIT_MASTER_DISABLE",
                 "AGENTS_DOCUMENTATION_MASTER_DISABLE",
                 "AGENTS_EXPLORE_MASTER_DISABLE",
-                "AGENTS_PROMPT_MASTER_DISABLE",
-                "AGENTS_SCRIPT_MASTER_DISABLE",
                 "AGENTS_VECTOR_MASTER_DISABLE",
                 "AGENTS_WEB_RESEARCH_MASTER_DISABLE",
-                "AGENT_MASTER_GUIDELINE_0",
-                "AGENT_MASTER_GUIDELINE_1",
-                "AGENT_MASTER_GUIDELINE_2",
-                "AGENT_MASTER_MODEL",
-                "AGENT_MASTER_RULE_0",
-                "AGENT_MASTER_RULE_1",
-                "AGENT_MASTER_RULE_2",
                 "ASYNC_COMMAND_GUIDELINE_0",
                 "ASYNC_COMMAND_GUIDELINE_1",
                 "ASYNC_COMMAND_GUIDELINE_2",
                 "ASYNC_COMMAND_MODEL",
-                "ASYNC_COMMAND_RULE_0"
+                "ASYNC_COMMAND_RULE_0",
+                "ASYNC_COMMAND_RULE_1",
+                "ASYNC_COMMAND_RULE_2",
+                "BRAINSTORM_COMMAND_GUIDELINE_0",
+                "BRAINSTORM_COMMAND_GUIDELINE_1",
+                "BRAINSTORM_COMMAND_GUIDELINE_2",
+                "BRAINSTORM_COMMAND_MODEL",
+                "BRAINSTORM_COMMAND_RULE_0",
+                "BRAINSTORM_COMMAND_RULE_1",
+                "BRAINSTORM_COMMAND_RULE_2",
+                "BRAIN_DISABLE"
             ]
         },
         "envVariablePatterns": {

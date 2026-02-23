@@ -78,6 +78,22 @@ Invariant sections use identical source text (byte-for-byte) across all surfaces
 
 Thresholds are calibrated to actual compiled output (~316 standard, ~598 exhaustive) with headroom for growth.
 
+### Canonical Enabled Agents (agent-schema.json)
+
+The following agents are enabled by default and appear in `agent-schema.json`:
+
+| Agent ID | Model | Purpose |
+|----------|-------|---------|
+| `commit-master` | sonnet | Conventional commits, git workflow |
+| `documentation-master` | haiku | Package/library documentation research |
+| `explore-master` | haiku | Fast codebase exploration |
+| `vector-master` | sonnet | Deep vector memory operations |
+| `web-research-master` | sonnet | Multi-source web research |
+
+**Meta-agents (disabled by default):** `agent-master`, `prompt-master`, `script-master` — require explicit `*_ENABLE` env var.
+
+**Changing the enabled set:** Requires explicit GO signal. Update canon list in `audit-enterprise.sh` Check 20 and this section together.
+
 ## Output Contract
 
 Brain enforces a dual-mode output contract via the `Evidence-contract` iron rule. Every readiness or snapshot report MUST declare exactly one mode.
