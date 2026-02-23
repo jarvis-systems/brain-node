@@ -51,6 +51,14 @@ All 19 checks in `audit-enterprise.sh` must PASS or WARN (no FAIL):
 | 18. MCP schema bypass | Raw `::call()` on schema-enabled MCP without `@mcp-schema-bypass` | FAIL |
 | 19. Compile clean-worktree | `brain compile` produces new uncommitted changes (source ↔ artifact drift) | FAIL |
 
+### DEV Baseline (WARN:0 Policy)
+
+DEV mode target: **WARN:0** from `audit-enterprise.sh`. This is required for Ferrari dev hygiene.
+
+- **Enforcement:** `scripts/audit-enterprise.sh` — any WARN creates task entry, not merge block
+- **Exception:** WARN allowed only if explicitly whitelisted as temporary debt (documented in FIX-QUEUE.md)
+- **PRE-PUB mode:** Stricter gates defined in `10-pre-publication.md` — DEV baseline is separate
+
 ### CLI Sub-Checks (Cross-Repo Boundary)
 
 Checks 2 (PHPUnit) and 12 (PHPStan) include CLI sub-checks that respect the three-repo topology:
