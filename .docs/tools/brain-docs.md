@@ -23,6 +23,61 @@ OR logic, case-insensitive. Score: name match = +10, description = +5, content =
     brain docs api auth --limit=10       # "api" OR "auth", max 10 results
     brain docs api --limit=0             # unlimited results
 
+### JSON Output (v2 schema)
+
+Search returns a JSON object with two fields:
+
+```json
+{
+  "total_matches": 49,
+  "files": [
+    {"path": ".docs/architecture/api.md", "name": "API Design", "score": 15, ...},
+    {"path": ".docs/operations/api-gateway.md", "name": "API Gateway", "score": 12, ...}
+  ]
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `total_matches` | int | Count of all matching documents (before limit) |
+| `files` | array | Top-K results, limited by `--limit` (default: 5) |
+
+**Breaking change (v0.5):** Previous versions returned a bare array `[...]`. Consumers expecting the old format should pin to v0.4 or adapt to the new schema.
+
+### Cache Observability
+
+| Flag | Description |
+|------|-------------|
+| `--cache-stats` | Show cache statistics: entries, hit rate, timing breakdown |
+| `--cache-health` | Show health report with recommendations |
+| `--clear-cache` | Clear the docs index cache |
+| `--cache=off` | Disable cache for this run |
+
+**Stats output (`--cache-stats`):**
+
+```json
+{
+  "cache_hit": true,
+  "entries_total": 49,
+  "entries_changed": 0,
+  "hit_rate": 1.0,
+  "health": "healthy",
+  "timing": {
+    "scan_ms": 17,
+    "enrich_ms": 0,
+    "render_ms": 0,
+    "git_calls_saved": 49
+  }
+}
+```
+
+| Timing field | Description |
+|--------------|-------------|
+| `scan_ms` | File scanning + scoring phase |
+| `enrich_ms` | Enrichment phase (headers, code_blocks, etc.) — only for top-K |
+| `render_ms` | JSON encoding + output |
+| `git_calls_saved` | Git lookups avoided via cached freshness data |
+
 ### Exact Phrase Search
 
 Matches entire phrase in document. Case-insensitive by default.
