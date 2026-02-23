@@ -3,7 +3,7 @@ name: "CLI Output Mode Policy"
 description: "Split policy for consistent --json/--human flag symmetry across all CLI commands"
 type: policy
 date: 2026-02-23
-version: "0.4.0"
+version: "0.5.0"
 status: active
 ---
 

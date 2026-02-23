@@ -372,7 +372,7 @@ status: active
 |-------|-------|
 | File | `.docs/product/18-enterprise-demo-script.md:47` |
 | Issue | `valid:72` hardcoded — reality is 75 after DocDiscovery tracking + front matter fixes |
-| Fix | Updated to `valid:100`, test counts `284/656`, PHPStan files `315`, version `v0.4.0` |
+| Fix | Updated to `valid:100`, test counts `284/653`, PHPStan files `315`, version `v0.5.0` |
 | Size | 6 lines |
 | Status | **FIXED** |
 | Validate | `brain docs --validate` count matches demo script expected value |

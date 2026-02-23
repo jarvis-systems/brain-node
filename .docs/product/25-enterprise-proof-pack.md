@@ -17,11 +17,11 @@ Run one command. Get cryptographic proof of code quality. Share the evidence bun
 |----------|----------|------|
 | **Determinism** | Compile produces identical output | `check-compile-clean.sh` |
 | **Type Safety** | PHPStan L4 (core) + L2 (CLI), 0 errors | `composer analyse` |
-| **Test Coverage** | 284 tests, 656 assertions | `composer test` |
+| **Test Coverage** | 284 tests, 653 assertions | `composer test` |
 | **Secret Hygiene** | No secrets in tracked files | `scan-secrets.sh` |
 | **Audit Discipline** | 20-category checklist: strict_types, no debug, no unsafe exec | `audit-enterprise.sh` |
 | **Instruction Integrity** | 101 docs validated, YAML front matter | `brain docs --validate` |
-| **Version Consistency** | All 3 repos aligned to v0.4.0 | Audit Check 17 |
+| **Version Consistency** | All 3 repos aligned to v0.5.0 | Audit Check 17 |
 
 ## How to Reproduce
 

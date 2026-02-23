@@ -102,7 +102,7 @@ Expected: `valid:100, invalid:0, warnings:0`. Proves: all 100 docs have YAML fro
 composer test
 ```
 
-Expected: `284 tests, 656 assertions, 0 failures`. Proves: full test coverage, deterministic compilation, merger invariants, node integrity, MCP schema validation.
+Expected: `284 tests, 653 assertions, 0 failures`. Proves: full test coverage, deterministic compilation, merger invariants, node integrity, MCP schema validation.
 
 ### 5. Static Analysis
 
@@ -118,7 +118,7 @@ Expected: `0 errors` for both core (170 files) and CLI (145 files). Proves: type
 bash scripts/audit-enterprise.sh
 ```
 
-Expected: `PASS:20, WARN:0, FAIL:0`. All three repos are version-aligned to `v0.4.0` with exact-match tags — version-drift is CLOSED. Proves: strict_types, no debug artifacts, no secret patterns, no unsafe exec, version consistency, compile clean-worktree, MCP schema enforcement, agent-schema consistency.
+Expected: `PASS:20, WARN:0, FAIL:0`. All three repos are version-aligned to `v0.5.0` with exact-match tags — version-drift is CLOSED. Proves: strict_types, no debug artifacts, no secret patterns, no unsafe exec, version consistency, compile clean-worktree, MCP schema enforcement, agent-schema consistency.
 
 ### 7. Secret Scan (tracked files)
 
