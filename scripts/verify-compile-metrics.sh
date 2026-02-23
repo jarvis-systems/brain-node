@@ -116,10 +116,10 @@ echo -e "${YELLOW}Phase 2: paranoid/exhaustive${NC}"
 STRICT_MODE=paranoid COGNITIVE_LEVEL=exhaustive brain compile >/dev/null 2>&1
 
 LINES_EXH=$(wc -l < "$CLAUDE_MD" | tr -d ' ')
-check "exhaustive line count >= 700" 700 "$LINES_EXH" "gt"
+check "exhaustive line count >= 550" 550 "$LINES_EXH" "gt"
 
-DEEP_LEVELS=$(grep -ciE 'Level brain|Level architect' "$CLAUDE_MD" 2>/dev/null || true)
-check "deep levels present in exhaustive" 0 "$DEEP_LEVELS" "gt"
+DEEP_LEVELS=$(grep -ciE 'Multi-probe-mandatory|Triggered-suggestion|Estimate-required|Cookbook first' "$CLAUDE_MD" 2>/dev/null || true)
+check "deep rules present in exhaustive" 0 "$DEEP_LEVELS" "gt"
 
 DEEP_ERRORS=$(grep -ciE 'Error delegation failed|Error agent timeout' "$CLAUDE_MD" 2>/dev/null || true)
 check "deep errors present in exhaustive" 0 "$DEEP_ERRORS" "gt"

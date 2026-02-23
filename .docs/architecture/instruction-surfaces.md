@@ -11,13 +11,12 @@ Brain compiles to 4 instruction surfaces (standard mode):
 
 | Surface | Target Clients | Lines | Rules | H1 Sections |
 |---------|---------------|-------|-------|-------------|
-| `.claude/CLAUDE.md` | Claude Code | 352 | 39 | 18 |
-| `AGENTS.md` | Codex, OpenCode | 352 | 39 | 18 |
+| `.claude/CLAUDE.md` | Claude Code | 316 | 39 | 18 |
+| `AGENTS.md` | Codex, OpenCode | 316 | 39 | 18 |
 | `GEMINI.md` | Gemini CLI | 316 | 34 | 17 |
 | `QWEN.md` | Qwen CLI | 316 | 34 | 17 |
 
-Tier 1 (Claude/AGENTS): full delegation hierarchy (39 rules).
-Tier 2 (Gemini/Qwen): trimmed delegation — 5 rules removed (Accountability, Approval-chain, Context-integrity, Delegation-limit, Non-recursive).
+All surfaces are uniform in standard mode. Premium mode (paranoid/exhaustive) adds ~282 lines via additional iron rules and expanded cookbook presets.
 
 ## Mandatory Invariants
 
@@ -38,7 +37,7 @@ These sections MUST be present in every surface, every tier, every mode. Absence
 
 These sections scale with model cognitive budget. Same H2 header IDs across tiers, different body depth.
 
-| Section Category | Economy (~300 lines) | Standard (~400 lines) | Premium (~700+ lines) |
+| Section Category | Economy (~330 lines) | Standard (~316 lines) | Premium (~598 lines) |
 |-----------------|---------------------|----------------------|----------------------|
 | Authority levels | brain + specialist | brain + specialist + tool | All 4 levels |
 | Workflow phases | delegate + validate | 3 phases | All 5 phases |
@@ -142,9 +141,9 @@ Different clients have different token budgets and cognitive capabilities. The c
 
 | Tier | Line Target | Rule Detail Level | Suitable For |
 |------|------------|-------------------|-------------|
-| Economy (~300 lines) | Minimal | id + text + why | Haiku, Flash, small models |
-| Standard (~400 lines) | Moderate | + short onViolation | Sonnet, Pro, Codex |
-| Premium (~700+ lines) | Full | + detailed onViolation + all scenarios | Opus, Ultra |
+| Economy (~330 lines) | Minimal | id + text + why | Haiku, Flash, small models |
+| Standard (~316 lines) | Moderate | + short onViolation | Sonnet, Pro, Codex |
+| Premium (~598 lines) | Full | + detailed onViolation + all scenarios | Opus, Ultra |
 
 ### Compile Knob Presets
 
@@ -180,9 +179,9 @@ The compile system enforces these via environment variables. Changing tier mid-s
 
 | Surface | Target | Standard (lines) | Economy (lines) | Premium (lines) | Tier |
 |---------|--------|:-:|:-:|:-:|:---:|
-| `.claude/CLAUDE.md` | Claude Code | 352 | 366 | 726 | 1 |
-| `AGENTS.md` | Codex, OpenCode | 352 | 366 | 726 | 1 |
+| `.claude/CLAUDE.md` | Claude Code | 316 | 330 | 598 | 1 |
+| `AGENTS.md` | Codex, OpenCode | 316 | 330 | 598 | 1 |
 | `GEMINI.md` | Gemini CLI | 316 | 330 | 598 | 2 |
 | `QWEN.md` | Qwen CLI | 316 | 330 | 598 | 2 |
 
-Economy adds ~14 lines (strict-only rules) while reducing cognitive depth. Premium doubles output via full error/validation/level sections. Tier 1 surfaces are ~36 lines larger than Tier 2 due to 5 additional delegation rules.
+Economy adds ~14 lines (strict-only rules) while reducing cognitive depth. Premium adds ~282 lines via additional iron rules and expanded cookbook presets. All surfaces are now uniform in size per mode (tier 1/2 distinction removed).
