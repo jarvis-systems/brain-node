@@ -27,11 +27,11 @@ Three independent git repos co-located on disk. Not a monorepo. See `.docs/archi
 
 | # | Gate | Command | Result |
 |---|------|---------|--------|
-| 1 | Docs Validation | `brain docs --validate` | valid:100, invalid:0, warnings:0 |
+| 1 | Docs Validation | `brain docs --validate` | valid:101, invalid:0, warnings:0 |
 | 2 | PHPUnit (core) | `composer test` | 273 tests, 645 assertions, 0 failures |
 | 3 | PHPStan (core) | `composer analyse` (core) | 0 errors (170 files) |
 | 4 | PHPStan (CLI) | `composer analyse` (cli) | 0 errors (131 files) |
-| 5 | Enterprise Audit | `bash scripts/audit-enterprise.sh` | PASS:19, WARN:0, FAIL:0 |
+| 5 | Enterprise Audit | `bash scripts/audit-enterprise.sh` | PASS:20, WARN:0, FAIL:0 |
 | 6 | Secret Scan | `bash scripts/scan-secrets.sh` | 0 secrets in tracked files |
 | 7 | History Scan | `bash scripts/scan-secrets-history.sh` | TOTAL_MATCHES=10, exit 2 (mitigated, P2-008) |
 
