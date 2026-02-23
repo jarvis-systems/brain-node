@@ -167,8 +167,33 @@ echo ""
 echo -e "${YELLOW}Restoring standard/standard${NC}"
 STRICT_MODE=standard COGNITIVE_LEVEL=standard brain compile >/dev/null 2>&1
 
+# --- Mandatory anchors across all surfaces ---
+echo -e "${YELLOW}Phase 3: Mandatory anchors (all surfaces)${NC}"
+SURFACES=("$CLAUDE_MD" "$AGENTS_MD" "$GEMINI_MD" "$QWEN_MD")
+SURFACE_NAMES=("CLAUDE.md" "AGENTS.md" "GEMINI.md" "QWEN.md")
+ANCHORS=("No-secret-output" "Quality-gates-mandatory" "Compile-single-writer" "Never-write-compiled")
+
+for i in "${!SURFACES[@]}"; do
+    sf="${SURFACES[$i]}"
+    sn="${SURFACE_NAMES[$i]}"
+    if [ ! -f "$sf" ]; then
+        echo -e "${RED}[FAIL]${NC} $sn missing"; ERRORS=$((ERRORS + 1))
+        continue
+    fi
+    for anchor in "${ANCHORS[@]}"; do
+        count=$(grep -c "$anchor" "$sf" 2>/dev/null || true)
+        if [ "$count" -gt 0 ]; then
+            echo -e "${GREEN}[PASS]${NC} $sn has $anchor"
+        else
+            echo -e "${RED}[FAIL]${NC} $sn missing anchor: $anchor"
+            ERRORS=$((ERRORS + 1))
+        fi
+    done
+done
+echo ""
+
 # --- Dev baseline audit guard ---
-echo -e "${YELLOW}Phase 3: Dev audit baseline${NC}"
+echo -e "${YELLOW}Phase 4: Dev audit baseline${NC}"
 AUDIT_OUTPUT=$(bash "$PROJECT_ROOT/scripts/audit-enterprise.sh" 2>&1 || true)
 AUDIT_CLEAN=$(echo "$AUDIT_OUTPUT" | sed $'s/\x1b\\[[0-9;]*m//g')
 AUDIT_WARN=$(echo "$AUDIT_CLEAN" | grep -E '^\s*WARN:' | head -1 | tr -dc '0-9')

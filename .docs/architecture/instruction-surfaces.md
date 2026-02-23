@@ -155,3 +155,34 @@ Different clients have different token budgets and cognitive capabilities. The c
 | Enterprise | paranoid | exhaustive | Security-critical, compliance, audits |
 
 The compile system enforces these via environment variables. Changing tier mid-session is forbidden (`No-mode-self-switch` iron rule) — tier is a compile-time decision only.
+
+### MODEL_TIER Preset Resolution
+
+`MODEL_TIER` is a convenience alias that maps to `STRICT_MODE` + `COGNITIVE_LEVEL`. Implemented as a shell wrapper (`scripts/tier-compile.sh`) because the var() resolution chain (ENV → Runtime → Meta → Method) doesn't support reverse-override from node-level hooks — `.brain/.env` always takes priority.
+
+| `MODEL_TIER` | `STRICT_MODE` | `COGNITIVE_LEVEL` | Primary Clients |
+|-------------|--------------|-------------------|----------------|
+| economy | strict | minimal | Haiku, Flash, Qwen Small |
+| standard | strict | standard | Sonnet, Pro, Codex |
+| premium | paranoid | exhaustive | Opus, Ultra |
+
+**Resolution rules:**
+1. Explicit `STRICT_MODE` / `COGNITIVE_LEVEL` always override preset defaults
+2. `MODEL_TIER` only sets defaults for unset variables (via `${VAR:-default}`)
+3. Without `MODEL_TIER`, existing `STRICT_MODE` + `COGNITIVE_LEVEL` workflow unchanged
+
+**Usage:**
+- `MODEL_TIER=economy scripts/tier-compile.sh` — compile with economy preset
+- `MODEL_TIER=premium STRICT_MODE=strict scripts/tier-compile.sh` — premium cognitive, but strict (not paranoid)
+- `STRICT_MODE=standard COGNITIVE_LEVEL=standard brain compile` — direct (bypass preset)
+
+### Surface Profile
+
+| Surface | Target | Standard (lines) | Economy (lines) | Premium (lines) | Tier |
+|---------|--------|:-:|:-:|:-:|:---:|
+| `.claude/CLAUDE.md` | Claude Code | 352 | 366 | 726 | 1 |
+| `AGENTS.md` | Codex, OpenCode | 352 | 366 | 726 | 1 |
+| `GEMINI.md` | Gemini CLI | 316 | 330 | 598 | 2 |
+| `QWEN.md` | Qwen CLI | 316 | 330 | 598 | 2 |
+
+Economy adds ~14 lines (strict-only rules) while reducing cognitive depth. Premium doubles output via full error/validation/level sections. Tier 1 surfaces are ~36 lines larger than Tier 2 due to 5 additional delegation rules.
