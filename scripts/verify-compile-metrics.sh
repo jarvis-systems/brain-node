@@ -202,6 +202,31 @@ check "dev audit WARN count" 0 "${AUDIT_WARN:-99}"
 check "dev audit FAIL count" 0 "${AUDIT_FAIL:-99}"
 
 echo ""
+
+# --- ENV Override Verification ---
+echo -e "${YELLOW}Phase 5: ENV override verification${NC}"
+OPENCODE_AGENT="$PROJECT_ROOT/.opencode/agents/web-research-master.md"
+TEST_MODEL="zai-coding-plan/test-model-override"
+
+# Compile with injected env override
+WEB_RESEARCH_MASTER_MODEL="$TEST_MODEL" brain compile opencode >/dev/null 2>&1
+
+if [ -f "$OPENCODE_AGENT" ]; then
+    COMPILED_MODEL=$(grep -E '^model:' "$OPENCODE_AGENT" | head -1 | sed 's/model: *//' | sed 's/\\//g' | tr -d '"' | tr -d "'" || true)
+    if [ "$COMPILED_MODEL" = "$TEST_MODEL" ]; then
+        echo -e "${GREEN}[PASS]${NC} ENV override works: WEB_RESEARCH_MASTER_MODEL → model in compiled output"
+    else
+        echo -e "${RED}[FAIL]${NC} ENV override broken: expected '$TEST_MODEL', got '$COMPILED_MODEL'"
+        ERRORS=$((ERRORS + 1))
+    fi
+else
+    echo -e "${RED}[FAIL]${NC} OpenCode agent missing after compile"; ERRORS=$((ERRORS + 1))
+fi
+
+# Restore standard compile
+STRICT_MODE=standard COGNITIVE_LEVEL=standard brain compile >/dev/null 2>&1
+
+echo ""
 echo "=========================================="
 echo "Summary: standard=$LINES_STD lines, exhaustive=$LINES_EXH lines, delta=$((LINES_EXH - LINES_STD))"
 
