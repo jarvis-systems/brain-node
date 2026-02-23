@@ -159,6 +159,9 @@ jobs:
       - name: Enterprise audit (blocking — P0 gate)
         run: bash scripts/audit-enterprise.sh
 
+      - name: Client format drift detection
+        run: bash scripts/verify-client-formats.sh
+
       - name: Compile discipline check
         run: |
           BASE_REF="${GITHUB_BASE_REF:-HEAD~1}"
