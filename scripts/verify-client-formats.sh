@@ -94,6 +94,8 @@ check_has_ext "$PROJECT_ROOT/.claude/commands" "md" "claude commands are .md"
 check_no_ext "$PROJECT_ROOT/.claude/commands" "toml" "claude commands have no .toml"
 check_has_ext "$PROJECT_ROOT/.claude/agents" "md" "claude agents are .md"
 check_yaml_frontmatter "$PROJECT_ROOT/.claude/agents" "claude agents have YAML front matter"
+check_has_ext "$PROJECT_ROOT/.claude/skills" "md" "claude skills are .md"
+check_yaml_frontmatter "$PROJECT_ROOT/.claude/skills" "claude skills have YAML front matter"
 echo ""
 
 # ── Qwen ─────────────────────────────────────────────────────────────────
@@ -102,6 +104,8 @@ check_has_ext "$PROJECT_ROOT/.qwen/commands" "toml" "qwen commands are .toml"
 check_no_ext "$PROJECT_ROOT/.qwen/commands" "md" "qwen commands have no .md"
 check_has_ext "$PROJECT_ROOT/.qwen/agents" "md" "qwen agents are .md"
 check_yaml_frontmatter "$PROJECT_ROOT/.qwen/agents" "qwen agents have YAML front matter"
+check_has_ext "$PROJECT_ROOT/.qwen/skills" "md" "qwen skills are .md"
+check_yaml_frontmatter "$PROJECT_ROOT/.qwen/skills" "qwen skills have YAML front matter"
 echo ""
 
 # ── Gemini ───────────────────────────────────────────────────────────────
@@ -110,6 +114,8 @@ check_has_ext "$PROJECT_ROOT/.gemini/commands" "toml" "gemini commands are .toml
 check_no_ext "$PROJECT_ROOT/.gemini/commands" "md" "gemini commands have no .md"
 check_has_ext "$PROJECT_ROOT/.gemini/agents" "md" "gemini agents are .md"
 check_yaml_frontmatter "$PROJECT_ROOT/.gemini/agents" "gemini agents have YAML front matter"
+check_has_ext "$PROJECT_ROOT/.gemini/skills" "md" "gemini skills are .md"
+check_yaml_frontmatter "$PROJECT_ROOT/.gemini/skills" "gemini skills have YAML front matter"
 echo ""
 
 # ── OpenCode ─────────────────────────────────────────────────────────────
@@ -124,6 +130,8 @@ check_has_ext "$OC_CMD" "md" "opencode commands are .md"
 check_no_ext "$OC_CMD" "toml" "opencode commands have no .toml"
 check_has_ext "$OC_AGT" "md" "opencode agents are .md"
 check_yaml_frontmatter "$OC_AGT" "opencode agents have YAML front matter"
+check_has_ext "$PROJECT_ROOT/.opencode/skills" "md" "opencode skills are .md"
+check_yaml_frontmatter "$PROJECT_ROOT/.opencode/skills" "opencode skills have YAML front matter"
 echo ""
 
 # ── Codex ────────────────────────────────────────────────────────────────
@@ -133,6 +141,17 @@ if [ -d "$PROJECT_ROOT/.codex/prompts" ]; then
     check_no_ext "$PROJECT_ROOT/.codex/prompts" "toml" "codex prompts have no .toml"
 else
     skip "codex prompts — .codex/prompts/ not found"
+fi
+# Codex skills use subdirectory format: .agents/skills/<name>/SKILL.md
+if [ -d "$PROJECT_ROOT/.agents/skills" ]; then
+    CODEX_SKILL_COUNT=$(find "$PROJECT_ROOT/.agents/skills" -name "SKILL.md" 2>/dev/null | wc -l | tr -d ' ')
+    if [ "$CODEX_SKILL_COUNT" -gt 0 ]; then
+        pass "codex skills have SKILL.md ($CODEX_SKILL_COUNT files)"
+    else
+        fail "codex skills — .agents/skills/ exists but no SKILL.md found"
+    fi
+else
+    skip "codex skills — .agents/skills/ not found"
 fi
 echo ""
 
