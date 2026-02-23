@@ -1111,6 +1111,34 @@
                     "type": "string",
                     "description": "Default model for Groq CLI agents"
                 },
+                "HEALTH_CHECK_SKILL_GUIDELINE_0": {
+                    "type": "string",
+                    "description": "Custom guideline #0 for HealthCheckSkill"
+                },
+                "HEALTH_CHECK_SKILL_GUIDELINE_1": {
+                    "type": "string",
+                    "description": "Custom guideline #1 for HealthCheckSkill"
+                },
+                "HEALTH_CHECK_SKILL_GUIDELINE_2": {
+                    "type": "string",
+                    "description": "Custom guideline #2 for HealthCheckSkill"
+                },
+                "HEALTH_CHECK_SKILL_MODEL": {
+                    "type": "string",
+                    "description": "Model override for HealthCheckSkill"
+                },
+                "HEALTH_CHECK_SKILL_RULE_0": {
+                    "type": "string",
+                    "description": "Custom CRITICAL rule #0 for HealthCheckSkill"
+                },
+                "HEALTH_CHECK_SKILL_RULE_1": {
+                    "type": "string",
+                    "description": "Custom CRITICAL rule #1 for HealthCheckSkill"
+                },
+                "HEALTH_CHECK_SKILL_RULE_2": {
+                    "type": "string",
+                    "description": "Custom CRITICAL rule #2 for HealthCheckSkill"
+                },
                 "INIT_AGENTS_COMMAND_GUIDELINE_0": {
                     "type": "string",
                     "description": "Custom guideline #0 for InitAgentsCommand"
@@ -1370,6 +1398,10 @@
                 "SEQUENTIAL_THINKING_MCP_RULE_2": {
                     "type": "string",
                     "description": "Custom CRITICAL rule #2 for SequentialThinkingMcp"
+                },
+                "SKILLS_HEALTH_CHECK_SKILL_DISABLE": {
+                    "type": "string",
+                    "description": "Disable HealthCheckSkill from compilation (true/false)"
                 },
                 "STATS_COMMAND_GUIDELINE_0": {
                     "type": "string",
