@@ -69,6 +69,15 @@ Invariant sections use identical source text (byte-for-byte) across all surfaces
 | `verify-client-formats.sh` | Command extensions, agent extensions, YAML front matter, skills directories |
 | `audit-enterprise.sh` | 20 categories: code quality, security, version consistency, compile hygiene |
 
+### Line Count Thresholds (verify-compile-metrics.sh)
+
+| Mode | Min Lines | Max Lines | Rationale |
+|------|-----------|-----------|-----------|
+| Standard | — | 400 | Economy tier; gated content excluded |
+| Exhaustive | 550 | — | Premium tier; full iron rules + expanded cookbook |
+
+Thresholds are calibrated to actual compiled output (~316 standard, ~598 exhaustive) with headroom for growth.
+
 ## Output Contract
 
 Brain enforces a dual-mode output contract via the `Evidence-contract` iron rule. Every readiness or snapshot report MUST declare exactly one mode.
