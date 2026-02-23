@@ -787,17 +787,15 @@ for repo_name in root core cli; do
     composer_ver=$(jq -r '.version // "missing"' "$repo_composer" 2>/dev/null || echo "missing")
     # Check if a tag matching composer.json version exists anywhere in the repo
     # (not just on HEAD). Post-tag doc/CI commits move HEAD past the tag — this is
-    # normal dev flow, not version drift. True drift = tag missing entirely or
-    # tag version != composer.json version.
+    # normal dev flow, not version drift.
+    #
+    # Missing tag = normal dev state (tag created at release time). Only WARN when
+    # HEAD carries a DIFFERENT tag than composer.json — that's real drift.
+    # Pre-publication exact-match is enforced by .docs/product/10-pre-publication.md.
     tag_exists=$(git -C "$repo_dir" tag -l "$composer_ver" 2>/dev/null || echo "")
     head_tag=$(git -C "$repo_dir" describe --tags --exact-match 2>/dev/null || echo "")
     if [[ -z "$tag_exists" ]]; then
-        VER_WARN_COUNT=$((VER_WARN_COUNT + 1))
-        VER_DRIFT_FINDINGS=$(echo "$VER_DRIFT_FINDINGS" | jq \
-            --arg repo "$repo_name" \
-            --arg ver "$composer_ver" \
-            '. + [{"repo": $repo, "composer_version": $ver, "tag": "none", "message": "No tag matching composer.json version; release requires exact tag"}]')
-        log "  ${YELLOW}WARN${NC} $repo_name: no tag=$composer_ver found; composer.json=$composer_ver — release requires tag"
+        log "  ${GREEN}PASS${NC} $repo_name: tag=$composer_ver pending — normal dev (pre-pub enforces)"
     elif [[ -n "$head_tag" && "$head_tag" != "$composer_ver" ]]; then
         VER_WARN_COUNT=$((VER_WARN_COUNT + 1))
         VER_DRIFT_FINDINGS=$(echo "$VER_DRIFT_FINDINGS" | jq \
@@ -806,6 +804,8 @@ for repo_name in root core cli; do
             --arg ver "$composer_ver" \
             '. + [{"repo": $repo, "tag": $tag, "composer_version": $ver, "message": "HEAD tag differs from composer.json version"}]')
         log "  ${YELLOW}WARN${NC} $repo_name: tag=$head_tag != composer.json=$composer_ver — drift detected"
+    else
+        log "  ${GREEN}PASS${NC} $repo_name: tag=$composer_ver exists"
     fi
 done
 
