@@ -392,3 +392,7 @@ When a score drop is detected:
 | P04 | static-analysis | Query tuning → #277 CI gates memory (sim 0.500→0.716) |
 | P05 | release-ritual | Tier:2 memory #285 + query tuning (sim 0.429→0.520) |
 | P12 | benchmark | Query tuning → #274 benchmark system (irrelevant→relevant) |
+
+## See Also
+
+- `.docs/operations/task-contract-templates.md` — copy-paste execution contracts (whitelist, stop conditions, evidence pack) for task batches.
