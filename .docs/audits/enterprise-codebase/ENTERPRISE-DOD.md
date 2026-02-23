@@ -17,8 +17,8 @@ Every merge to `master` MUST satisfy ALL gates below. A single FAIL = merge bloc
 |---|------|---------|----------|-----------------|
 | 1 | PHP Syntax | `php -l` on all `.php` files | YES | `brain-lint.yml` → audit-enterprise.sh Check 1 |
 | 2 | Unit Tests | `composer test` (273+ tests, 0 failures) | YES | `brain-lint.yml` → audit-enterprise.sh Check 2 |
-| 3 | Static Analysis (Core) | `composer analyse` in core/ (phpstan level 2) | YES | `brain-lint.yml` → `core/phpstan.neon` |
-| 4 | Static Analysis (CLI) | `composer analyse` in cli/ (phpstan level 0) | YES | `brain-lint.yml` → `cli/phpstan.neon` |
+| 3 | Static Analysis (Core) | `composer analyse` in core/ (phpstan level 4) | YES | `brain-lint.yml` → `core/phpstan.neon` |
+| 4 | Static Analysis (CLI) | `composer analyse` in cli/ (phpstan level 2) | YES | `brain-lint.yml` → `cli/phpstan.neon` |
 | 5 | Secret Scanning | `bash scripts/scan-secrets.sh` (exit 0) | YES | `brain-lint.yml` → `scripts/scan-secrets.sh` |
 | 6 | Enterprise Audit | `bash scripts/audit-enterprise.sh` (exit 0) | YES | `brain-lint.yml` → `scripts/audit-enterprise.sh` |
 | 7 | Compile Discipline | Node source ↔ compiled artifact drift check | YES | `brain-lint.yml` inline step |
@@ -63,11 +63,11 @@ Worktree guard ignores `.phpunit.cache` and `.phpunit.result.cache` (PHPUnit art
 
 ### PHPStan Level Policy (Cross-Repo)
 
-- **Core baseline:** PHPStan level 2 — required for all Enterprise gates. Regression = merge blocked.
-- **CLI baseline:** PHPStan level 0 — separate repo, may lag. Release requires explicit alignment plan (see `10-pre-publication.md` § "Version Alignment").
-- **Downgrade prohibition:** Never lower core PHPStan level without evidence pack + Doc approval.
+- **Core baseline:** PHPStan level 4 — required for all Enterprise gates. Regression = merge blocked.
+- **CLI baseline:** PHPStan level 2 — separate repo. Release requires explicit alignment plan (see `10-pre-publication.md` § "Version Alignment").
+- **Downgrade prohibition:** Never lower core or CLI PHPStan level without evidence pack + Doc approval.
 - **Source of truth:** `core/phpstan.neon` → `composer analyse` output. CLI: `cli/phpstan.neon`.
-- **Level progression:** 0 → 1 → 2 (2026-02-22). Each lift produced evidence pack + test proof.
+- **Level progression:** Core 0→1→2→4 (2026-02-22). CLI 0→2 (2026-02-22). Each lift produced evidence pack + test proof.
 
 ## CI Supply Chain
 

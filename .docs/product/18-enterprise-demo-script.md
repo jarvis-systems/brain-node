@@ -60,7 +60,7 @@ Expected: `273 tests, 645 assertions, 0 failures`. Proves: full test coverage, d
 composer analyse
 ```
 
-Expected: `0 errors` for both core (170 files) and CLI (125 files). Proves: type safety across entire codebase at PHPStan level 2.
+Expected: `0 errors` for both core (170 files) and CLI (143 files). Proves: type safety across entire codebase at PHPStan L4 (core) + L2 (cli).
 
 ### 6. Enterprise Audit (19 checks)
 
