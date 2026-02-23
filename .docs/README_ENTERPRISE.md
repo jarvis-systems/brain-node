@@ -140,6 +140,12 @@ This project consists of three independent git repositories co-located on disk (
 - **Pre-publication runbook:** `.docs/product/10-pre-publication.md` — GO PRE-PUB version alignment procedure
 - **Final gate snapshot:** `.docs/product/24-final-gate-snapshot.md` — authoritative current-state gate results
 
+## Key References
+
+- **Per-Task Contract Templates:** `.docs/operations/task-contract-templates.md` — copy-paste templates for task execution contracts
+- **Instruction Surfaces & Model-Tier Elasticity:** `.docs/architecture/instruction-surfaces.md` — compiled instruction surfaces, invariants, and model-tier mapping
+- **Release Readiness Check:** `.docs/operations/release-readiness.md` — pre-release and pre-merge quality checklist
+
 ## Cost Estimates (haiku)
 
 | Profile | Scenarios | Est. tokens | Est. time | Est. cost |

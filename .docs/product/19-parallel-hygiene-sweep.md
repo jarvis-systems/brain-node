@@ -193,3 +193,4 @@ Root `CLAUDE.md` is a compiled artifact referenced by the Brain system. When ope
 | `10-pre-publication.md` | Sweep is a stabilization step before GO PRE-PUB |
 | `17-worktree-isolation-contract.md` | Workspace Sweeper enforces worktree hygiene |
 | `ENTERPRISE-DOD.md` § Operator Readiness | Sweep linked as operator checklist item |
+| `.docs/operations/task-contract-templates.md` | Copy-paste execution contracts (whitelist, stop conditions, evidence pack) for task batches |

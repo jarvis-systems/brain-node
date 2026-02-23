@@ -591,3 +591,7 @@ From the 548 unique tags, these appear frequently across memories but lack canon
 | P4 | Merge brain sub-tags -> `brain` | Reduces `brain-*` fragmentation | ~5 memories |
 | P5 | Clean up task-reference and status tags | Removes noise tags | ~20 memories |
 | P6 | Establish canonical set for uncovered domains | Improves coverage | New canonical entries |
+
+## See Also
+
+- `.docs/operations/task-contract-templates.md` — copy-paste execution contracts (whitelist, stop conditions, evidence pack) for task batches.
