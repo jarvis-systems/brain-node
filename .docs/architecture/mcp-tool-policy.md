@@ -32,6 +32,23 @@ This document defines the canonical policy for Brain MCP tool exposure.
 
 **If CLI default is missing:** CLI install is corrupted — reinstall `jarvis-brain/cli`.
 
+## Policy Consumption
+
+**Source-of-truth:** JSON allowlist files, resolved at runtime by `McpToolPolicyResolver`.
+
+- **Resolver:** `BrainCore\Services\McpToolPolicy\FilePolicyResolver`
+- **Not emitted into compile outputs** — policy is runtime configuration
+- **Used by:** Future MCP server, optional CLI safety checks
+- **Kill-switch:** `BRAIN_DISABLE_MCP=true` disables all tool emission
+
+**Resolution:**
+```php
+$resolver = new FilePolicyResolver($projectRoot, $cliPackageDir);
+$policy = $resolver->resolve(); // ResolvedPolicy DTO
+```
+
+**Wildcard patterns:** `never` supports `prefix:*` to block command groups (e.g., `make:*` blocks `make:command`, `make:master`, etc.)
+
 ## Policy v1 Summary
 
 **READ-ONLY ONLY** — MCP v1 exposes only commands with no side effects.
@@ -105,6 +122,19 @@ The following mode-based expansions are **planned but NOT active** in v1:
 | GO_PRE_PUB | `compile`, `release:*`, `update` | Explicit GO signal |
 
 These require explicit GO and compile changes before activation.
+
+## Policy Consumption
+
+**Source-of-truth:** JSON allowlist files, resolved at runtime by `McpToolPolicyResolver`.
+
+**Resolver:** `BrainCore\Services\McpToolPolicy\FilePolicyResolver`
+- Resolution order: `.brain-config/` → `.brain/config/` → CLI default
+- Wildcard support: `make:*` in `never` blocks all `make:` prefixes
+- Kill-switch: `BRAIN_DISABLE_MCP=true` disables all MCP emission
+
+**Not emitted into compiled outputs.** Policy stays in source files for runtime resolution.
+
+**Future use:** MCP server + optional CLI safety checks.
 
 ## Related
 

@@ -97,6 +97,8 @@ Legend: ✅ allowed, ❌ blocked, ⚠️ experimental
 
 MCP v1 exposes READ-ONLY only. See `.docs/architecture/mcp-tool-policy.md` for canonical allowlist and kill-switch (`BRAIN_DISABLE_MCP=true`).
 
+**Policy resolver:** `BrainCore\Services\McpToolPolicy\FilePolicyResolver` — runtime resolution from JSON allowlist, not emitted into compiled outputs.
+
 ## CLI Commands Summary
 
 | Category | Count | Key Commands |
