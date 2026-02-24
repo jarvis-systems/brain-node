@@ -44,28 +44,35 @@ Single-writer lock prevents concurrent `brain compile` race conditions. Lock use
 
 ## Test Mode Contract
 
-The `--no-lock` flag bypasses the single-writer compile mutex. To prevent production misuse, this bypass is gated by a test mode contract:
+The `--no-lock` flag bypasses the single-writer compile mutex. To prevent production misuse, this bypass is gated by a test mode contract with Ferrari-grade hardening:
 
 **Requirements for `--no-lock` or `BRAIN_ALLOW_NO_LOCK=1`:**
 
 1. **Test mode indicator** — ONE of:
-   - `BRAIN_TEST_MODE=1` environment variable
    - PHPUnit runtime detected (`PHPUnit\Framework\TestCase` class exists)
+   - `BRAIN_TEST_MODE=1` environment variable
 
-2. **Isolated workdir** — ONE of:
-   - Current working directory under `sys_get_temp_dir()`
-   - `.brain/test-workdir` marker file exists in repo root (self-hosting tests)
+2. **Leakage prevention** — If `BRAIN_TEST_MODE=1` without PHPUnit:
+   - Requires `BRAIN_TEST_MODE_SOURCE=ci` to prevent accidental production leakage
+
+3. **Isolated workdir** — BOTH conditions required:
+   - Under `sys_get_temp_dir()` OR under repo `/dist/tmp/`
+   - `.brain-testmode.marker` file present in workdir root
 
 **Violation behavior:**
-- Non-test context: Error message + exit non-zero
-- Missing isolation: Error message + exit non-zero
+- Structured error: `code=NOLOCK_FORBIDDEN reason=<code> hint=<action>`
+- Reasons: `missing_test_mode`, `leaky_test_mode`, `non_isolated_workdir`
+- No path leakage: only basenames in error messages
 
 **Implementation:** `CompileLock::validateTestModeContract()` in CLI package.
+
+**Inspector:** `brain diagnose --json` includes `test_mode_contract` section with full diagnostics.
 
 **Audit:** Check 24 in `scripts/audit-enterprise.sh` validates:
 - No `BRAIN_ALLOW_NO_LOCK` usage outside test files
 - `CompileCommand` calls validation method
 - `CompileLock` has required test mode methods
+- `.brain-testmode.marker` file exists
 
 ## Known Gaps (Future Work)
 
