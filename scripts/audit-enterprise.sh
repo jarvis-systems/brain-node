@@ -1014,7 +1014,8 @@ log "${BOLD}[24/24] Test Mode Contract enforcement${NC}"
 TESTMODE_FINDINGS="[]"
 TESTMODE_COUNT=0
 
-# Check 24a: BRAIN_ALLOW_NO_LOCK=1 usage outside tests
+# Check 24a: BRAIN_ALLOW_NO_LOCK usage outside tests
+# Only flag actual USAGE patterns (getenv, $_ENV), not string references in comments/docs
 while IFS=: read -r file line content; do
     [[ -z "$file" ]] && continue
     relative="${file#$PROJECT_ROOT/}"
@@ -1023,6 +1024,10 @@ while IFS=: read -r file line content; do
     [[ "$relative" == *Test.php ]] && continue
     [[ "$relative" == scripts/audit-enterprise.sh ]] && continue
     [[ "$relative" == .docs/* ]] && continue
+    # Skip CompileLock.php and CompileCommand.php - they implement the contract
+    [[ "$relative" == cli/src/Services/CompileLock.php ]] && continue
+    [[ "$relative" == cli/src/Console/Commands/CompileCommand.php ]] && continue
+    [[ "$relative" == core/src/Includes/Universal/CompileSafetyInclude.php ]] && continue
     TESTMODE_COUNT=$((TESTMODE_COUNT + 1))
     TESTMODE_FINDINGS=$(echo "$TESTMODE_FINDINGS" | jq \
         --arg file "$relative" \
@@ -1030,7 +1035,7 @@ while IFS=: read -r file line content; do
         --arg content "$(echo "$content" | head -c 200)" \
         '. + [{"file": $file, "line": ($line | tonumber), "type": "allow-no-lock-outside-tests", "content": $content}]')
     log "  ${RED}FAIL${NC} $relative:$line — BRAIN_ALLOW_NO_LOCK outside tests"
-done < <(grep -rn 'BRAIN_ALLOW_NO_LOCK' "$PROJECT_ROOT/core/src" "$PROJECT_ROOT/cli/src" "$PROJECT_ROOT/node" --include='*.php' 2>/dev/null || true)
+done < <(grep -rn "getenv.*BRAIN_ALLOW_NO_LOCK\|_ENV.*BRAIN_ALLOW_NO_LOCK" "$PROJECT_ROOT/core/src" "$PROJECT_ROOT/cli/src" "$PROJECT_ROOT/node" --include='*.php' 2>/dev/null || true)
 
 # Check 24b: CompileCommand validates test mode contract (static analysis)
 # Ensure enforceNoLockPolicy() calls validateTestModeContract()
