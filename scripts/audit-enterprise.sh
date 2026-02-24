@@ -932,6 +932,30 @@ else
 fi
 add_category "agent-schema" "$([ $AGENTSCHEMA_COUNT -eq 0 ] && echo pass || echo fail)" "$AGENTSCHEMA_COUNT" "$AGENTSCHEMA_FINDINGS"
 
+# ── Check 21: MCP tool policy contract ───────────────────────────────────────
+
+log "${BOLD}[21/21] MCP tool policy contract${NC}"
+
+MCP_POLICY_FILE="$PROJECT_ROOT/config/brain/mcp-tools.yaml"
+MCPPOLICY_FINDINGS="[]"
+MCPPOLICY_COUNT=0
+
+if [[ -f "$MCP_POLICY_FILE" ]]; then
+    # Run the policy check script
+    if bash "$PROJECT_ROOT/scripts/check-mcp-tool-policy.sh" >/dev/null 2>&1; then
+        log "  ${GREEN}PASS${NC} MCP tool policy valid"
+    else
+        MCPPOLICY_COUNT=1
+        MCPPOLICY_FINDINGS=$(echo "$MCPPOLICY_FINDINGS" | jq '. + [{"message": "MCP tool policy validation failed"}]')
+        log "  ${RED}FAIL${NC} MCP tool policy validation failed"
+        # Re-run to show details
+        bash "$PROJECT_ROOT/scripts/check-mcp-tool-policy.sh" 2>&1 | sed 's/^/    /'
+    fi
+else
+    log "  ${YELLOW}SKIP${NC} MCP tool policy file not found ($MCP_POLICY_FILE)"
+fi
+add_category "mcp-tool-policy" "$([ $MCPPOLICY_COUNT -eq 0 ] && echo pass || echo fail)" "$MCPPOLICY_COUNT" "$MCPPOLICY_FINDINGS"
+
 # ── Output JSON report ──────────────────────────────────────────────────
 
 mkdir -p "$DIST_DIR"
