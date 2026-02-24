@@ -55,9 +55,10 @@ The `--no-lock` flag bypasses the single-writer compile mutex. To prevent produc
 2. **Leakage prevention** — If `BRAIN_TEST_MODE=1` without PHPUnit:
    - Requires `BRAIN_TEST_MODE_SOURCE=ci` to prevent accidental production leakage
 
-3. **Isolated workdir** — BOTH conditions required:
-   - Under `sys_get_temp_dir()` OR under repo `/dist/tmp/`
-   - `.brain-testmode.marker` file present in workdir root
+3. **Isolated workdir** — ONE of the following combinations:
+   - Under `sys_get_temp_dir()` AND `.brain-testmode.marker` present
+   - Under repo `/dist/tmp/` AND `.brain-testmode.marker` present
+   - Project root (Brain project detected) AND `.brain-testmode.marker` present
 
 **Violation behavior:**
 - Structured error: `code=NOLOCK_FORBIDDEN reason=<code> hint=<action>`
