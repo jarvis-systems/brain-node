@@ -57,6 +57,18 @@ brain docs --undocumented    # Find code without docs
 
 **Governance:** `Cookbook-governance` iron rule — no speculative pulls. Use compile-time preset. See `.docs/instructions/REGISTRY.md` for include chain.
 
+## Programmatic Tool Invocation
+
+For PHP code that needs to execute Brain tools (future MCP server, internal services):
+
+- **Use:** `BrainCore\Contracts\BrainToolInvoker` interface
+- **Backend:** `BrainCore\Services\BrainCliInvoker` (CLI execution via Process)
+- **Future:** MCP wrapper backend (not yet implemented)
+
+**Methods:** `docsSearch()`, `diagnose()`, `status()`, `listIncludes()`, `listMasters()`, `readinessCheck()`
+
+**Contract:** All methods return structured arrays. Secret patterns are automatically redacted. Invalid JSON throws typed exception.
+
 ## Tool Exposure Matrix
 
 ### Mode Definitions
