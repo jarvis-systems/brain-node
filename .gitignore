@@ -12,6 +12,7 @@ upload.sh
 
 # Build outputs (compiled artifacts from brain compile)
 .compile-stamp
+compile.lock
 AGENTS.md
 GEMINI.md
 QWEN.md
