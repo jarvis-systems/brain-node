@@ -1007,6 +1007,62 @@ else
     add_category "self-hosting-hygiene" "info" "0" "[{\"message\": \"consumer project\"}]"
 fi
 
+# ── Check 24: Test Mode Contract enforcement ─────────────────────────
+
+log "${BOLD}[24/24] Test Mode Contract enforcement${NC}"
+
+TESTMODE_FINDINGS="[]"
+TESTMODE_COUNT=0
+
+# Check 24a: BRAIN_ALLOW_NO_LOCK=1 usage outside tests
+while IFS=: read -r file line content; do
+    [[ -z "$file" ]] && continue
+    relative="${file#$PROJECT_ROOT/}"
+    # Skip test files and this audit script
+    [[ "$relative" == */tests/* ]] && continue
+    [[ "$relative" == *Test.php ]] && continue
+    [[ "$relative" == scripts/audit-enterprise.sh ]] && continue
+    [[ "$relative" == .docs/* ]] && continue
+    TESTMODE_COUNT=$((TESTMODE_COUNT + 1))
+    TESTMODE_FINDINGS=$(echo "$TESTMODE_FINDINGS" | jq \
+        --arg file "$relative" \
+        --arg line "$line" \
+        --arg content "$(echo "$content" | head -c 200)" \
+        '. + [{"file": $file, "line": ($line | tonumber), "type": "allow-no-lock-outside-tests", "content": $content}]')
+    log "  ${RED}FAIL${NC} $relative:$line — BRAIN_ALLOW_NO_LOCK outside tests"
+done < <(grep -rn 'BRAIN_ALLOW_NO_LOCK' "$PROJECT_ROOT/core/src" "$PROJECT_ROOT/cli/src" "$PROJECT_ROOT/node" --include='*.php' 2>/dev/null || true)
+
+# Check 24b: CompileCommand validates test mode contract (static analysis)
+# Ensure enforceNoLockPolicy() calls validateTestModeContract()
+COMPILECMD="$PROJECT_ROOT/cli/src/Console/Commands/CompileCommand.php"
+if [[ -f "$COMPILECMD" ]]; then
+    if ! grep -q 'validateTestModeContract' "$COMPILECMD" 2>/dev/null; then
+        TESTMODE_COUNT=$((TESTMODE_COUNT + 1))
+        TESTMODE_FINDINGS=$(echo "$TESTMODE_FINDINGS" | jq '. + [{"file": "cli/src/Console/Commands/CompileCommand.php", "type": "missing-test-mode-validation", "message": "enforceNoLockPolicy does not call validateTestModeContract"}]')
+        log "  ${RED}FAIL${NC} CompileCommand missing test mode validation"
+    fi
+fi
+
+# Check 24c: CompileLock has required test mode methods
+COMPILELOCK="$PROJECT_ROOT/cli/src/Services/CompileLock.php"
+if [[ -f "$COMPILELOCK" ]]; then
+    REQUIRED_METHODS="isTestMode isPhpUnit isIsolatedWorkdir validateTestModeContract"
+    for method in $REQUIRED_METHODS; do
+        if ! grep -q "function $method" "$COMPILELOCK" 2>/dev/null; then
+            TESTMODE_COUNT=$((TESTMODE_COUNT + 1))
+            TESTMODE_FINDINGS=$(echo "$TESTMODE_FINDINGS" | jq \
+                --arg method "$method" \
+                '. + [{"file": "cli/src/Services/CompileLock.php", "type": "missing-method", "method": $method}]')
+            log "  ${RED}FAIL${NC} CompileLock missing method: $method"
+        fi
+    done
+fi
+
+if [[ $TESTMODE_COUNT -eq 0 ]]; then
+    log "  ${GREEN}PASS${NC} Test Mode Contract enforced"
+fi
+add_category "test-mode-contract" "$([ $TESTMODE_COUNT -eq 0 ] && echo pass || echo fail)" "$TESTMODE_COUNT" "$TESTMODE_FINDINGS"
+
 # ── Check 23: MCP policy inspector output contract ─────────────────────────
 
 log "${BOLD}[23/23] MCP policy inspector output contract${NC}"

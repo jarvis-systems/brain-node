@@ -42,6 +42,31 @@ Single-writer lock prevents concurrent `brain compile` race conditions. Lock use
 
 **Verification:** `brain compile` → `git status --porcelain` must show zero new changes.
 
+## Test Mode Contract
+
+The `--no-lock` flag bypasses the single-writer compile mutex. To prevent production misuse, this bypass is gated by a test mode contract:
+
+**Requirements for `--no-lock` or `BRAIN_ALLOW_NO_LOCK=1`:**
+
+1. **Test mode indicator** — ONE of:
+   - `BRAIN_TEST_MODE=1` environment variable
+   - PHPUnit runtime detected (`PHPUnit\Framework\TestCase` class exists)
+
+2. **Isolated workdir** — ONE of:
+   - Current working directory under `sys_get_temp_dir()`
+   - `.brain/test-workdir` marker file exists in repo root (self-hosting tests)
+
+**Violation behavior:**
+- Non-test context: Error message + exit non-zero
+- Missing isolation: Error message + exit non-zero
+
+**Implementation:** `CompileLock::validateTestModeContract()` in CLI package.
+
+**Audit:** Check 24 in `scripts/audit-enterprise.sh` validates:
+- No `BRAIN_ALLOW_NO_LOCK` usage outside test files
+- `CompileCommand` calls validation method
+- `CompileLock` has required test mode methods
+
 ## Known Gaps (Future Work)
 
 - **Secret management**: API keys in MCP PHP source files need vault integration
