@@ -40,7 +40,7 @@ BEFORE=$(git status --porcelain 2>/dev/null || true)
 
 # Run brain compile (all targets)
 echo -e "${YELLOW}Running brain compile...${NC}"
-if ! BRAIN_ALLOW_NO_LOCK=1 brain compile --no-lock >/dev/null 2>&1; then
+if ! BRAIN_TEST_MODE=1 BRAIN_ALLOW_NO_LOCK=1 brain compile --no-lock >/dev/null 2>&1; then
     echo -e "${RED}FAIL${NC}: brain compile exited with error"
     exit 1
 fi

@@ -879,7 +879,7 @@ if command -v brain &>/dev/null; then
     BEFORE_COMPILE=$(cd "$PROJECT_ROOT" && git status --porcelain 2>/dev/null || true)
 
     # Run compile with --no-lock (audit already runs sequentially)
-    if (cd "$PROJECT_ROOT" && BRAIN_ALLOW_NO_LOCK=1 brain compile --no-lock >/dev/null 2>&1); then
+    if (cd "$PROJECT_ROOT" && BRAIN_TEST_MODE=1 BRAIN_ALLOW_NO_LOCK=1 brain compile --no-lock >/dev/null 2>&1); then
         # Snapshot worktree AFTER compile — diff to find NEW changes only
         AFTER_COMPILE=$(cd "$PROJECT_ROOT" && git status --porcelain 2>/dev/null || true)
         NEW_COMPILE_CHANGES=$(diff <(echo "$BEFORE_COMPILE") <(echo "$AFTER_COMPILE") | grep '^>' | sed 's/^> //' || true)
