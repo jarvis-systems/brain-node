@@ -3,7 +3,7 @@ name: "MCP Tool Policy"
 description: "Canonical allowlist contract for Brain MCP toolset - defines which CLI commands can be exposed via MCP"
 type: architecture
 date: 2026-02-24
-version: "1.0.0"
+version: "1.0.1"
 status: active
 ---
 
@@ -15,37 +15,50 @@ This document defines the canonical policy for Brain MCP tool exposure.
 
 **PLANNING ONLY** — This policy does NOT implement Brain MCP yet. It's a contract to prevent tool surface bloat/drift before implementation.
 
-## Location
+## Canonical Sources
 
-| File | Purpose |
-|------|---------|
-| `config/brain/mcp-tools.yaml` | Machine-readable policy (repo-tracked) |
-| `.docs/architecture/mcp-tool-policy.md` | This document (human-readable) |
+| Location | Type | Purpose |
+|----------|------|---------|
+| `cli/mcp-tools.allowlist.json` | Default | Ships with CLI package |
+| `.brain/mcp-tools.allowlist.json` | Override | Project-specific (self-hosting) |
+
+**Resolution order:**
+1. `.brain/mcp-tools.allowlist.json` (if exists) → project override
+2. `cli/mcp-tools.allowlist.json` → CLI default
+
+**Note:** `.brain/` is a symlink to project root in self-hosting mode. In consumer projects, `.brain/` is a real directory created by `brain init`.
 
 ## Policy v1 Summary
 
 **READ-ONLY ONLY** — MCP v1 exposes only commands with no side effects.
 
-### Allowed Categories
+### Allowed Commands
 
-| Category | Commands | Notes |
-|----------|----------|-------|
-| DEFAULT_READONLY | `docs`, `diagnose`, `status`, `list`, `list:includes`, `list:masters` | Safe for all clients |
-| OPTIONAL_READONLY | `memory:status` | Requires MCP server connection |
+| Command | Notes |
+|---------|-------|
+| `docs` | Documentation search |
+| `diagnose` | System diagnostics |
+| `status` | Brain status (redacted) |
+| `list` | List MCP servers |
+| `list:includes` | List compiled includes |
+| `list:masters` | List agent masters |
+| `memory:status` | Memory system status |
 
 ### Never via MCP
 
 These commands are **never** exposed via Brain MCP:
 
-- `compile` — Changes filesystem, requires GO signal
-- `init` — Changes filesystem, prompts for input
-- `make:*` — Scaffolding requires SELF_DEV_MODE
-- `memory:hygiene` — Destructive, requires GO signal
-- `release:prepare` — Changes versions, requires GO PRE-PUB
-- `update` — Changes filesystem, requires GO signal
-- `add`, `detail` — Prompts for credentials
-- `board`, `lab`, `run`, `meeting`, `custom-run` — Experimental AI commands
-- `mcp:migrate` — Changes database schema
+| Command | Reason |
+|---------|--------|
+| `compile` | Changes filesystem, requires GO signal |
+| `init` | Changes filesystem, prompts for input |
+| `make:*` | Scaffolding requires SELF_DEV_MODE |
+| `memory:hygiene` | Destructive, requires GO signal |
+| `release:prepare` | Changes versions, requires GO PRE-PUB |
+| `update` | Changes filesystem, requires GO signal |
+| `add`, `detail` | Prompts for credentials |
+| `board`, `lab`, `run`, `meeting`, `custom-run` | Experimental AI commands |
+| `mcp:migrate` | Changes database schema |
 
 ### Per-Client Enablement
 
@@ -61,7 +74,22 @@ All supported clients get Brain MCP by default:
 
 ### Kill-Switch
 
-Set `BRAIN_DISABLE_MCP=true` to disable all Brain MCP tool emission during compile.
+Set `BRAIN_DISABLE_MCP=true` to disable all Brain MCP tool emission.
+
+## JSON Schema
+
+```json
+{
+  "version": "1.0.0",
+  "kill_switch_env": "BRAIN_DISABLE_MCP",
+  "allowed": ["docs", "diagnose", ...],
+  "never": ["compile", "init", ...],
+  "clients": {
+    "claude": {"enabled": true, "categories": ["DEFAULT_READONLY", "OPTIONAL_READONLY"]},
+    ...
+  }
+}
+```
 
 ## Validation
 

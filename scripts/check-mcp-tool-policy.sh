@@ -4,10 +4,9 @@
 # Usage: scripts/check-mcp-tool-policy.sh
 #
 # Validates:
-#   1. config/brain/mcp-tools.yaml exists and is valid YAML
+#   1. MCP tool allowlist exists and is valid JSON
 #   2. All commands in categories exist in CLI inventory
 #   3. No forbidden commands appear in allowed categories
-#   4. Never-list doesn't overlap with allowed categories
 #
 # Exit codes:
 #   0 - All checks pass
@@ -17,9 +16,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
-POLICY_FILE="$PROJECT_ROOT/config/brain/mcp-tools.yaml"
 CLI_DIR="$PROJECT_ROOT/cli/src/Console"
-
 cd "$PROJECT_ROOT"
 
 # Colors
@@ -35,70 +32,68 @@ fi
 errors=0
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Check 1: Policy file exists
+# Resolution: find policy file (override -> default)
 # ─────────────────────────────────────────────────────────────────────────────
 
+resolve_policy_file() {
+    local override="$PROJECT_ROOT/.brain/mcp-tools.allowlist.json"
+    local default="$PROJECT_ROOT/cli/mcp-tools.allowlist.json"
+    
+    if [[ -f "$override" ]]; then
+        echo "$override"
+        return 0
+    fi
+    
+    if [[ -f "$default" ]]; then
+        echo "$default"
+        return 0
+    fi
+    return 1
+}
+
+POLICY_FILE=$(resolve_policy_file)
+
 if [[ ! -f "$POLICY_FILE" ]]; then
-    echo -e "${RED}FAIL: Policy file not found: $POLICY_FILE${NC}"
+    echo -e "${RED}FAIL: Policy file not found${NC}"
+    echo "  Expected: .brain/mcp-tools.allowlist.json or cli/mcp-tools.allowlist.json"
     exit 1
 fi
 
-echo -e "${GREEN}INFO: Policy file exists: $POLICY_FILE${NC}"
+echo -e "${GREEN}INFO: Policy file: $POLICY_FILE${NC}"
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Check 2: Valid YAML structure (basic grep-based validation)
+# Check 2: Valid JSON structure
 # ─────────────────────────────────────────────────────────────────────────────
 
-# Basic YAML structure check - verify key sections exist with proper indentation
-if ! grep -qE "^version:" "$POLICY_FILE"; then
-    echo -e "${RED}FAIL: Missing 'version:' at root level${NC}"
+if ! jq -e .version "$POLICY_FILE" >/dev/null 2>&1; then
+    echo -e "${RED}FAIL: Missing or invalid 'version' field${NC}"
     ((errors++))
 fi
 
-if ! grep -qE "^categories:" "$POLICY_FILE"; then
-    echo -e "${RED}FAIL: Missing 'categories:' at root level${NC}"
+if ! jq -e '.allowed' "$POLICY_FILE" >/dev/null 2>&1; then
+    echo -e "${RED}FAIL: Missing or invalid 'allowed' field${NC}"
     ((errors++))
 fi
 
-if ! grep -qE "^clients:" "$POLICY_FILE"; then
-    echo -e "${RED}FAIL: Missing 'clients:' at root level${NC}"
+if ! jq -e '.never' "$POLICY_FILE" >/dev/null 2>&1; then
+    echo -e "${RED}FAIL: Missing or invalid 'never' field${NC}"
     ((errors++))
 fi
 
 if [[ $errors -eq 0 ]]; then
-    echo -e "${GREEN}INFO: YAML structure valid (basic check)${NC}"
+    echo -e "${GREEN}INFO: JSON structure valid${NC}"
 fi
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Check 3: Extract allowed commands from policy
+# Check 3: Extract allowed commands
 # ─────────────────────────────────────────────────────────────────────────────
 
-# Get commands from DEFAULT_READONLY and OPTIONAL_READONLY categories
-allowed_commands=$(grep -A 20 "DEFAULT_READONLY:" "$POLICY_FILE" 2>/dev/null | grep -E '^\s+-\s+' | sed 's/.*-\s*//' | tr -d '"' || true)
-allowed_commands="$allowed_commands $(grep -A 20 "OPTIONAL_READONLY:" "$POLICY_FILE" 2>/dev/null | grep -E '^\s+-\s+' | sed 's/.*-\s*//' | tr -d '"' || true)"
+allowed_commands=$(jq -r '.allowed[]' "$POLICY_FILE" 2>/dev/null | sort -u | tr '\n' ' ' || true)
 
-# Normalize
-allowed_commands=$(echo "$allowed_commands" | tr ' ' '\n' | grep -v '^$' | sort -u | tr '\n' ' ')
+echo -e "${GREEN}INFO: Allowed commands: ${allowed_commands:-none}${NC}"
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Check 4: Verify never section exists and has content
-# ─────────────────────────────────────────────────────────────────────────────
-
-if ! grep -q "reason_by_command:" "$POLICY_FILE"; then
-    echo -e "${RED}FAIL: Missing 'reason_by_command:' in never section${NC}"
-    ((errors++))
-fi
-
-# Count entries in reason_by_command (simple heuristic: lines with colons after reason_by_command)
-never_count=$(sed -n '/reason_by_command:/,/^clients:/p' "$POLICY_FILE" 2>/dev/null | \
-    grep -cE '^\s+"?[a-z]' || echo "0")
-
-if [[ "$never_count" -lt 5 ]]; then
-    echo -e "${YELLOW}WARN: Only $never_count commands in never list (expected 10+)${NC}"
-fi
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Check 5: Verify allowed commands exist in CLI
+# Check 4: Verify allowed commands exist in CLI
 # ─────────────────────────────────────────────────────────────────────────────
 
 cli_signatures=$(grep -rh "\$signature" "$CLI_DIR" --include="*.php" 2>/dev/null | \
@@ -107,7 +102,6 @@ cli_signatures=$(grep -rh "\$signature" "$CLI_DIR" --include="*.php" 2>/dev/null
     sort -u | tr '\n' ' ' || true)
 
 for cmd in $allowed_commands; do
-    # Handle wildcards
     if [[ "$cmd" == *"*"* ]]; then
         prefix=$(echo "$cmd" | cut -d'*' -f1)
         if ! echo "$cli_signatures" | grep -q "$prefix"; then
@@ -123,31 +117,18 @@ for cmd in $allowed_commands; do
 done
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Check 6: No forbidden commands in allowed categories
+# Check 5: No forbidden commands in allowed categories
 # ─────────────────────────────────────────────────────────────────────────────
 
-# List of commands that should NEVER be in allowed categories
 forbidden_commands=("compile" "init" "make:" "memory:hygiene" "release:" "update" "add" "detail" "mcp:migrate")
 
 for cmd in $allowed_commands; do
     for forbidden in "${forbidden_commands[@]}"; do
         if [[ "$cmd" == "$forbidden"* ]]; then
-            echo -e "${RED}FAIL: Forbidden command '$cmd' found in allowed categories${NC}"
+            echo -e "${RED}FAIL: Forbidden command '$cmd' found in allowed list${NC}"
             ((errors++))
         fi
     done
-done
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Check 7: Required structure elements
-# ─────────────────────────────────────────────────────────────────────────────
-
-required_elements=("version:" "kill_switch_env:" "categories:" "never:" "clients:")
-for elem in "${required_elements[@]}"; do
-    if ! grep -q "$elem" "$POLICY_FILE" 2>/dev/null; then
-        echo -e "${RED}FAIL: Missing required element '$elem' in policy${NC}"
-        ((errors++))
-    fi
 done
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -155,11 +136,9 @@ done
 # ─────────────────────────────────────────────────────────────────────────────
 
 if [[ $errors -gt 0 ]]; then
-    echo -e "${RED}FAIL: $errors MCP tool policy violation(s)${NC}"
+    echo -e "${RED}FAIL: $errors MCP tool policy violation${NC}"
     exit 1
 fi
 
 echo -e "${GREEN}PASS: MCP tool policy valid${NC}"
-echo "  Allowed commands: ${allowed_commands:-none}"
-echo "  Never-list entries: ${never_count:-?}"
 exit 0
