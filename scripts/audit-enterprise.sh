@@ -1007,6 +1007,53 @@ else
     add_category "self-hosting-hygiene" "info" "0" "[{\"message\": \"consumer project\"}]"
 fi
 
+# ── Check 23: MCP policy inspector output contract ─────────────────────────
+
+log "${BOLD}[23/23] MCP policy inspector output contract${NC}"
+
+MCPPOLICYINSPECTOR_FINDINGS="[]"
+MCPPOLICYINSPECTOR_COUNT=0
+
+# Run brain mcp:policy --json and validate output
+POLICY_OUTPUT=$(brain mcp:policy --json 2>&1) || true
+
+# Check 1: Valid JSON
+if ! echo "$POLICY_OUTPUT" | jq empty 2>/dev/null; then
+    MCPPOLICYINSPECTOR_COUNT=$((MCPPOLICYINSPECTOR_COUNT + 1))
+    MCPPOLICYINSPECTOR_FINDINGS=$(echo "$MCPPOLICYINSPECTOR_FINDINGS" | jq '. + [{"message": "Invalid JSON output"}]')
+    log "  ${RED}FAIL${NC} Invalid JSON output"
+fi
+
+# Check 2: Required keys present
+if [[ $MCPPOLICYINSPECTOR_COUNT -eq 0 ]]; then
+    REQUIRED_KEYS="enabled kill_switch_env resolved_path schema_version allowed_count never_count overlap"
+    for key in $REQUIRED_KEYS; do
+        if ! echo "$POLICY_OUTPUT" | jq -e "has(\"$key\")" >/dev/null 2>&1; then
+            MCPPOLICYINSPECTOR_COUNT=$((MCPPOLICYINSPECTOR_COUNT + 1))
+            MCPPOLICYINSPECTOR_FINDINGS=$(echo "$MCPPOLICYINSPECTOR_FINDINGS" | jq --arg key "$key" '. + [{"message": "Missing required key", "key": $key}]')
+            log "  ${RED}FAIL${NC} Missing required key: $key"
+        fi
+    done
+fi
+
+# Check 3: No forbidden patterns (tool names, secrets)
+if [[ $MCPPOLICYINSPECTOR_COUNT -eq 0 ]]; then
+    FORBIDDEN_PATTERNS="docs compile make: token secret api_key bearer sk- gsk_ ctx7sk"
+    OUTPUT_LOWER=$(echo "$POLICY_OUTPUT" | tr '[:upper:]' '[:lower:]')
+    for pattern in $FORBIDDEN_PATTERNS; do
+        if echo "$OUTPUT_LOWER" | grep -qE "$pattern"; then
+            MCPPOLICYINSPECTOR_COUNT=$((MCPPOLICYINSPECTOR_COUNT + 1))
+            MCPPOLICYINSPECTOR_FINDINGS=$(echo "$MCPPOLICYINSPECTOR_FINDINGS" | jq --arg pattern "$pattern" '. + [{"message": "Forbidden pattern in output", "pattern": $pattern}]')
+            log "  ${RED}FAIL${NC} Forbidden pattern detected: $pattern"
+        fi
+    done
+fi
+
+if [[ $MCPPOLICYINSPECTOR_COUNT -eq 0 ]]; then
+    log "  ${GREEN}PASS${NC} MCP policy inspector output valid"
+fi
+add_category "mcp-policy-inspector" "$([ $MCPPOLICYINSPECTOR_COUNT -eq 0 ] && echo pass || echo fail)" "$MCPPOLICYINSPECTOR_COUNT" "$MCPPOLICYINSPECTOR_FINDINGS"
+
 # ── Output JSON report ──────────────────────────────────────────────────
 
 mkdir -p "$DIST_DIR"
