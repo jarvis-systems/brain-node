@@ -49,20 +49,25 @@ The `--no-lock` flag bypasses the single-writer compile mutex. To prevent produc
 **Requirements for `--no-lock` or `BRAIN_ALLOW_NO_LOCK=1`:**
 
 1. **Test mode indicator** — ONE of:
-   - PHPUnit runtime detected (`PHPUnit\Framework\TestCase` class exists)
-   - `BRAIN_TEST_MODE=1` environment variable
+   - PHPUnit runtime detected (`PHPUnit\Framework\TestCase` class exists) — bypasses all isolation checks
+   - `BRAIN_TEST_MODE=1` environment variable — requires isolation verification
 
 2. **Leakage prevention** — If `BRAIN_TEST_MODE=1` without PHPUnit:
    - Requires `BRAIN_TEST_MODE_SOURCE=ci` to prevent accidental production leakage
 
-3. **Isolated workdir** — ONE of the following combinations:
-   - Under `sys_get_temp_dir()` AND `.brain-testmode.marker` present
-   - Under repo `/dist/tmp/` AND `.brain-testmode.marker` present
-   - Project root (Brain project detected) AND `.brain-testmode.marker` present
+3. **Isolated workdir** — Required when using `BRAIN_TEST_MODE` (PHPUnit bypasses this):
+   - Under `sys_get_temp_dir()` OR under project `dist/tmp/`
+   - `.brain-testmode.marker` file present
+   - **NOT** a Brain project root (project root is NEVER isolated)
+
+**Critical:** 
+- PHPUnit detection bypasses ALL isolation checks. Tests can run from any directory.
+- Project root is never considered isolated, even with marker file present.
+- Marker in project root is treated as misconfiguration and will be rejected with `reason=marker_in_project_root`.
 
 **Violation behavior:**
 - Structured error: `code=NOLOCK_FORBIDDEN reason=<code> hint=<action>`
-- Reasons: `missing_test_mode`, `leaky_test_mode`, `non_isolated_workdir`
+- Reasons: `missing_test_mode`, `leaky_test_mode`, `non_isolated_workdir`, `marker_in_project_root`
 - No path leakage: only basenames in error messages
 
 **Implementation:** `CompileLock::validateTestModeContract()` in CLI package.

@@ -16,6 +16,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+ISOLATED_DIR="$PROJECT_ROOT/dist/tmp"
 
 cd "$PROJECT_ROOT"
 
@@ -35,12 +36,16 @@ if ! git rev-parse --is-inside-work-tree &>/dev/null; then
     exit 1
 fi
 
+# Ensure isolated directory exists with marker
+mkdir -p "$ISOLATED_DIR"
+touch "$ISOLATED_DIR/.brain-testmode.marker"
+
 # Snapshot worktree state BEFORE compile
 BEFORE=$(git status --porcelain 2>/dev/null || true)
 
-# Run brain compile (all targets)
+# Run brain compile from isolated directory
 echo -e "${YELLOW}Running brain compile...${NC}"
-if ! BRAIN_TEST_MODE=1 BRAIN_TEST_MODE_SOURCE=ci BRAIN_ALLOW_NO_LOCK=1 brain compile --no-lock >/dev/null 2>&1; then
+if ! (cd "$ISOLATED_DIR" && BRAIN_TEST_MODE=1 BRAIN_TEST_MODE_SOURCE=ci BRAIN_ALLOW_NO_LOCK=1 brain compile --no-lock >/dev/null 2>&1); then
     echo -e "${RED}FAIL${NC}: brain compile exited with error"
     exit 1
 fi

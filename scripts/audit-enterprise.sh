@@ -875,11 +875,16 @@ COMPILECLEAN_FINDINGS="[]"
 COMPILECLEAN_COUNT=0
 
 if command -v brain &>/dev/null; then
+    # Ensure isolated directory exists with marker
+    ISOLATED_DIR="$PROJECT_ROOT/dist/tmp"
+    mkdir -p "$ISOLATED_DIR"
+    touch "$ISOLATED_DIR/.brain-testmode.marker"
+
     # Snapshot worktree BEFORE compile
     BEFORE_COMPILE=$(cd "$PROJECT_ROOT" && git status --porcelain 2>/dev/null || true)
 
-    # Run compile with --no-lock (audit already runs sequentially)
-    if (cd "$PROJECT_ROOT" && BRAIN_TEST_MODE=1 BRAIN_TEST_MODE_SOURCE=ci BRAIN_ALLOW_NO_LOCK=1 brain compile --no-lock >/dev/null 2>&1); then
+    # Run compile from isolated directory
+    if (cd "$ISOLATED_DIR" && BRAIN_TEST_MODE=1 BRAIN_TEST_MODE_SOURCE=ci BRAIN_ALLOW_NO_LOCK=1 brain compile --no-lock >/dev/null 2>&1); then
         # Snapshot worktree AFTER compile — diff to find NEW changes only
         AFTER_COMPILE=$(cd "$PROJECT_ROOT" && git status --porcelain 2>/dev/null || true)
         NEW_COMPILE_CHANGES=$(diff <(echo "$BEFORE_COMPILE") <(echo "$AFTER_COMPILE") | grep '^>' | sed 's/^> //' || true)
@@ -1051,7 +1056,7 @@ fi
 # Check 24c: CompileLock has required test mode methods
 COMPILELOCK="$PROJECT_ROOT/cli/src/Services/CompileLock.php"
 if [[ -f "$COMPILELOCK" ]]; then
-    REQUIRED_METHODS="isTestMode isTestModeSourceCi isPhpUnit isUnderTempDir isUnderDistTmp hasTestModeMarker isIsolatedWorkdir validateTestModeContract getContractDiagnostics"
+    REQUIRED_METHODS="isTestMode isTestModeSourceCi isPhpUnit isUnderTempDir isUnderDistTmp hasTestModeMarker isBrainProjectRoot isIsolatedWorkdir validateTestModeContract getContractDiagnostics"
     for method in $REQUIRED_METHODS; do
         if ! grep -q "function $method" "$COMPILELOCK" 2>/dev/null; then
             TESTMODE_COUNT=$((TESTMODE_COUNT + 1))
@@ -1063,12 +1068,14 @@ if [[ -f "$COMPILELOCK" ]]; then
     done
 fi
 
-# Check 24d: Test mode marker file exists
-MARKER_FILE="$PROJECT_ROOT/.brain-testmode.marker"
-if [[ ! -f "$MARKER_FILE" ]]; then
+# Check 24d: Test mode marker file can be created in dist/tmp
+MARKER_DIR="$PROJECT_ROOT/dist/tmp"
+MARKER_FILE="$MARKER_DIR/.brain-testmode.marker"
+mkdir -p "$MARKER_DIR" 2>/dev/null || true
+if [[ ! -d "$MARKER_DIR" ]]; then
     TESTMODE_COUNT=$((TESTMODE_COUNT + 1))
-    TESTMODE_FINDINGS=$(echo "$TESTMODE_FINDINGS" | jq '. + [{"file": ".brain-testmode.marker", "type": "missing-marker", "message": "Test mode marker file required for self-hosting"}]')
-    log "  ${RED}FAIL${NC} Missing .brain-testmode.marker file"
+    TESTMODE_FINDINGS=$(echo "$TESTMODE_FINDINGS" | jq '. + [{"file": "dist/tmp/", "type": "missing-marker-dir", "message": "Cannot create dist/tmp directory for isolated compile"}]')
+    log "  ${RED}FAIL${NC} Cannot create dist/tmp directory"
 fi
 
 if [[ $TESTMODE_COUNT -eq 0 ]]; then
