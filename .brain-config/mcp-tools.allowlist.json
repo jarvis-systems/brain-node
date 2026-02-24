@@ -1,0 +1,15 @@
+{
+  "version": "1.0.0",
+  "kill_switch_env": "BRAIN_DISABLE_MCP",
+  "allowed": ["docs","diagnose","status","list","list:includes","list:masters","memory:status"],
+  "never": ["compile","init","make:*","memory:hygiene","release:prepare","update","add","detail","board","lab","run","meeting","custom-run","mcp:migrate"],
+  "clients": {
+    "claude": {"enabled": true},
+    "codex": {"enabled": true},
+    "opencode": {"enabled": true},
+    "gemini": {"enabled": true},
+    "qwen": {"enabled": true}
+  },
+  "overrides": {},
+  "_comment": "MCP v1 policy contract (READ-ONLY). Self-hosting override. No compile emission in this batch."
+}

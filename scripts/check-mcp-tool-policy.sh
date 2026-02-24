@@ -5,8 +5,13 @@
 #
 # Validates:
 #   1. MCP tool allowlist exists and is valid JSON
-#   2. All commands in categories exist in CLI inventory
-#   3. No forbidden commands appear in allowed categories
+#   2. All commands in "allowed" exist in CLI inventory
+#   3. No forbidden commands appear in "allowed"
+#
+# Canonical sources (resolution order):
+#   1. .brain-config/mcp-tools.allowlist.json (self-hosting override)
+#   2. .brain/config/mcp-tools.allowlist.json (consumer override)
+#   3. cli/mcp-tools.allowlist.json (CLI default)
 #
 # Exit codes:
 #   0 - All checks pass
@@ -17,6 +22,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 CLI_DIR="$PROJECT_ROOT/cli/src/Console"
+
 cd "$PROJECT_ROOT"
 
 # Colors
@@ -32,50 +38,64 @@ fi
 errors=0
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Resolution: find policy file (override -> default)
+# Resolution: find policy file (canonical order)
 # ─────────────────────────────────────────────────────────────────────────────
 
 resolve_policy_file() {
-    local override="$PROJECT_ROOT/.brain/mcp-tools.allowlist.json"
-    local default="$PROJECT_ROOT/cli/mcp-tools.allowlist.json"
-    
-    if [[ -f "$override" ]]; then
-        echo "$override"
+    # 1. Self-hosting override (real directory, not symlinked)
+    if [[ -f "$PROJECT_ROOT/.brain-config/mcp-tools.allowlist.json" ]]; then
+        echo "$PROJECT_ROOT/.brain-config/mcp-tools.allowlist.json"
         return 0
     fi
     
-    if [[ -f "$default" ]]; then
-        echo "$default"
+    # 2. Consumer override (in .brain/ directory)
+    if [[ -f "$PROJECT_ROOT/.brain/config/mcp-tools.allowlist.json" ]]; then
+        echo "$PROJECT_ROOT/.brain/config/mcp-tools.allowlist.json"
         return 0
     fi
+    
+    # 3. CLI default (shipped with package)
+    if [[ -f "$PROJECT_ROOT/cli/mcp-tools.allowlist.json" ]]; then
+        echo "$PROJECT_ROOT/cli/mcp-tools.allowlist.json"
+        return 0
+    fi
+    
     return 1
 }
 
-POLICY_FILE=$(resolve_policy_file)
-
-if [[ ! -f "$POLICY_FILE" ]]; then
-    echo -e "${RED}FAIL: Policy file not found${NC}"
-    echo "  Expected: .brain/mcp-tools.allowlist.json or cli/mcp-tools.allowlist.json"
+if ! POLICY_FILE=$(resolve_policy_file); then
+    echo -e "${RED}FAIL: No MCP tool policy file found${NC}"
+    echo "  Expected one of:"
+    echo "    .brain-config/mcp-tools.allowlist.json (self-hosting)"
+    echo "    .brain/config/mcp-tools.allowlist.json (consumer)"
+    echo "    cli/mcp-tools.allowlist.json (CLI default)"
+    echo ""
+    echo "  Remediation: CLI install corrupted - reinstall jarvis-brain/cli"
     exit 1
 fi
 
 echo -e "${GREEN}INFO: Policy file: $POLICY_FILE${NC}"
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Check 2: Valid JSON structure
+# Validate JSON structure
 # ─────────────────────────────────────────────────────────────────────────────
+
+if ! jq -e . "$POLICY_FILE" >/dev/null 2>&1; then
+    echo -e "${RED}FAIL: Invalid JSON in policy file${NC}"
+    ((errors++))
+fi
 
 if ! jq -e .version "$POLICY_FILE" >/dev/null 2>&1; then
     echo -e "${RED}FAIL: Missing or invalid 'version' field${NC}"
     ((errors++))
 fi
 
-if ! jq -e '.allowed' "$POLICY_FILE" >/dev/null 2>&1; then
+if ! jq -e .allowed "$POLICY_FILE" >/dev/null 2>&1; then
     echo -e "${RED}FAIL: Missing or invalid 'allowed' field${NC}"
     ((errors++))
 fi
 
-if ! jq -e '.never' "$POLICY_FILE" >/dev/null 2>&1; then
+if ! jq -e .never "$POLICY_FILE" >/dev/null 2>&1; then
     echo -e "${RED}FAIL: Missing or invalid 'never' field${NC}"
     ((errors++))
 fi
@@ -85,20 +105,25 @@ if [[ $errors -eq 0 ]]; then
 fi
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Check 3: Extract allowed commands
+# Extract allowed commands
 # ─────────────────────────────────────────────────────────────────────────────
 
 allowed_commands=$(jq -r '.allowed[]' "$POLICY_FILE" 2>/dev/null | sort -u | tr '\n' ' ' || true)
 
+if [[ -z "$allowed_commands" ]]; then
+    echo -e "${RED}FAIL: No allowed commands defined${NC}"
+    ((errors++))
+fi
+
 echo -e "${GREEN}INFO: Allowed commands: ${allowed_commands:-none}${NC}"
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Check 4: Verify allowed commands exist in CLI
+# Verify allowed commands exist in CLI
 # ─────────────────────────────────────────────────────────────────────────────
 
 cli_signatures=$(grep -rh "\$signature" "$CLI_DIR" --include="*.php" 2>/dev/null | \
     grep -E "signature\s*[.=]" | \
-    sed -n "s/.*['\"]\([a-z][a-z:_]*\).*/\1/p" | \
+    sed -n "s/.*['\"]\\([a-z][a-z:_]*\\).*/\\1/p" | \
     sort -u | tr '\n' ' ' || true)
 
 for cmd in $allowed_commands; do
@@ -117,7 +142,7 @@ for cmd in $allowed_commands; do
 done
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Check 5: No forbidden commands in allowed categories
+# Check no forbidden commands in allowed
 # ─────────────────────────────────────────────────────────────────────────────
 
 forbidden_commands=("compile" "init" "make:" "memory:hygiene" "release:" "update" "add" "detail" "mcp:migrate")

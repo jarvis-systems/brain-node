@@ -3,7 +3,7 @@ name: "MCP Tool Policy"
 description: "Canonical allowlist contract for Brain MCP toolset - defines which CLI commands can be exposed via MCP"
 type: architecture
 date: 2026-02-24
-version: "1.0.1"
+version: "1.0.2"
 status: active
 ---
 
@@ -20,13 +20,17 @@ This document defines the canonical policy for Brain MCP tool exposure.
 | Location | Type | Purpose |
 |----------|------|---------|
 | `cli/mcp-tools.allowlist.json` | Default | Ships with CLI package |
-| `.brain/mcp-tools.allowlist.json` | Override | Project-specific (self-hosting) |
+| `.brain-config/mcp-tools.allowlist.json` | Override | **Self-hosting only** |
+| `.brain/config/mcp-tools.allowlist.json` | Override | Consumer project |
 
 **Resolution order:**
-1. `.brain/mcp-tools.allowlist.json` (if exists) → project override
-2. `cli/mcp-tools.allowlist.json` → CLI default
+1. `.brain-config/mcp-tools.allowlist.json` (self-hosting)
+2. `.brain/config/mcp-tools.allowlist.json` (consumer override)
+3. `cli/mcp-tools.allowlist.json` (CLI default)
 
-**Note:** `.brain/` is a symlink to project root in self-hosting mode. In consumer projects, `.brain/` is a real directory created by `brain init`.
+**Important:** `.brain-config/` is a **self-hosting only** directory. It exists in the development repo for this project. Consumer projects use `.brain/config/` for overrides.
+
+**If CLI default is missing:** CLI install is corrupted — reinstall `jarvis-brain/cli`.
 
 ## Policy v1 Summary
 
@@ -60,18 +64,6 @@ These commands are **never** exposed via Brain MCP:
 | `board`, `lab`, `run`, `meeting`, `custom-run` | Experimental AI commands |
 | `mcp:migrate` | Changes database schema |
 
-### Per-Client Enablement
-
-All supported clients get Brain MCP by default:
-
-| Client | Enabled | Categories |
-|--------|---------|------------|
-| Claude | Yes | DEFAULT_READONLY + OPTIONAL_READONLY |
-| Codex | Yes | DEFAULT_READONLY |
-| OpenCode | Yes | DEFAULT_READONLY + OPTIONAL_READONLY |
-| Gemini | Yes | DEFAULT_READONLY |
-| Qwen | Yes | DEFAULT_READONLY |
-
 ### Kill-Switch
 
 Set `BRAIN_DISABLE_MCP=true` to disable all Brain MCP tool emission.
@@ -85,9 +77,11 @@ Set `BRAIN_DISABLE_MCP=true` to disable all Brain MCP tool emission.
   "allowed": ["docs", "diagnose", ...],
   "never": ["compile", "init", ...],
   "clients": {
-    "claude": {"enabled": true, "categories": ["DEFAULT_READONLY", "OPTIONAL_READONLY"]},
+    "claude": {"enabled": true},
+    "codex": {"enabled": true},
     ...
-  }
+  },
+  "overrides": {}
 }
 ```
 
