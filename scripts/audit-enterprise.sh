@@ -951,6 +951,62 @@ else
 fi
 add_category "mcp-tool-policy" "$([ $MCPPOLICY_COUNT -eq 0 ] && echo pass || echo fail)" "$MCPPOLICY_COUNT" "$MCPPOLICY_FINDINGS"
 
+# ── Check 22: Self-hosting workspace hygiene ───────────────────────────────
+
+log "${BOLD}[22/22] Self-hosting workspace hygiene${NC}"
+
+SELFSYMLINK_FINDINGS="[]"
+SELFSYMLINK_COUNT=0
+
+# Check if .brain is a symlink to '.' (self-hosting mode)
+if [[ -L "$PROJECT_ROOT/.brain" ]]; then
+    SYMLINK_TARGET=$(readlink "$PROJECT_ROOT/.brain" 2>/dev/null || echo "")
+
+    if [[ "$SYMLINK_TARGET" == "." ]]; then
+        # Self-hosting mode: verify hygiene rules
+        # Rule 1: .brain-config/ must exist and be tracked
+        if [[ ! -d "$PROJECT_ROOT/.brain-config" ]]; then
+            SELFSYMLINK_COUNT=$((SELFSYMLINK_COUNT + 1))
+            SELFSYMLINK_FINDINGS=$(echo "$SELFSYMLINK_FINDINGS" | jq '. + [{"message": ".brain-config/ missing in self-hosting repo"}]')
+            log "  ${RED}FAIL${NC} .brain-config/ missing"
+        else
+            # Check if tracked by git
+            if ! git -C "$PROJECT_ROOT" ls-files --error-unmatch ".brain-config" >/dev/null 2>&1; then
+                SELFSYMLINK_COUNT=$((SELFSYMLINK_COUNT + 1))
+                SELFSYMLINK_FINDINGS=$(echo "$SELFSYMLINK_FINDINGS" | jq '. + [{"message": ".brain-config/ not tracked by git"}]')
+                log "  ${RED}FAIL${NC} .brain-config/ not tracked"
+            fi
+        fi
+
+        # Rule 2: config/brain/ must NOT exist (prevent consumer pattern relapse)
+        if [[ -d "$PROJECT_ROOT/config/brain" ]]; then
+            SELFSYMLINK_COUNT=$((SELFSYMLINK_COUNT + 1))
+            SELFSYMLINK_FINDINGS=$(echo "$SELFSYMLINK_FINDINGS" | jq '. + [{"message": "config/brain/ exists — use .brain-config/ for self-hosting"}]')
+            log "  ${RED}FAIL${NC} config/brain/ exists (use .brain-config/)"
+        fi
+
+        # Rule 3: MCP policy file must exist at canonical location
+        if [[ ! -f "$PROJECT_ROOT/.brain-config/mcp-tools.allowlist.json" ]]; then
+            SELFSYMLINK_COUNT=$((SELFSYMLINK_COUNT + 1))
+            SELFSYMLINK_FINDINGS=$(echo "$SELFSYMLINK_FINDINGS" | jq '. + [{"message": ".brain-config/mcp-tools.allowlist.json missing"}]')
+            log "  ${RED}FAIL${NC} MCP policy file missing"
+        fi
+
+        if [[ $SELFSYMLINK_COUNT -eq 0 ]]; then
+            log "  ${GREEN}PASS${NC} Self-hosting workspace hygiene OK"
+        fi
+        add_category "self-hosting-hygiene" "$([ $SELFSYMLINK_COUNT -eq 0 ] && echo pass || echo fail)" "$SELFSYMLINK_COUNT" "$SELFSYMLINK_FINDINGS"
+    else
+        # Symlink but not to '.' — unusual, warn but don't fail
+        log "  ${YELLOW}SKIP${NC} .brain symlink to '$SYMLINK_TARGET' (not self-hosting pattern)"
+        add_category "self-hosting-hygiene" "info" "0" "[{\"message\": \"symlink to non-dot target\"}]"
+    fi
+else
+    # Consumer project: .brain is not a symlink
+    log "  ${YELLOW}SKIP${NC} Consumer project (.brain is not a symlink)"
+    add_category "self-hosting-hygiene" "info" "0" "[{\"message\": \"consumer project\"}]"
+fi
+
 # ── Output JSON report ──────────────────────────────────────────────────
 
 mkdir -p "$DIST_DIR"
