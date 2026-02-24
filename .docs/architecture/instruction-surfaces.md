@@ -210,3 +210,19 @@ The compile system enforces these via environment variables. Changing tier mid-s
 | `QWEN.md` | Qwen CLI | 316 | 330 | 598 | 2 |
 
 Economy adds ~14 lines (strict-only rules) while reducing cognitive depth. Premium adds ~282 lines via additional iron rules and expanded cookbook presets. All surfaces are now uniform in size per mode (tier 1/2 distinction removed).
+
+## Client Format Compatibility Matrix
+
+| Client | Commands | Agents | Skills | Config File | Model ID Format |
+|--------|----------|--------|--------|-------------|-----------------|
+| Claude | .md (YAML FM) | .md (YAML FM) | .md (YAML FM) | CLAUDE.md | Optional (defaults) |
+| Qwen | .toml | .md (YAML FM) | .md (YAML FM) | QWEN.md | Optional |
+| Gemini | .toml | .md (YAML FM) | .md (YAML FM) | GEMINI.md | Optional |
+| OpenCode | .md (YAML FM) | .md (YAML FM) | .md (YAML FM) | AGENTS.md + settings.json | Required: provider/model |
+| Codex | .md (prompts/) | N/A | SKILL.md | AGENTS.md (trust_level) | Optional |
+
+### Known Pitfalls
+
+1. **Qwen Migration**: Commands use .toml, NOT .md. No migration to MD exists.
+2. **Codex Trust Model**: Requires `trust_level: trusted` in AGENTS.md for self-hosted configs.
+3. **OpenCode Model IDs**: Must use full `provider/model` format (e.g., `anthropic/claude-3-opus`). No bare model names allowed.

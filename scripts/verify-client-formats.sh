@@ -6,6 +6,8 @@
 # Checks command file extensions, agent YAML front matter, and format consistency
 # across all compile targets. Detects format drift before it breaks client UX.
 #
+# ENHANCED: Per-client required key validation, OpenCode model alias map, skill key checks
+#
 # Exit codes:
 #   0 - All checks passed
 #   1 - Format drift detected
@@ -27,6 +29,28 @@ ERRORS=0
 pass() { echo -e "${GREEN}[PASS]${NC} $1"; }
 fail() { echo -e "${RED}[FAIL]${NC} $1"; ERRORS=$((ERRORS + 1)); }
 skip() { echo -e "${YELLOW}[SKIP]${NC} $1"; }
+
+# ═══════════════════════════════════════════════════════════════════════════
+# OPENCODE MODEL ALIAS MAP
+# ═══════════════════════════════════════════════════════════════════════════
+# Known model aliases that are ALLOWED without "/" prefix
+# These are short aliases that OpenCode resolves to full provider/model IDs
+# Format: newline-separated list for grep matching
+OPENCODE_MODEL_ALIASES="sonnet
+sonnet-4
+opus
+opus-4
+haiku
+gpt-4o
+gpt-4
+gpt-4-turbo
+gpt-3.5-turbo
+o1
+o1-mini
+o1-preview
+claude-3-5-sonnet
+claude-3-opus
+claude-3-haiku"
 
 # ── Check: no wrong-format files in a directory ──────────────────────────
 # Usage: check_no_ext <dir> <banned_ext> <label>
@@ -80,6 +104,160 @@ check_yaml_frontmatter() {
     done
     if [ "$bad_files" -eq 0 ]; then
         pass "$label"
+    fi
+}
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ENHANCED: YAML REQUIRED KEYS VALIDATION
+# ═══════════════════════════════════════════════════════════════════════════
+
+# ── Check: YAML front matter contains required keys ─────────────────────────
+# Usage: check_yaml_required_keys <dir> <label> <required_keys...>
+# Example: check_yaml_required_keys ".claude/agents" "claude agents keys" "name" "description"
+check_yaml_required_keys() {
+    local dir="$1" label="$2"
+    shift 2
+    local required_keys=("$@")
+    
+    if [ ! -d "$dir" ]; then
+        skip "$label — directory missing"
+        return
+    fi
+    
+    local total_files=0
+    local files_with_errors=0
+    
+    for f in "$dir"/*.md; do
+        [ -f "$f" ] || continue
+        total_files=$((total_files + 1))
+        
+        # Extract YAML front matter (between --- lines)
+        local in_fm=0 fm_content=""
+        while IFS= read -r line; do
+            if [[ "$line" == "---" ]]; then
+                if [ "$in_fm" -eq 1 ]; then
+                    break
+                fi
+                in_fm=1
+                continue
+            fi
+            if [ "$in_fm" -eq 1 ]; then
+                fm_content+="$line"$'\n'
+            fi
+        done < "$f"
+        
+        if [ -z "$fm_content" ]; then
+            fail "$label — $(basename "$f") has no YAML front matter"
+            files_with_errors=$((files_with_errors + 1))
+            continue
+        fi
+        
+        # Check each required key
+        local missing_keys=()
+        for key in "${required_keys[@]}"; do
+            # Match: "key:" at start of line (with optional whitespace)
+            if ! echo "$fm_content" | grep -qE "^[[:space:]]*${key}[[:space:]]*:"; then
+                missing_keys+=("$key")
+            fi
+        done
+        
+        if [ ${#missing_keys[@]} -gt 0 ]; then
+            fail "$label — $(basename "$f") missing required keys: ${missing_keys[*]}"
+            files_with_errors=$((files_with_errors + 1))
+        fi
+    done
+    
+    if [ "$files_with_errors" -eq 0 ] && [ "$total_files" -gt 0 ]; then
+        pass "$label — $total_files file(s) have all required keys (${required_keys[*]})"
+    elif [ "$total_files" -eq 0 ]; then
+        skip "$label — no .md files found"
+    fi
+}
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ENHANCED: OPENCODE MODEL ID STRICTNESS
+# ═══════════════════════════════════════════════════════════════════════════
+
+# ── Check: OpenCode model IDs are either provider/model OR known alias ──────
+# Usage: check_opencode_model_strict <dir> <label>
+# Validates model field: must contain "/" OR be in OPENCODE_MODEL_ALIASES map
+check_opencode_model_strict() {
+    local dir="$1" label="$2"
+    if [ ! -d "$dir" ]; then
+        skip "$label — directory missing"
+        return
+    fi
+    
+    local bad_count=0
+    local total_count=0
+    local alias_count=0
+    
+    for f in "$dir"/*.md; do
+        [ -f "$f" ] || continue
+        
+        # Extract model value from YAML front matter
+        local model_line model_value
+        model_line=$(grep -E '^[[:space:]]*model[[:space:]]*:' "$f" 2>/dev/null | head -1) || true
+        if [ -z "$model_line" ]; then
+            continue
+        fi
+        
+        total_count=$((total_count + 1))
+        
+        # Extract value: strip key, whitespace, and quotes
+        model_value=$(echo "$model_line" | sed -E 's/^[[:space:]]*model[[:space:]]*:[[:space:]]*//' | sed 's/^"//' | sed 's/"$//' | sed "s/^'//" | sed "s/'$//" | sed 's/\\//g')
+        
+        # Check: contains "/" OR is a known alias
+        if [[ "$model_value" == *"/"* ]]; then
+            : # Valid provider/model format
+        elif echo "$OPENCODE_MODEL_ALIASES" | grep -qxF "$model_value"; then
+            alias_count=$((alias_count + 1))
+            : # Valid alias
+        else
+            fail "$label — $(basename "$f") has invalid model ID: \"$model_value\" (expected provider/model format or known alias)"
+            bad_count=$((bad_count + 1))
+        fi
+    done
+    
+    if [ "$bad_count" -eq 0 ] && [ "$total_count" -gt 0 ]; then
+        local msg="$label — $total_count model(s) valid"
+        [ "$alias_count" -gt 0 ] && msg+=" ($alias_count using aliases)"
+        pass "$msg"
+    elif [ "$bad_count" -eq 0 ] && [ "$total_count" -eq 0 ]; then
+        pass "$label — no model fields found (ok)"
+    fi
+}
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ENHANCED: COMMANDS FORMAT DRIFT DETECTION
+# ═══════════════════════════════════════════════════════════════════════════
+
+# ── Check: commands directory has ONLY expected format (strict) ─────────────
+# Usage: check_commands_format_strict <dir> <expected_ext> <banned_ext> <client>
+# Fails if ANY file has wrong extension, not just if banned files exist
+check_commands_format_strict() {
+    local dir="$1" expected_ext="$2" banned_ext="$3" client="$4"
+    
+    if [ ! -d "$dir" ]; then
+        skip "$client commands — directory missing"
+        return
+    fi
+    
+    local expected_count banned_count total_count
+    expected_count=$(find "$dir" -maxdepth 1 -name "*.$expected_ext" 2>/dev/null | wc -l | tr -d ' ')
+    banned_count=$(find "$dir" -maxdepth 1 -name "*.$banned_ext" 2>/dev/null | wc -l | tr -d ' ')
+    total_count=$(find "$dir" -maxdepth 1 -type f 2>/dev/null | wc -l | tr -d ' ')
+    
+    if [ "$banned_count" -gt 0 ]; then
+        local bad_files
+        bad_files=$(find "$dir" -maxdepth 1 -name "*.$banned_ext" -exec basename {} \; 2>/dev/null | tr '\n' ' ')
+        fail "$client commands — wrong format: found .$banned_ext files: $bad_files (expected .$expected_ext)"
+    elif [ "$expected_count" -gt 0 ]; then
+        pass "$client commands — correct .$expected_ext format ($expected_count files)"
+    elif [ "$total_count" -eq 0 ]; then
+        skip "$client commands — directory empty"
+    else
+        fail "$client commands — no .$expected_ext files found (expected .$expected_ext format)"
     fi
 }
 
@@ -207,32 +385,35 @@ echo ""
 
 # ── Claude ───────────────────────────────────────────────────────────────
 echo -e "${YELLOW}Claude${NC}"
-check_has_ext "$PROJECT_ROOT/.claude/commands" "md" "claude commands are .md"
-check_no_ext "$PROJECT_ROOT/.claude/commands" "toml" "claude commands have no .toml"
+check_commands_format_strict "$PROJECT_ROOT/.claude/commands" "md" "toml" "claude"
 check_has_ext "$PROJECT_ROOT/.claude/agents" "md" "claude agents are .md"
-check_yaml_frontmatter "$PROJECT_ROOT/.claude/agents" "claude agents have YAML front matter"
+check_yaml_frontmatter "$PROJECT_ROOT/.claude/agents" "claude agents YAML front matter"
+check_yaml_required_keys "$PROJECT_ROOT/.claude/agents" "claude agents required keys" "name" "description"
 check_has_ext "$PROJECT_ROOT/.claude/skills" "md" "claude skills are .md"
-check_yaml_frontmatter "$PROJECT_ROOT/.claude/skills" "claude skills have YAML front matter"
+check_yaml_frontmatter "$PROJECT_ROOT/.claude/skills" "claude skills YAML front matter"
+check_yaml_required_keys "$PROJECT_ROOT/.claude/skills" "claude skills required keys" "name" "description"
 echo ""
 
 # ── Qwen ─────────────────────────────────────────────────────────────────
 echo -e "${YELLOW}Qwen${NC}"
-check_has_ext "$PROJECT_ROOT/.qwen/commands" "toml" "qwen commands are .toml"
-check_no_ext "$PROJECT_ROOT/.qwen/commands" "md" "qwen commands have no .md"
+check_commands_format_strict "$PROJECT_ROOT/.qwen/commands" "toml" "md" "qwen"
 check_has_ext "$PROJECT_ROOT/.qwen/agents" "md" "qwen agents are .md"
-check_yaml_frontmatter "$PROJECT_ROOT/.qwen/agents" "qwen agents have YAML front matter"
+check_yaml_frontmatter "$PROJECT_ROOT/.qwen/agents" "qwen agents YAML front matter"
+check_yaml_required_keys "$PROJECT_ROOT/.qwen/agents" "qwen agents required keys" "name" "description"
 check_has_ext "$PROJECT_ROOT/.qwen/skills" "md" "qwen skills are .md"
-check_yaml_frontmatter "$PROJECT_ROOT/.qwen/skills" "qwen skills have YAML front matter"
+check_yaml_frontmatter "$PROJECT_ROOT/.qwen/skills" "qwen skills YAML front matter"
+check_yaml_required_keys "$PROJECT_ROOT/.qwen/skills" "qwen skills required keys" "name" "description"
 echo ""
 
 # ── Gemini ───────────────────────────────────────────────────────────────
 echo -e "${YELLOW}Gemini${NC}"
-check_has_ext "$PROJECT_ROOT/.gemini/commands" "toml" "gemini commands are .toml"
-check_no_ext "$PROJECT_ROOT/.gemini/commands" "md" "gemini commands have no .md"
+check_commands_format_strict "$PROJECT_ROOT/.gemini/commands" "toml" "md" "gemini"
 check_has_ext "$PROJECT_ROOT/.gemini/agents" "md" "gemini agents are .md"
-check_yaml_frontmatter "$PROJECT_ROOT/.gemini/agents" "gemini agents have YAML front matter"
+check_yaml_frontmatter "$PROJECT_ROOT/.gemini/agents" "gemini agents YAML front matter"
+check_yaml_required_keys "$PROJECT_ROOT/.gemini/agents" "gemini agents required keys" "name" "description"
 check_has_ext "$PROJECT_ROOT/.gemini/skills" "md" "gemini skills are .md"
-check_yaml_frontmatter "$PROJECT_ROOT/.gemini/skills" "gemini skills have YAML front matter"
+check_yaml_frontmatter "$PROJECT_ROOT/.gemini/skills" "gemini skills YAML front matter"
+check_yaml_required_keys "$PROJECT_ROOT/.gemini/skills" "gemini skills required keys" "name" "description"
 echo ""
 
 # ── OpenCode ─────────────────────────────────────────────────────────────
@@ -243,14 +424,14 @@ OC_AGT="$PROJECT_ROOT/.opencode/agent"
 # Also check plural (official docs convention) if singular missing
 [ -d "$OC_CMD" ] || OC_CMD="$PROJECT_ROOT/.opencode/commands"
 [ -d "$OC_AGT" ] || OC_AGT="$PROJECT_ROOT/.opencode/agents"
-check_has_ext "$OC_CMD" "md" "opencode commands are .md"
-check_no_ext "$OC_CMD" "toml" "opencode commands have no .toml"
+check_commands_format_strict "$OC_CMD" "md" "toml" "opencode"
 check_has_ext "$OC_AGT" "md" "opencode agents are .md"
-check_yaml_frontmatter "$OC_AGT" "opencode agents have YAML front matter"
-check_model_ids_have_slash "$OC_AGT" "opencode agents have full model IDs"
-check_model_ids_have_slash "$OC_CMD" "opencode commands have full model IDs"
+check_yaml_frontmatter "$OC_AGT" "opencode agents YAML front matter"
+check_yaml_required_keys "$OC_AGT" "opencode agents required keys" "name" "description" "model"
+check_opencode_model_strict "$OC_AGT" "opencode agents model IDs"
 check_has_ext "$PROJECT_ROOT/.opencode/skills" "md" "opencode skills are .md"
-check_yaml_frontmatter "$PROJECT_ROOT/.opencode/skills" "opencode skills have YAML front matter"
+check_yaml_frontmatter "$PROJECT_ROOT/.opencode/skills" "opencode skills YAML front matter"
+check_yaml_required_keys "$PROJECT_ROOT/.opencode/skills" "opencode skills required keys" "name" "description"
 echo ""
 
 # ── Schema ─────────────────────────────────────────────────────────────────
@@ -274,8 +455,7 @@ echo ""
 # ── Codex ────────────────────────────────────────────────────────────────
 echo -e "${YELLOW}Codex${NC}"
 if [ -d "$PROJECT_ROOT/.codex/prompts" ]; then
-    check_has_ext "$PROJECT_ROOT/.codex/prompts" "md" "codex prompts are .md"
-    check_no_ext "$PROJECT_ROOT/.codex/prompts" "toml" "codex prompts have no .toml"
+    check_commands_format_strict "$PROJECT_ROOT/.codex/prompts" "md" "toml" "codex prompts"
 else
     skip "codex prompts — .codex/prompts/ not found"
 fi
@@ -284,6 +464,50 @@ if [ -d "$PROJECT_ROOT/.agents/skills" ]; then
     CODEX_SKILL_COUNT=$(find "$PROJECT_ROOT/.agents/skills" -name "SKILL.md" 2>/dev/null | wc -l | tr -d ' ')
     if [ "$CODEX_SKILL_COUNT" -gt 0 ]; then
         pass "codex skills have SKILL.md ($CODEX_SKILL_COUNT files)"
+        # Check each SKILL.md has required YAML front matter keys
+        skill_errors=0
+        while IFS= read -r skill_file; do
+            [ -f "$skill_file" ] || continue
+            # Extract YAML front matter content
+            in_fm=0 fm_content=""
+            while IFS= read -r line; do
+                if [[ "$line" == "---" ]]; then
+                    if [ "$in_fm" -eq 1 ]; then
+                        break
+                    fi
+                    in_fm=1
+                    continue
+                fi
+                if [ "$in_fm" -eq 1 ]; then
+                    fm_content+="$line"$'\n'
+                fi
+            done < "$skill_file"
+            
+            skill_name=$(dirname "$skill_file" | xargs basename)
+            
+            if [ -z "$fm_content" ]; then
+                fail "codex skill $skill_name — SKILL.md missing YAML front matter"
+                skill_errors=$((skill_errors + 1))
+                continue
+            fi
+            
+            # Check required keys: name, description
+            missing=()
+            for key in name description; do
+                if ! echo "$fm_content" | grep -qE "^[[:space:]]*${key}[[:space:]]*:"; then
+                    missing+=("$key")
+                fi
+            done
+            
+            if [ ${#missing[@]} -gt 0 ]; then
+                fail "codex skill $skill_name — missing keys: ${missing[*]}"
+                skill_errors=$((skill_errors + 1))
+            fi
+        done < <(find "$PROJECT_ROOT/.agents/skills" -name "SKILL.md" 2>/dev/null)
+        
+        if [ "$skill_errors" -eq 0 ]; then
+            pass "codex skills required keys — all $CODEX_SKILL_COUNT skill(s) have name + description"
+        fi
     else
         fail "codex skills — .agents/skills/ exists but no SKILL.md found"
     fi
