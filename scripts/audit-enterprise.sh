@@ -99,7 +99,7 @@ add_category() {
 
 # ── Check 1: PHP syntax ──────────────────────────────────────────────────
 
-log "${BOLD}[1/30] PHP syntax check${NC}"
+log "${BOLD}[1/31] PHP syntax check${NC}"
 
 PHP_ERRORS=0
 PHP_FINDINGS="[]"
@@ -136,7 +136,7 @@ add_category "php-syntax" "$([ $PHP_ERRORS -eq 0 ] && echo pass || echo fail)" "
 
 # ── Check 2: PHPUnit (if available) ─────────────────────────────────────
 
-log "${BOLD}[2/30] PHPUnit tests${NC}"
+log "${BOLD}[2/31] PHPUnit tests${NC}"
 
 TEST_FINDINGS="[]"
 TEST_COUNT=0
@@ -193,7 +193,7 @@ add_category "phpunit" "$([ $TEST_COUNT -eq 0 ] && echo pass || echo fail)" "$TE
 
 # ── Check 3: Silent catch blocks ────────────────────────────────────────
 
-log "${BOLD}[3/30] Silent catch blocks${NC}"
+log "${BOLD}[3/31] Silent catch blocks${NC}"
 
 CATCH_FINDINGS="[]"
 CATCH_COUNT=0
@@ -253,7 +253,7 @@ add_category "silent-catches" "$([ $CATCH_COUNT -eq 0 ] && echo pass || echo war
 
 # ── Check 4: Debug artifacts ────────────────────────────────────────────
 
-log "${BOLD}[4/30] Debug artifacts${NC}"
+log "${BOLD}[4/31] Debug artifacts${NC}"
 
 DEBUG_FINDINGS="[]"
 DEBUG_COUNT=0
@@ -298,7 +298,7 @@ add_category "debug-artifacts" "$([ $DEBUG_COUNT -eq 0 ] && echo pass || echo wa
 
 # ── Check 5: TODO/FIXME markers ────────────────────────────────────────
 
-log "${BOLD}[5/30] TODO/FIXME markers${NC}"
+log "${BOLD}[5/31] TODO/FIXME markers${NC}"
 
 TODO_FINDINGS="[]"
 TODO_COUNT=0
@@ -335,7 +335,7 @@ add_category "todo-fixme" "$([ $TODO_COUNT -eq 0 ] && echo pass || echo info)" "
 
 # ── Check 6: Unsafe patterns ───────────────────────────────────────────
 
-log "${BOLD}[6/30] Unsafe patterns (eval/shell_exec/die/exit)${NC}"
+log "${BOLD}[6/31] Unsafe patterns (eval/shell_exec/die/exit)${NC}"
 
 UNSAFE_FINDINGS="[]"
 UNSAFE_COUNT=0
@@ -382,7 +382,7 @@ add_category "unsafe-patterns" "$([ $UNSAFE_COUNT -eq 0 ] && echo pass || echo w
 
 # ── Check 7: Shell script safety ────────────────────────────────────────
 
-log "${BOLD}[7/30] Shell script safety headers${NC}"
+log "${BOLD}[7/31] Shell script safety headers${NC}"
 
 SHELL_FINDINGS="[]"
 SHELL_COUNT=0
@@ -410,7 +410,7 @@ add_category "shell-safety" "$([ $SHELL_COUNT -eq 0 ] && echo pass || echo warn)
 
 # ── Check 8: No-op escape methods ───────────────────────────────────────
 
-log "${BOLD}[8/30] No-op escape method detection${NC}"
+log "${BOLD}[8/31] No-op escape method detection${NC}"
 
 NOOP_FINDINGS="[]"
 NOOP_COUNT=0
@@ -448,7 +448,7 @@ add_category "noop-escape" "$([ $NOOP_COUNT -eq 0 ] && echo pass || echo warn)" 
 
 # ── Check 9: self:: in trait files ─────────────────────────────────────
 
-log "${BOLD}[9/30] Late static binding in traits${NC}"
+log "${BOLD}[9/31] Late static binding in traits${NC}"
 
 LSB_FINDINGS="[]"
 LSB_COUNT=0
@@ -480,7 +480,7 @@ add_category "trait-lsb" "$([ $LSB_COUNT -eq 0 ] && echo pass || echo warn)" "$L
 
 # ── Check 10: Known typos ──────────────────────────────────────────────
 
-log "${BOLD}[10/30] Known typos in codebase${NC}"
+log "${BOLD}[10/31] Known typos in codebase${NC}"
 
 TYPO_FINDINGS="[]"
 TYPO_COUNT=0
@@ -510,7 +510,7 @@ add_category "known-typos" "$([ $TYPO_COUNT -eq 0 ] && echo pass || echo fail)" 
 
 # ── Check 11: Dev deps in production require ───────────────────────────
 
-log "${BOLD}[11/30] Dev dependencies in production require${NC}"
+log "${BOLD}[11/31] Dev dependencies in production require${NC}"
 
 DEVDEP_FINDINGS="[]"
 DEVDEP_COUNT=0
@@ -541,7 +541,7 @@ add_category "dev-deps-prod" "$([ $DEVDEP_COUNT -eq 0 ] && echo pass || echo fai
 
 # ── Check 12: PHPStan (static analysis) ───────────────────────────────
 
-log "${BOLD}[12/30] PHPStan static analysis${NC}"
+log "${BOLD}[12/31] PHPStan static analysis${NC}"
 
 PHPSTAN_FINDINGS="[]"
 PHPSTAN_COUNT=0
@@ -577,7 +577,7 @@ add_category "phpstan" "$([ $PHPSTAN_COUNT -eq 0 ] && echo pass || echo fail)" "
 
 # ── Check 13: strict_types declaration ─────────────────────────────────
 
-log "${BOLD}[13/30] Missing declare(strict_types=1)${NC}"
+log "${BOLD}[13/31] Missing declare(strict_types=1)${NC}"
 
 STRICT_FINDINGS="[]"
 STRICT_COUNT=0
@@ -616,7 +616,7 @@ add_category "strict-types" "$([ $STRICT_COUNT -eq 0 ] && echo pass || echo fail
 
 # ── Check 14: Secret patterns in tracked files ─────────────────────────
 
-log "${BOLD}[14/30] Secret patterns in tracked files${NC}"
+log "${BOLD}[14/31] Secret patterns in tracked files${NC}"
 
 SECRET_FINDINGS="[]"
 SECRET_COUNT=0
@@ -656,7 +656,7 @@ add_category "secrets" "$([ $SECRET_COUNT -eq 0 ] && echo pass || echo fail)" "$
 
 # ── Check 15: Hardcoded user paths ────────────────────────────────────
 
-log "${BOLD}[15/30] Hardcoded user paths in tracked source files${NC}"
+log "${BOLD}[15/31] Hardcoded user paths in tracked source files${NC}"
 
 HPATH_FINDINGS="[]"
 HPATH_COUNT=0
@@ -697,7 +697,7 @@ add_category "hardcoded-paths" "$([ $HPATH_COUNT -eq 0 ] && echo pass || echo wa
 
 # ── Check 16: Degradation observability ────────────────────────────────
 
-log "${BOLD}[16/30] Degradation observability in catch blocks${NC}"
+log "${BOLD}[16/31] Degradation observability in catch blocks${NC}"
 
 DEGRAD_COUNT=0
 DEGRAD_FINDINGS="[]"
@@ -739,7 +739,7 @@ add_category "degradation-observability" "$([ $DEGRAD_COUNT -eq 0 ] && echo pass
 
 # ── Check 17: Version consistency ─────────────────────────────────────
 
-log "${BOLD}[17/30] Version consistency${NC}"
+log "${BOLD}[17/31] Version consistency${NC}"
 
 VER_FINDINGS="[]"
 VER_COUNT=0
@@ -816,7 +816,7 @@ fi
 
 # ── Check 18: MCP schema bypass enforcement ─────────────────────────────
 
-log "${BOLD}[18/30] MCP schema bypass enforcement${NC}"
+log "${BOLD}[18/31] MCP schema bypass enforcement${NC}"
 
 MCPBYPASS_FINDINGS="[]"
 MCPBYPASS_COUNT=0
@@ -869,7 +869,7 @@ add_category "mcp-schema-bypass" "$([ $MCPBYPASS_COUNT -eq 0 ] && echo pass || e
 
 # ── Check 19: Compile clean-worktree gate ────────────────────────────────
 
-log "${BOLD}[19/30] Compile clean-worktree gate${NC}"
+log "${BOLD}[19/31] Compile clean-worktree gate${NC}"
 
 COMPILECLEAN_FINDINGS="[]"
 COMPILECLEAN_COUNT=0
@@ -909,7 +909,7 @@ add_category "compile-clean" "$([ $COMPILECLEAN_COUNT -eq 0 ] && echo pass || ec
 
 # ── Check 20: Agent schema enabled set consistency ───────────────────────────
 
-log "${BOLD}[20/30] Agent schema enabled set${NC}"
+log "${BOLD}[20/31] Agent schema enabled set${NC}"
 
 CANON_FILE="$PROJECT_ROOT/.brain-config/enabled-agents.json"
 AGENTSCHEMA_FINDINGS="[]"
@@ -942,7 +942,7 @@ add_category "agent-schema" "$([ $AGENTSCHEMA_COUNT -eq 0 ] && echo pass || echo
 
 # ── Check 21: MCP tool policy contract ───────────────────────────────────────
 
-log "${BOLD}[21/30] MCP tool policy contract${NC}"
+log "${BOLD}[21/31] MCP tool policy contract${NC}"
 
 MCPPOLICY_FINDINGS="[]"
 MCPPOLICY_COUNT=0
@@ -961,7 +961,7 @@ add_category "mcp-tool-policy" "$([ $MCPPOLICY_COUNT -eq 0 ] && echo pass || ech
 
 # ── Check 22: Self-hosting workspace hygiene ───────────────────────────────
 
-log "${BOLD}[22/30] Self-hosting workspace hygiene${NC}"
+log "${BOLD}[22/31] Self-hosting workspace hygiene${NC}"
 
 SELFSYMLINK_FINDINGS="[]"
 SELFSYMLINK_COUNT=0
@@ -1017,7 +1017,7 @@ fi
 
 # ── Check 23: Test Mode Contract enforcement ───────────────────────────────
 
-log "${BOLD}[23/30] Test Mode Contract enforcement${NC}"
+log "${BOLD}[23/31] Test Mode Contract enforcement${NC}"
 
 TESTMODE_FINDINGS="[]"
 TESTMODE_COUNT=0
@@ -1088,7 +1088,7 @@ add_category "test-mode-contract" "$([ $TESTMODE_COUNT -eq 0 ] && echo pass || e
 
 # ── Check 24: MCP policy inspector output contract ─────────────────────────
 
-log "${BOLD}[24/30] MCP policy inspector output contract${NC}"
+log "${BOLD}[24/31] MCP policy inspector output contract${NC}"
 
 MCPPOLICYINSPECTOR_FINDINGS="[]"
 MCPPOLICYINSPECTOR_COUNT=0
@@ -1135,7 +1135,7 @@ add_category "mcp-policy-inspector" "$([ $MCPPOLICYINSPECTOR_COUNT -eq 0 ] && ec
 
 # ── Check 25: MCP allowlist contract ───────────────────────────────────────
 
-log "${BOLD}[25/30] MCP allowlist contract${NC}"
+log "${BOLD}[25/31] MCP allowlist contract${NC}"
 
 MCPALLOWLIST_FINDINGS="[]"
 MCPALLOWLIST_COUNT=0
@@ -1192,7 +1192,7 @@ add_category "mcp-allowlist-contract" "$([ $MCPALLOWLIST_COUNT -eq 0 ] && echo p
 
 # ── Check 26: mcp:docs-search contract ─────────────────────────────────────
 
-log "${BOLD}[26/30] mcp:docs-search contract${NC}"
+log "${BOLD}[26/31] mcp:docs-search contract${NC}"
 
 MCPDOCSSEARCH_FINDINGS="[]"
 MCPDOCSSEARCH_COUNT=0
@@ -1244,7 +1244,7 @@ add_category "mcp-docs-search-contract" "$([ $MCPDOCSSEARCH_COUNT -eq 0 ] && ech
 
 # ── Check 27: mcp:diagnose contract ────────────────────────────────────────
 
-log "${BOLD}[27/30] mcp:diagnose contract${NC}"
+log "${BOLD}[27/31] mcp:diagnose contract${NC}"
 
 MCPDIAGNOSE_FINDINGS="[]"
 MCPDIAGNOSE_COUNT=0
@@ -1289,7 +1289,7 @@ add_category "mcp-diagnose-contract" "$([ $MCPDIAGNOSE_COUNT -eq 0 ] && echo pas
 
 # ── Check 28: Secret reference hygiene ─────────────────────────────────────
 
-log "${BOLD}[28/30] Secret reference hygiene${NC}"
+log "${BOLD}[28/31] Secret reference hygiene${NC}"
 
 SECRETREF_FINDINGS="[]"
 SECRETREF_COUNT=0
@@ -1305,7 +1305,7 @@ add_category "secret-reference-hygiene" "$([ $SECRETREF_COUNT -eq 0 ] && echo pa
 
 # ── Check 29: MCP registry contract ─────────────────────────────────────────
 
-log "${BOLD}[29/30] MCP registry contract${NC}"
+log "${BOLD}[29/31] MCP registry contract${NC}"
 
 MCPREGISTRY_FINDINGS="[]"
 MCPREGISTRY_COUNT=0
@@ -1322,7 +1322,7 @@ add_category "mcp-registry" "$([ $MCPREGISTRY_COUNT -eq 0 ] && echo pass || echo
 
 # ── Check 30: MCP compile consistency ───────────────────────────────────────
 
-log "${BOLD}[30/30] MCP compile consistency${NC}"
+log "${BOLD}[30/31] MCP compile consistency${NC}"
 
 MCPCONSISTENCY_FINDINGS="[]"
 MCPCONSISTENCY_COUNT=0
@@ -1336,6 +1336,23 @@ else
     bash "$PROJECT_ROOT/scripts/check-compile-registry-consistency.sh" 2>&1 | sed 's/^/    /'
 fi
 add_category "mcp-compile-consistency" "$([ $MCPCONSISTENCY_COUNT -eq 0 ] && echo pass || echo fail)" "$MCPCONSISTENCY_COUNT" "$MCPCONSISTENCY_FINDINGS"
+
+# ── Check 31: MCP registry validation ───────────────────────────────────────
+
+log "${BOLD}[31/31] MCP registry validation${NC}"
+
+MCPVALIDATION_FINDINGS="[]"
+MCPVALIDATION_COUNT=0
+
+if bash "$PROJECT_ROOT/scripts/check-mcp-registry-validation.sh" >/dev/null 2>&1; then
+    log "  ${GREEN}PASS${NC} MCP registry validation verified"
+else
+    MCPVALIDATION_COUNT=1
+    MCPVALIDATION_FINDINGS=$(echo "$MCPVALIDATION_FINDINGS" | jq '. + [{"message": "MCP registry validation check failed"}]')
+    log "  ${RED}FAIL${NC} MCP registry validation check failed"
+    bash "$PROJECT_ROOT/scripts/check-mcp-registry-validation.sh" 2>&1 | sed 's/^/    /'
+fi
+add_category "mcp-registry-validation" "$([ $MCPVALIDATION_COUNT -eq 0 ] && echo pass || echo fail)" "$MCPVALIDATION_COUNT" "$MCPVALIDATION_FINDINGS"
 
 # ── Output JSON report ──────────────────────────────────────────────────
 
