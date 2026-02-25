@@ -75,7 +75,7 @@ AUDIT_PASS=$(echo "$AUDIT_OUTPUT" | grep -E 'PASS:.*categories' | grep -oE '[0-9
 AUDIT_FAIL=$(echo "$AUDIT_OUTPUT" | grep -E 'FAIL:.*categories' | grep -oE '[0-9]+' | head -1 || echo "0")
 
 if [[ "$AUDIT_FAIL" == "0" && "$AUDIT_PASS" -gt 0 ]]; then
-    log_gate "enterprise-audit" "PASS" "${AUDIT_PASS}/23 checks"
+    log_gate "enterprise-audit" "PASS" "${AUDIT_PASS}/28 checks"
 else
     log_gate "enterprise-audit" "FAIL" "${AUDIT_FAIL} failures"
 fi
@@ -107,9 +107,9 @@ else
 fi
 
 # ── Gate 5: Docs Validation ──────────────────────────────────────────────
-
 echo -e "${YELLOW}[5/7] Docs Validation${NC}"
-DOCS_OUTPUT=$(brain docs --validate 2>&1) || true
+DOCS_OUTPUT=$(brain docs --validate --no-interaction 2>&1) || true
+
 VALID_COUNT=$(echo "$DOCS_OUTPUT" | grep -oE '"valid":[0-9]+' | grep -oE '[0-9]+' || echo "0")
 INVALID_COUNT=$(echo "$DOCS_OUTPUT" | grep -oE '"invalid":[0-9]+' | grep -oE '[0-9]+' || echo "0")
 

@@ -99,7 +99,7 @@ add_category() {
 
 # ── Check 1: PHP syntax ──────────────────────────────────────────────────
 
-log "${BOLD}[1/19] PHP syntax check${NC}"
+log "${BOLD}[1/28] PHP syntax check${NC}"
 
 PHP_ERRORS=0
 PHP_FINDINGS="[]"
@@ -136,7 +136,7 @@ add_category "php-syntax" "$([ $PHP_ERRORS -eq 0 ] && echo pass || echo fail)" "
 
 # ── Check 2: PHPUnit (if available) ─────────────────────────────────────
 
-log "${BOLD}[2/19] PHPUnit tests${NC}"
+log "${BOLD}[2/28] PHPUnit tests${NC}"
 
 TEST_FINDINGS="[]"
 TEST_COUNT=0
@@ -193,7 +193,7 @@ add_category "phpunit" "$([ $TEST_COUNT -eq 0 ] && echo pass || echo fail)" "$TE
 
 # ── Check 3: Silent catch blocks ────────────────────────────────────────
 
-log "${BOLD}[3/19] Silent catch blocks${NC}"
+log "${BOLD}[3/28] Silent catch blocks${NC}"
 
 CATCH_FINDINGS="[]"
 CATCH_COUNT=0
@@ -253,7 +253,7 @@ add_category "silent-catches" "$([ $CATCH_COUNT -eq 0 ] && echo pass || echo war
 
 # ── Check 4: Debug artifacts ────────────────────────────────────────────
 
-log "${BOLD}[4/19] Debug artifacts${NC}"
+log "${BOLD}[4/28] Debug artifacts${NC}"
 
 DEBUG_FINDINGS="[]"
 DEBUG_COUNT=0
@@ -298,7 +298,7 @@ add_category "debug-artifacts" "$([ $DEBUG_COUNT -eq 0 ] && echo pass || echo wa
 
 # ── Check 5: TODO/FIXME markers ────────────────────────────────────────
 
-log "${BOLD}[5/19] TODO/FIXME markers${NC}"
+log "${BOLD}[5/28] TODO/FIXME markers${NC}"
 
 TODO_FINDINGS="[]"
 TODO_COUNT=0
@@ -335,7 +335,7 @@ add_category "todo-fixme" "$([ $TODO_COUNT -eq 0 ] && echo pass || echo info)" "
 
 # ── Check 6: Unsafe patterns ───────────────────────────────────────────
 
-log "${BOLD}[6/19] Unsafe patterns (eval/shell_exec/die/exit)${NC}"
+log "${BOLD}[6/28] Unsafe patterns (eval/shell_exec/die/exit)${NC}"
 
 UNSAFE_FINDINGS="[]"
 UNSAFE_COUNT=0
@@ -382,7 +382,7 @@ add_category "unsafe-patterns" "$([ $UNSAFE_COUNT -eq 0 ] && echo pass || echo w
 
 # ── Check 7: Shell script safety ────────────────────────────────────────
 
-log "${BOLD}[7/19] Shell script safety headers${NC}"
+log "${BOLD}[7/28] Shell script safety headers${NC}"
 
 SHELL_FINDINGS="[]"
 SHELL_COUNT=0
@@ -410,7 +410,7 @@ add_category "shell-safety" "$([ $SHELL_COUNT -eq 0 ] && echo pass || echo warn)
 
 # ── Check 8: No-op escape methods ───────────────────────────────────────
 
-log "${BOLD}[8/19] No-op escape method detection${NC}"
+log "${BOLD}[8/28] No-op escape method detection${NC}"
 
 NOOP_FINDINGS="[]"
 NOOP_COUNT=0
@@ -448,7 +448,7 @@ add_category "noop-escape" "$([ $NOOP_COUNT -eq 0 ] && echo pass || echo warn)" 
 
 # ── Check 9: self:: in trait files ─────────────────────────────────────
 
-log "${BOLD}[9/19] Late static binding in traits${NC}"
+log "${BOLD}[9/28] Late static binding in traits${NC}"
 
 LSB_FINDINGS="[]"
 LSB_COUNT=0
@@ -480,7 +480,7 @@ add_category "trait-lsb" "$([ $LSB_COUNT -eq 0 ] && echo pass || echo warn)" "$L
 
 # ── Check 10: Known typos ──────────────────────────────────────────────
 
-log "${BOLD}[10/19] Known typos in codebase${NC}"
+log "${BOLD}[10/28] Known typos in codebase${NC}"
 
 TYPO_FINDINGS="[]"
 TYPO_COUNT=0
@@ -510,7 +510,7 @@ add_category "known-typos" "$([ $TYPO_COUNT -eq 0 ] && echo pass || echo fail)" 
 
 # ── Check 11: Dev deps in production require ───────────────────────────
 
-log "${BOLD}[11/19] Dev dependencies in production require${NC}"
+log "${BOLD}[11/28] Dev dependencies in production require${NC}"
 
 DEVDEP_FINDINGS="[]"
 DEVDEP_COUNT=0
@@ -541,7 +541,7 @@ add_category "dev-deps-prod" "$([ $DEVDEP_COUNT -eq 0 ] && echo pass || echo fai
 
 # ── Check 12: PHPStan (static analysis) ───────────────────────────────
 
-log "${BOLD}[12/19] PHPStan static analysis${NC}"
+log "${BOLD}[12/28] PHPStan static analysis${NC}"
 
 PHPSTAN_FINDINGS="[]"
 PHPSTAN_COUNT=0
@@ -577,7 +577,7 @@ add_category "phpstan" "$([ $PHPSTAN_COUNT -eq 0 ] && echo pass || echo fail)" "
 
 # ── Check 13: strict_types declaration ─────────────────────────────────
 
-log "${BOLD}[13/19] Missing declare(strict_types=1)${NC}"
+log "${BOLD}[13/28] Missing declare(strict_types=1)${NC}"
 
 STRICT_FINDINGS="[]"
 STRICT_COUNT=0
@@ -616,7 +616,7 @@ add_category "strict-types" "$([ $STRICT_COUNT -eq 0 ] && echo pass || echo fail
 
 # ── Check 14: Secret patterns in tracked files ─────────────────────────
 
-log "${BOLD}[14/19] Secret patterns in tracked files${NC}"
+log "${BOLD}[14/28] Secret patterns in tracked files${NC}"
 
 SECRET_FINDINGS="[]"
 SECRET_COUNT=0
@@ -656,7 +656,7 @@ add_category "secrets" "$([ $SECRET_COUNT -eq 0 ] && echo pass || echo fail)" "$
 
 # ── Check 15: Hardcoded user paths ────────────────────────────────────
 
-log "${BOLD}[15/19] Hardcoded user paths in tracked source files${NC}"
+log "${BOLD}[15/28] Hardcoded user paths in tracked source files${NC}"
 
 HPATH_FINDINGS="[]"
 HPATH_COUNT=0
@@ -697,7 +697,7 @@ add_category "hardcoded-paths" "$([ $HPATH_COUNT -eq 0 ] && echo pass || echo wa
 
 # ── Check 16: Degradation observability ────────────────────────────────
 
-log "${BOLD}[16/19] Degradation observability in catch blocks${NC}"
+log "${BOLD}[16/28] Degradation observability in catch blocks${NC}"
 
 DEGRAD_COUNT=0
 DEGRAD_FINDINGS="[]"
@@ -739,7 +739,7 @@ add_category "degradation-observability" "$([ $DEGRAD_COUNT -eq 0 ] && echo pass
 
 # ── Check 17: Version consistency ─────────────────────────────────────
 
-log "${BOLD}[17/19] Version consistency${NC}"
+log "${BOLD}[17/28] Version consistency${NC}"
 
 VER_FINDINGS="[]"
 VER_COUNT=0
@@ -816,7 +816,7 @@ fi
 
 # ── Check 18: MCP schema bypass enforcement ─────────────────────────────
 
-log "${BOLD}[18/19] MCP schema bypass enforcement${NC}"
+log "${BOLD}[18/28] MCP schema bypass enforcement${NC}"
 
 MCPBYPASS_FINDINGS="[]"
 MCPBYPASS_COUNT=0
@@ -869,7 +869,7 @@ add_category "mcp-schema-bypass" "$([ $MCPBYPASS_COUNT -eq 0 ] && echo pass || e
 
 # ── Check 19: Compile clean-worktree gate ────────────────────────────────
 
-log "${BOLD}[19/20] Compile clean-worktree gate${NC}"
+log "${BOLD}[19/28] Compile clean-worktree gate${NC}"
 
 COMPILECLEAN_FINDINGS="[]"
 COMPILECLEAN_COUNT=0
@@ -884,7 +884,7 @@ if command -v brain &>/dev/null; then
     BEFORE_COMPILE=$(cd "$PROJECT_ROOT" && git status --porcelain 2>/dev/null || true)
 
     # Run compile from isolated directory
-    if (cd "$ISOLATED_DIR" && BRAIN_TEST_MODE=1 BRAIN_TEST_MODE_SOURCE=ci BRAIN_ALLOW_NO_LOCK=1 brain compile --no-lock >/dev/null 2>&1); then
+    if (cd "$ISOLATED_DIR" && BRAIN_TEST_MODE=1 BRAIN_TEST_MODE_SOURCE=ci BRAIN_ALLOW_NO_LOCK=1 brain compile --no-lock --no-interaction >/dev/null 2>&1); then
         # Snapshot worktree AFTER compile — diff to find NEW changes only
         AFTER_COMPILE=$(cd "$PROJECT_ROOT" && git status --porcelain 2>/dev/null || true)
         NEW_COMPILE_CHANGES=$(diff <(echo "$BEFORE_COMPILE") <(echo "$AFTER_COMPILE") | grep '^>' | sed 's/^> //' || true)
@@ -909,37 +909,40 @@ add_category "compile-clean" "$([ $COMPILECLEAN_COUNT -eq 0 ] && echo pass || ec
 
 # ── Check 20: Agent schema enabled set consistency ───────────────────────────
 
-log "${BOLD}[20/20] Agent schema enabled set${NC}"
+log "${BOLD}[20/28] Agent schema enabled set${NC}"
 
-SCHEMA_FILE="$PROJECT_ROOT/agent-schema.json"
-CANON_AGENTS="commit-master documentation-master explore-master vector-master web-research-master"
+CANON_FILE="$PROJECT_ROOT/.brain-config/enabled-agents.json"
 AGENTSCHEMA_FINDINGS="[]"
 AGENTSCHEMA_COUNT=0
 
-if [[ -f "$SCHEMA_FILE" ]]; then
-    SCHEMA_AGENTS=$(grep -oE '"(agent|commit|documentation|explore|prompt|script|vector|web-research)-master"' "$SCHEMA_FILE" 2>/dev/null | tr -d '"' | sort -u | tr '\n' ' ' | sed 's/ $//')
-    CANON_SORTED=$(echo "$CANON_AGENTS" | tr ' ' '\n' | sort | tr '\n' ' ' | sed 's/ $//')
-    
-    if [[ "$SCHEMA_AGENTS" != "$CANON_SORTED" ]]; then
-        AGENTSCHEMA_COUNT=1
-        AGENTSCHEMA_FINDINGS=$(echo "$AGENTSCHEMA_FINDINGS" | jq \
-            --arg schema "$SCHEMA_AGENTS" \
-            --arg canon "$CANON_SORTED" \
-            '. + [{"message": "agent-schema.json enabled set mismatch", "schema_has": $schema, "canon_expects": $canon}]')
-        log "  ${RED}FAIL${NC} enabled set mismatch"
-        log "    Schema has: $SCHEMA_AGENTS"
-        log "    Canon expects: $CANON_SORTED"
-    else
-        log "  ${GREEN}PASS${NC} enabled agents match canon ($SCHEMA_AGENTS)"
-    fi
+# Determine Canon list from canonical JSON file
+if [[ -f "$CANON_FILE" ]]; then
+    CANON_SORTED=$(jq -r '.enabled[]' "$CANON_FILE" | sort | tr '\n' ' ' | sed 's/ $//')
 else
-    log "  ${YELLOW}SKIP${NC} agent-schema.json not found"
+    # Fallback to hardcoded enterprise canon (5 agents)
+    CANON_SORTED=$(echo "commit-master documentation-master explore-master vector-master web-research-master" | tr ' ' '\n' | sort | tr '\n' ' ' | sed 's/ $//')
+fi
+
+# Determine Observed list from deterministic filtered CLI source
+OBS_SORTED=$(brain list:masters --no-interaction | jq -r 'keys[]' | sort | tr '\n' ' ' | sed 's/ $//')
+
+if [[ "$OBS_SORTED" != "$CANON_SORTED" ]]; then
+    AGENTSCHEMA_COUNT=1
+    AGENTSCHEMA_FINDINGS=$(echo "$AGENTSCHEMA_FINDINGS" | jq \
+        --arg observed "$OBS_SORTED" \
+        --arg canon "$CANON_SORTED" \
+        '. + [{"message": "enabled agents set mismatch", "observed": $observed, "canon_expects": $canon}]')
+    log "  ${RED}FAIL${NC} enabled set mismatch"
+    log "    Observed: $OBS_SORTED"
+    log "    Canon expects: $CANON_SORTED"
+else
+    log "  ${GREEN}PASS${NC} enabled agents match canon ($OBS_SORTED)"
 fi
 add_category "agent-schema" "$([ $AGENTSCHEMA_COUNT -eq 0 ] && echo pass || echo fail)" "$AGENTSCHEMA_COUNT" "$AGENTSCHEMA_FINDINGS"
 
 # ── Check 21: MCP tool policy contract ───────────────────────────────────────
 
-log "${BOLD}[21/21] MCP tool policy contract${NC}"
+log "${BOLD}[21/28] MCP tool policy contract${NC}"
 
 MCPPOLICY_FINDINGS="[]"
 MCPPOLICY_COUNT=0
@@ -958,7 +961,7 @@ add_category "mcp-tool-policy" "$([ $MCPPOLICY_COUNT -eq 0 ] && echo pass || ech
 
 # ── Check 22: Self-hosting workspace hygiene ───────────────────────────────
 
-log "${BOLD}[22/22] Self-hosting workspace hygiene${NC}"
+log "${BOLD}[22/28] Self-hosting workspace hygiene${NC}"
 
 SELFSYMLINK_FINDINGS="[]"
 SELFSYMLINK_COUNT=0
@@ -1012,9 +1015,9 @@ else
     add_category "self-hosting-hygiene" "info" "0" "[{\"message\": \"consumer project\"}]"
 fi
 
-# ── Check 24: Test Mode Contract enforcement ─────────────────────────
+# ── Check 23: Test Mode Contract enforcement ───────────────────────────────
 
-log "${BOLD}[24/24] Test Mode Contract enforcement${NC}"
+log "${BOLD}[23/28] Test Mode Contract enforcement${NC}"
 
 TESTMODE_FINDINGS="[]"
 TESTMODE_COUNT=0
@@ -1083,15 +1086,15 @@ if [[ $TESTMODE_COUNT -eq 0 ]]; then
 fi
 add_category "test-mode-contract" "$([ $TESTMODE_COUNT -eq 0 ] && echo pass || echo fail)" "$TESTMODE_COUNT" "$TESTMODE_FINDINGS"
 
-# ── Check 23: MCP policy inspector output contract ─────────────────────────
+# ── Check 24: MCP policy inspector output contract ─────────────────────────
 
-log "${BOLD}[23/23] MCP policy inspector output contract${NC}"
+log "${BOLD}[24/28] MCP policy inspector output contract${NC}"
 
 MCPPOLICYINSPECTOR_FINDINGS="[]"
 MCPPOLICYINSPECTOR_COUNT=0
 
 # Run brain mcp:policy --json and validate output
-POLICY_OUTPUT=$(brain mcp:policy --json 2>&1) || true
+POLICY_OUTPUT=$(brain mcp:policy --json --no-interaction 2>&1) || true
 
 # Check 1: Valid JSON
 if ! echo "$POLICY_OUTPUT" | jq empty 2>/dev/null; then
@@ -1129,6 +1132,176 @@ if [[ $MCPPOLICYINSPECTOR_COUNT -eq 0 ]]; then
     log "  ${GREEN}PASS${NC} MCP policy inspector output valid"
 fi
 add_category "mcp-policy-inspector" "$([ $MCPPOLICYINSPECTOR_COUNT -eq 0 ] && echo pass || echo fail)" "$MCPPOLICYINSPECTOR_COUNT" "$MCPPOLICYINSPECTOR_FINDINGS"
+
+# ── Check 25: MCP allowlist contract ───────────────────────────────────────
+
+log "${BOLD}[25/28] MCP allowlist contract${NC}"
+
+MCPALLOWLIST_FINDINGS="[]"
+MCPALLOWLIST_COUNT=0
+
+# Run brain mcp:allowlist --json and validate output
+ALLOWLIST_OUTPUT=$(brain mcp:allowlist --json --no-interaction 2>&1) || true
+
+# Check 1: Valid JSON
+if ! echo "$ALLOWLIST_OUTPUT" | jq empty 2>/dev/null; then
+    MCPALLOWLIST_COUNT=$((MCPALLOWLIST_COUNT + 1))
+    MCPALLOWLIST_FINDINGS=$(echo "$MCPALLOWLIST_FINDINGS" | jq '. + [{"message": "Invalid JSON output"}]')
+    log "  ${RED}FAIL${NC} Invalid JSON output"
+fi
+
+# Check 2: Required keys present (programmatic v1 contract)
+if [[ $MCPALLOWLIST_COUNT -eq 0 ]]; then
+    REQUIRED_ALLOWLIST_KEYS="allowed clients enabled kill_switch_env never resolved_path schema_version"
+    for key in $REQUIRED_ALLOWLIST_KEYS; do
+        if ! echo "$ALLOWLIST_OUTPUT" | jq -e "has(\"$key\")" >/dev/null 2>&1; then
+            MCPALLOWLIST_COUNT=$((MCPALLOWLIST_COUNT + 1))
+            MCPALLOWLIST_FINDINGS=$(echo "$MCPALLOWLIST_FINDINGS" | jq --arg key "$key" '. + [{"message": "Missing required programmatic key", "key": $key}]')
+            log "  ${RED}FAIL${NC} Missing programmatic key: $key"
+        fi
+    done
+fi
+
+# Check 3: No secrets
+if [[ $MCPALLOWLIST_COUNT -eq 0 ]]; then
+    FORBIDDEN_ALLOWLIST_PATTERNS="token secret api_key bearer sk- gsk_ ctx7sk"
+    ALLOWLIST_OUTPUT_LOWER=$(echo "$ALLOWLIST_OUTPUT" | tr '[:upper:]' '[:lower:]')
+    for pattern in $FORBIDDEN_ALLOWLIST_PATTERNS; do
+        if echo "$ALLOWLIST_OUTPUT_LOWER" | grep -qE "$pattern"; then
+            MCPALLOWLIST_COUNT=$((MCPALLOWLIST_COUNT + 1))
+            MCPALLOWLIST_FINDINGS=$(echo "$MCPALLOWLIST_FINDINGS" | jq --arg pattern "$pattern" '. + [{"message": "Secret pattern in allowlist output", "pattern": $pattern}]')
+            log "  ${RED}FAIL${NC} Secret pattern detected: $pattern"
+        fi
+    done
+fi
+
+# Check 4: Respects kill switch
+if [[ $MCPALLOWLIST_COUNT -eq 0 ]]; then
+    KILL_OUTPUT=$(BRAIN_DISABLE_MCP=true brain mcp:allowlist --json --no-interaction 2>&1) || true
+    if [[ "$(echo "$KILL_OUTPUT" | jq -r '.enabled')" != "false" ]]; then
+        MCPALLOWLIST_COUNT=$((MCPALLOWLIST_COUNT + 1))
+        MCPALLOWLIST_FINDINGS=$(echo "$MCPALLOWLIST_FINDINGS" | jq '. + [{"message": "Kill switch ignored"}]')
+        log "  ${RED}FAIL${NC} Kill switch ignored"
+    fi
+fi
+
+if [[ $MCPALLOWLIST_COUNT -eq 0 ]]; then
+    log "  ${GREEN}PASS${NC} MCP allowlist programmatic output valid"
+fi
+add_category "mcp-allowlist-contract" "$([ $MCPALLOWLIST_COUNT -eq 0 ] && echo pass || echo fail)" "$MCPALLOWLIST_COUNT" "$MCPALLOWLIST_FINDINGS"
+
+# ── Check 26: mcp:docs-search contract ─────────────────────────────────────
+
+log "${BOLD}[26/28] mcp:docs-search contract${NC}"
+
+MCPDOCSSEARCH_FINDINGS="[]"
+MCPDOCSSEARCH_COUNT=0
+
+# Run brain mcp:docs-search --json and validate output
+DOCS_SEARCH_OUTPUT=$(brain mcp:docs-search --json --query="mcp" --no-interaction 2>&1) || true
+
+# Check 1: Valid JSON
+if ! echo "$DOCS_SEARCH_OUTPUT" | jq empty 2>/dev/null; then
+    MCPDOCSSEARCH_COUNT=$((MCPDOCSSEARCH_COUNT + 1))
+    MCPDOCSSEARCH_FINDINGS=$(echo "$MCPDOCSSEARCH_FINDINGS" | jq '. + [{"message": "Invalid JSON output"}]')
+    log "  ${RED}FAIL${NC} Invalid JSON output"
+fi
+
+# Check 2: Required keys present
+if [[ $MCPDOCSSEARCH_COUNT -eq 0 ]]; then
+    REQUIRED_DOCS_KEYS="documents query limit headers summary"
+    for key in $REQUIRED_DOCS_KEYS; do
+        if ! echo "$DOCS_SEARCH_OUTPUT" | jq -e "has(\"$key\")" >/dev/null 2>&1; then
+            MCPDOCSSEARCH_COUNT=$((MCPDOCSSEARCH_COUNT + 1))
+            MCPDOCSSEARCH_FINDINGS=$(echo "$MCPDOCSSEARCH_FINDINGS" | jq --arg key "$key" '. + [{"message": "Missing required docs-search key", "key": $key}]')
+            log "  ${RED}FAIL${NC} Missing docs-search key: $key"
+        fi
+    done
+fi
+
+# Check 3: Determinism (sorted arrays)
+if [[ $MCPDOCSSEARCH_COUNT -eq 0 ]]; then
+    # Check if paths are sorted (basic check)
+    PATHS=$(echo "$DOCS_SEARCH_OUTPUT" | jq -r '.documents[].path')
+    SORTED_PATHS=$(echo "$PATHS" | sort)
+    if [[ "$PATHS" != "$SORTED_PATHS" ]]; then
+        # Score DESC + Path ASC might not match plain sort, but if scores are same, path ASC is required.
+        # We check if score desc is maintained.
+        SCORES=$(echo "$DOCS_SEARCH_OUTPUT" | jq -r '.documents[].score')
+        SORTED_SCORES=$(echo "$SCORES" | sort -nr)
+        if [[ "$SCORES" != "$SORTED_SCORES" ]]; then
+            MCPDOCSSEARCH_COUNT=$((MCPDOCSSEARCH_COUNT + 1))
+            MCPDOCSSEARCH_FINDINGS=$(echo "$MCPDOCSSEARCH_FINDINGS" | jq '. + [{"message": "Output not sorted by score DESC"}]')
+            log "  ${RED}FAIL${NC} Output not sorted by score DESC"
+        fi
+    fi
+fi
+
+if [[ $MCPDOCSSEARCH_COUNT -eq 0 ]]; then
+    log "  ${GREEN}PASS${NC} mcp:docs-search output valid"
+fi
+add_category "mcp-docs-search-contract" "$([ $MCPDOCSSEARCH_COUNT -eq 0 ] && echo pass || echo fail)" "$MCPDOCSSEARCH_COUNT" "$MCPDOCSSEARCH_FINDINGS"
+
+# ── Check 27: mcp:diagnose contract ────────────────────────────────────────
+
+log "${BOLD}[27/28] mcp:diagnose contract${NC}"
+
+MCPDIAGNOSE_FINDINGS="[]"
+MCPDIAGNOSE_COUNT=0
+
+# Run brain mcp:diagnose --json and validate output
+DIAGNOSE_OUTPUT=$(brain mcp:diagnose --json --no-interaction 2>&1) || true
+
+# Check 1: Valid JSON
+if ! echo "$DIAGNOSE_OUTPUT" | jq empty 2>/dev/null; then
+    MCPDIAGNOSE_COUNT=$((MCPDIAGNOSE_COUNT + 1))
+    MCPDIAGNOSE_FINDINGS=$(echo "$MCPDIAGNOSE_FINDINGS" | jq '. + [{"message": "Invalid JSON output"}]')
+    log "  ${RED}FAIL${NC} Invalid JSON output"
+fi
+
+# Check 2: Required keys present
+if [[ $MCPDIAGNOSE_COUNT -eq 0 ]]; then
+    REQUIRED_DIAG_KEYS="env_checks modes self_dev_mode self_hosting test_mode_contract versions"
+    for key in $REQUIRED_DIAG_KEYS; do
+        if ! echo "$DIAGNOSE_OUTPUT" | jq -e "has(\"$key\")" >/dev/null 2>&1; then
+            MCPDIAGNOSE_COUNT=$((MCPDIAGNOSE_COUNT + 1))
+            MCPDIAGNOSE_FINDINGS=$(echo "$MCPDIAGNOSE_FINDINGS" | jq --arg key "$key" '. + [{"message": "Missing required diagnose key", "key": $key}]')
+            log "  ${RED}FAIL${NC} Missing diagnose key: $key"
+        fi
+    done
+fi
+
+# Check 3: Redaction check
+if [[ $MCPDIAGNOSE_COUNT -eq 0 ]]; then
+    # Env checks should not contain actual values, only FOUND/NOT FOUND or [REDACTED]
+    SENSITIVE_REDACTED=$(echo "$DIAGNOSE_OUTPUT" | jq -r '.env_checks.ANTHROPIC_API_KEY')
+    if [[ "$SENSITIVE_REDACTED" != "[REDACTED]" ]]; then
+        MCPDIAGNOSE_COUNT=$((MCPDIAGNOSE_COUNT + 1))
+        MCPDIAGNOSE_FINDINGS=$(echo "$MCPDIAGNOSE_FINDINGS" | jq '. + [{"message": "Sensitive environment variable not redacted"}]')
+        log "  ${RED}FAIL${NC} Sensitive environment variable not redacted"
+    fi
+fi
+
+if [[ $MCPDIAGNOSE_COUNT -eq 0 ]]; then
+    log "  ${GREEN}PASS${NC} mcp:diagnose output valid"
+fi
+add_category "mcp-diagnose-contract" "$([ $MCPDIAGNOSE_COUNT -eq 0 ] && echo pass || echo fail)" "$MCPDIAGNOSE_COUNT" "$MCPDIAGNOSE_FINDINGS"
+
+# ── Check 28: Secret reference hygiene ─────────────────────────────────────
+
+log "${BOLD}[28/28] Secret reference hygiene${NC}"
+
+SECRETREF_FINDINGS="[]"
+SECRETREF_COUNT=0
+
+if ! bash scripts/check-secret-references.sh; then
+    SECRETREF_COUNT=$((SECRETREF_COUNT + 1))
+    SECRETREF_FINDINGS=$(echo "$SECRETREF_FINDINGS" | jq '. + [{"message": "Risky secret references detected in tracked files"}]')
+    log "  ${RED}FAIL${NC} Risky secret references detected"
+else
+    log "  ${GREEN}PASS${NC} No risky secret references found"
+fi
+add_category "secret-reference-hygiene" "$([ $SECRETREF_COUNT -eq 0 ] && echo pass || echo fail)" "$SECRETREF_COUNT" "$SECRETREF_FINDINGS"
 
 # ── Output JSON report ──────────────────────────────────────────────────
 
