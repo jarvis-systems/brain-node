@@ -32,6 +32,16 @@ if ! grep -q "MCP_CALL_BLOCKED" output.json; then
 fi
 echo "  PASS: Policy blocks forbidden tool"
 
+# 2b. Test blocked server (not in external tools allowlist)
+# We use sequential-thinking but try to call a tool that isn't allowed
+log_check "Testing blocked server/tool combination"
+php cli/bin/brain mcp:call --server=sequential-thinking --tool=unauthorized-tool --input='{}' > output.json || true
+if ! grep -q "MCP_CALL_BLOCKED" output.json; then
+    echo "FAIL: Unauthorized tool on authorized server was not blocked"
+    exit 1
+fi
+echo "  PASS: Policy blocks unauthorized tool on server"
+
 # 3. Test successful redacted call
 log_check "Testing successful redacted call"
 php cli/bin/brain mcp:call --server=mock-echo --tool=mock-echo --input='{"text":"hello"}' > output.json

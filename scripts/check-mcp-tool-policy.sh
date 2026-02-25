@@ -126,23 +126,7 @@ cli_signatures=$(grep -rh "\$signature" "$CLI_DIR" --include="*.php" 2>/dev/null
     sed -n "s/.*['\"]\\([a-z][a-z:_]*\\).*/\\1/p" | \
     sort -u | tr '\n' ' ' || true)
 
-# Exempt known MCP tools that are not CLI commands
-exempt_mcp_tools=("search" "sequentialThinking" "mock-echo")
-
 for cmd in $allowed_commands; do
-    # Skip exemption check
-    is_exempt=0
-    for exempt in "${exempt_mcp_tools[@]}"; do
-        if [[ "$cmd" == "$exempt" ]]; then
-            is_exempt=1
-            break
-        fi
-    done
-
-    if [[ $is_exempt -eq 1 ]]; then
-        continue
-    fi
-
     if [[ "$cmd" == *"*"* ]]; then
         prefix=$(echo "$cmd" | cut -d'*' -f1)
         if ! echo "$cli_signatures" | grep -q "$prefix"; then
