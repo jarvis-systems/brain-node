@@ -7,19 +7,18 @@ namespace BrainNode\Mcp;
 use BrainCore\Attributes\Meta;
 use BrainCore\Mcp\StdioMcp;
 
-#[Meta('id', 'sequential-thinking')]
-class SequentialThinkingMcp extends StdioMcp
+#[Meta('id', 'mock-echo')]
+class MockEchoMcp extends StdioMcp
 {
     public static function defaultCommand(): string
     {
-        return 'npx';
+        return 'php';
     }
 
     public static function defaultArgs(): array
     {
         return [
-            '-y',
-            '@modelcontextprotocol/server-sequential-thinking',
+            __DIR__ . '/../../scripts/mock-mcp-server.php',
         ];
     }
 }

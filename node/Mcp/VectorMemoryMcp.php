@@ -18,12 +18,12 @@ class VectorMemoryMcp extends StdioMcp
     {
         return VectorMemorySchema::class;
     }
-    protected static function defaultCommand(): string
+    public static function defaultCommand(): string
     {
         return 'uvx';
     }
 
-    protected static function defaultArgs(): array
+    public static function defaultArgs(): array
     {
         return [
             'vector-memory-mcp',

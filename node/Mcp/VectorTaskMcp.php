@@ -18,12 +18,12 @@ class VectorTaskMcp extends StdioMcp
     {
         return VectorTaskSchema::class;
     }
-    protected static function defaultCommand(): string
+    public static function defaultCommand(): string
     {
         return 'uvx';
     }
 
-    protected static function defaultArgs(): array
+    public static function defaultArgs(): array
     {
         return [
             'vector-task-mcp',

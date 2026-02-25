@@ -10,12 +10,12 @@ use BrainCore\Mcp\StdioMcp;
 #[Meta('id', 'context7')]
 class Context7Mcp extends StdioMcp
 {
-    protected static function defaultCommand(): string
+    public static function defaultCommand(): string
     {
         return 'npx';
     }
 
-    protected static function defaultArgs(): array
+    public static function defaultArgs(): array
     {
         $apiKey = getenv('CONTEXT7_API_KEY');
 

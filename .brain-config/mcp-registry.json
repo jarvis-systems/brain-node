@@ -12,6 +12,11 @@
       "enabled": false
     },
     {
+      "id": "mock-echo",
+      "class": "BrainNode\\Mcp\\MockEchoMcp",
+      "enabled": true
+    },
+    {
       "id": "sequential-thinking",
       "class": "BrainNode\\Mcp\\SequentialThinkingMcp",
       "enabled": true

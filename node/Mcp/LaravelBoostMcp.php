@@ -10,12 +10,12 @@ use BrainCore\Mcp\StdioMcp;
 #[Meta('id', 'laravel-boost')]
 class LaravelBoostMcp extends StdioMcp
 {
-    protected static function defaultCommand(): string
+    public static function defaultCommand(): string
     {
         return 'php';
     }
 
-    protected static function defaultArgs(): array
+    public static function defaultArgs(): array
     {
         return [
             'artisan',
