@@ -1,0 +1,30 @@
+{
+  "version": "1.0.0",
+  "servers": [
+    {
+      "id": "context7",
+      "class": "BrainNode\\Mcp\\Context7Mcp",
+      "enabled": true
+    },
+    {
+      "id": "laravel-boost",
+      "class": "BrainNode\\Mcp\\LaravelBoostMcp",
+      "enabled": false
+    },
+    {
+      "id": "sequential-thinking",
+      "class": "BrainNode\\Mcp\\SequentialThinkingMcp",
+      "enabled": true
+    },
+    {
+      "id": "vector-memory",
+      "class": "BrainNode\\Mcp\\VectorMemoryMcp",
+      "enabled": true
+    },
+    {
+      "id": "vector-task",
+      "class": "BrainNode\\Mcp\\VectorTaskMcp",
+      "enabled": true
+    }
+  ]
+}

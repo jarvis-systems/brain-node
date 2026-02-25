@@ -75,7 +75,7 @@ AUDIT_PASS=$(echo "$AUDIT_OUTPUT" | grep -E 'PASS:.*categories' | grep -oE '[0-9
 AUDIT_FAIL=$(echo "$AUDIT_OUTPUT" | grep -E 'FAIL:.*categories' | grep -oE '[0-9]+' | head -1 || echo "0")
 
 if [[ "$AUDIT_FAIL" == "0" && "$AUDIT_PASS" -gt 0 ]]; then
-    log_gate "enterprise-audit" "PASS" "${AUDIT_PASS}/28 checks"
+    log_gate "enterprise-audit" "PASS" "${AUDIT_PASS}/29 checks"
 else
     log_gate "enterprise-audit" "FAIL" "${AUDIT_FAIL} failures"
 fi

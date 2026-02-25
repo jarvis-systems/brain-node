@@ -112,6 +112,50 @@ bash scripts/check-mcp-tool-policy.sh
 
 This is also integrated into `audit-enterprise.sh` as Check 21.
 
+## Programmatic Access
+
+MCP v1 defines a stable programmatic interface for policy discovery.
+
+### Registry: `mcp:list`
+
+Returns available MCP servers from the canonical registry.
+
+**Command:**
+```bash
+brain mcp:list
+```
+
+**Resolution Order:**
+1. `.brain-config/mcp-registry.json` (self-hosting)
+2. `.brain/config/mcp-registry.json` (consumer)
+3. `cli/mcp-registry.json` (CLI default)
+
+**Stable Output Keys:**
+- `enabled`: Global MCP status
+- `servers`: Sorted list of server IDs and enabled flags
+- `summary`: Counts of total and enabled servers
+- `resolved_registry_path`: Active registry source path
+
+### Inspector: `mcp:allowlist`
+
+Returns the full resolved policy as a deterministic JSON object.
+
+**Command:**
+```bash
+brain mcp:allowlist --json
+```
+
+**Stable Output Keys:**
+- `allowed`: Sorted list of permitted commands
+- `clients`: Map of client configurations
+- `enabled`: Global activation state
+- `kill_switch_env`: The ENV variable used for kill-switch
+- `never`: Sorted list of strictly forbidden commands/patterns
+- `resolved_path`: Path to the active policy source (redacted)
+- `schema_version`: Policy version string
+
+This command is used by future MCP server wrappers to discover available tools without re-implementing resolution logic.
+
 ## Future Expansion
 
 The following mode-based expansions are **planned but NOT active** in v1:
