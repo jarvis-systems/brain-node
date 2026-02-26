@@ -5,11 +5,20 @@ declare(strict_types=1);
 namespace BrainNode\Mcp;
 
 use BrainCore\Attributes\Meta;
+use BrainCore\Mcp\Schemas\Context7Schema;
 use BrainCore\Mcp\StdioMcp;
+use BrainCore\Mcp\Traits\McpSchemaTrait;
 
 #[Meta('id', 'context7')]
 class Context7Mcp extends StdioMcp
 {
+    use McpSchemaTrait;
+
+    protected static function getSchemaClass(): string
+    {
+        return Context7Schema::class;
+    }
+
     public static function defaultCommand(): string
     {
         return 'npx';
