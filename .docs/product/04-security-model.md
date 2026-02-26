@@ -72,7 +72,7 @@ The `--no-lock` flag bypasses the single-writer compile mutex. To prevent produc
 
 **Implementation:** `CompileLock::validateTestModeContract()` in CLI package.
 
-**Inspector:** `brain diagnose --json` includes `test_mode_contract` section with full diagnostics.
+**Inspector:** `brain mcp:diagnose` includes `test_mode_contract` section with full diagnostics.
 
 **Audit:** Check 24 in `scripts/audit-enterprise.sh` validates:
 - No `BRAIN_ALLOW_NO_LOCK` usage outside test files

@@ -325,7 +325,7 @@ Multi-model benchmark support enables cost-effective nightly coverage with high-
 
 | Tier | Agent | Model | Cost | Schedule |
 |------|-------|-------|------|----------|
-| Free | opencode | opencode/glm-4.7-free | $0 | Nightly |
+| Free | opencode | opencode/minimax-m2.5-free | $0 | Nightly |
 | Standard | claude | haiku/sonnet | Low-Medium | Nightly |
 | Golden | claude | claude-opus-4-6 | High | Manual/Weekly |
 
@@ -335,7 +335,7 @@ The benchmark runner accepts `--agent` flag to specify which AI CLI to use. Comb
 
 ```bash
 # Free-first: nightly, zero cost
-bash scripts/benchmark-llm-suite.sh --json --profile free-live --agent opencode --model opencode/glm-4.7-free --model-tier haiku --yolo
+bash scripts/benchmark-llm-suite.sh --json --profile free-live --agent opencode --model opencode/minimax-m2.5-free --model-tier haiku --yolo
 
 # Golden verify: manual, high confidence
 bash scripts/benchmark-llm-suite.sh --json --profile golden-live --agent claude --model claude-opus-4-6 --model-tier opus --yolo

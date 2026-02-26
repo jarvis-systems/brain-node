@@ -1,26 +1,40 @@
 {
-  "schema_version": "1.0.0",
-  "kill_switch_env": "BRAIN_DISABLE_MCP",
-  "servers": {
-    "vector-memory": {
-      "enabled": true,
-      "tools_allowed": ["search", "upsert", "stats"]
-    },
-    "sequential-thinking": {
-      "enabled": true,
-      "tools_allowed": ["think"]
-    },
-    "context7": {
-      "enabled": true,
-      "tools_allowed": ["search"]
-    },
-    "vector-task": {
-      "enabled": true,
-      "tools_allowed": ["task_list", "task_get", "task_create"]
-    },
-    "mock-echo": {
-      "enabled": true,
-      "tools_allowed": ["mock-echo"]
+    "schema_version": "1.0.0",
+    "kill_switch_env": "BRAIN_DISABLE_MCP",
+    "servers": {
+        "context7": {
+            "enabled": true,
+            "tools_allowed": [
+                "search"
+            ]
+        },
+        "mock-echo": {
+            "enabled": true,
+            "tools_allowed": [
+                "mock-echo"
+            ]
+        },
+        "sequential-thinking": {
+            "enabled": true,
+            "tools_allowed": [
+                "think"
+            ]
+        },
+        "vector-memory": {
+            "enabled": true,
+            "tools_allowed": [
+                "search",
+                "stats",
+                "upsert"
+            ]
+        },
+        "vector-task": {
+            "enabled": true,
+            "tools_allowed": [
+                "task_create",
+                "task_get",
+                "task_list"
+            ]
+        }
     }
-  }
 }

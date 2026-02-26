@@ -81,7 +81,7 @@ Current gated scenarios:
 |---------|-----------|-------|-------|---------|---------|
 | smoke | 1 | claude | haiku | All (pre-gate) | Basic connectivity |
 | nightly-live | 8 | claude | sonnet | Nightly + manual | Live behavioral proof |
-| free-live | 8 | opencode | glm-4.7-free | Nightly + manual | Free-first coverage ($0) |
+| free-live | 8 | opencode | minimax-m2.5-free | Nightly + manual | Free-first coverage ($0) |
 | golden-live | 8 | claude | opus | Manual | Golden verification (high-confidence) |
 | telemetry-ci | 12 | claude | haiku | Manual | Telemetry coverage |
 | ci | 26 | claude | haiku | Manual | Broad knowledge coverage |
@@ -94,7 +94,7 @@ Current gated scenarios:
 
 The benchmark system supports multiple AI agents beyond Claude via `--agent` and `--model-tier` flags.
 
-**Free-First:** Nightly runs execute on a free model (opencode/glm-4.7-free) at zero API cost. This catches structural regressions in instructions without spending budget.
+**Free-First:** Nightly runs execute on a free model (opencode/minimax-m2.5-free) at zero API cost. This catches structural regressions in instructions without spending budget.
 
 **Golden Verification:** Weekly or manual runs execute on Claude Opus for high-confidence behavioral verification. Golden reports are retained 90 days as long-term baselines.
 

@@ -67,9 +67,9 @@ class DoCommand extends CommandArchetype
         $this->guideline('phase0-context-analysis')
             ->goal('Extract task insights from conversation history before planning')
             ->example()
-            ->phase(Store::as('TASK_DESCRIPTION', 'User task from $ARGUMENTS'))
+            ->phase(Store:: as('TASK_DESCRIPTION', 'User task from $ARGUMENTS'))
             ->phase('Analyze conversation context: requirements mentioned, constraints discussed, user preferences, prior decisions, related code/files referenced')
-            ->phase(Store::as('CONVERSATION_CONTEXT', '{requirements, constraints, preferences, decisions, references}'))
+            ->phase(Store:: as('CONVERSATION_CONTEXT', '{requirements, constraints, preferences, decisions, references}'))
             ->phase(Operator::if('conversation has relevant context', [
                 'Integrate context into task understanding',
                 'Note: Use conversation insights throughout all phases',
@@ -85,11 +85,11 @@ class DoCommand extends CommandArchetype
             ->goal('Discover agents leveraging conversation context + vector memory')
             ->example()
             ->phase(VectorMemoryMcp::callValidatedJson('search_memories', ['query' => 'similar: {$TASK_DESCRIPTION}', 'limit' => 5, 'category' => 'code-solution,architecture']))
-            ->phase(Store::as('PAST_SOLUTIONS', 'Past approaches'))
+            ->phase(Store:: as('PAST_SOLUTIONS', 'Past approaches'))
             ->phase(BashTool::describe(BrainCLI::LIST_MASTERS, 'brain list:masters'))
-            ->phase(Store::as('AVAILABLE_AGENTS', 'Agents list'))
+            ->phase(Store:: as('AVAILABLE_AGENTS', 'Agents list'))
             ->phase('Match task to agents: $TASK_DESCRIPTION + $CONVERSATION_CONTEXT + $PAST_SOLUTIONS')
-            ->phase(Store::as('RELEVANT_AGENTS', '[{agent, capability, rationale}, ...]'))
+            ->phase(Store:: as('RELEVANT_AGENTS', '[{agent, capability, rationale}, ...]'))
             ->phase(Operator::output([
                 '=== PHASE 1: AGENT DISCOVERY ===',
                 'Agents: {selected} | Context: {conversation insights applied}',
@@ -100,10 +100,10 @@ class DoCommand extends CommandArchetype
             ->goal('Create requirements plan leveraging conversation + memory + GET USER APPROVAL')
             ->example()
             ->phase(VectorMemoryMcp::callValidatedJson('search_memories', ['query' => 'patterns: {task_domain}', 'limit' => 5, 'category' => 'learning,architecture']))
-            ->phase(Store::as('IMPLEMENTATION_PATTERNS', 'Past patterns'))
+            ->phase(Store:: as('IMPLEMENTATION_PATTERNS', 'Past patterns'))
             ->phase('Analyze: $TASK_DESCRIPTION + $CONVERSATION_CONTEXT + $PAST_SOLUTIONS + $IMPLEMENTATION_PATTERNS')
             ->phase('Determine needs: scan targets, web research (if non-trivial), docs scan (if architecture-related)')
-            ->phase(Store::as('REQUIREMENTS_PLAN', '{scan_targets, web_research, docs_scan, conversation_insights, memory_learnings}'))
+            ->phase(Store:: as('REQUIREMENTS_PLAN', '{scan_targets, web_research, docs_scan, conversation_insights, memory_learnings}'))
             ->phase(Operator::output([
                 '',
                 '=== PHASE 2: REQUIREMENTS ANALYSIS ===',
@@ -123,17 +123,17 @@ class DoCommand extends CommandArchetype
             ->example()
             ->phase(Operator::forEach('scan_target in $REQUIREMENTS_PLAN.scan_targets', [
                 TaskTool::describe('Delegate to agent for context extraction from {scan_target}'),
-                Store::as('GATHERED_MATERIALS[{target}]', 'Extracted context'),
+                Store:: as('GATHERED_MATERIALS[{target}]', 'Extracted context'),
             ]))
             ->phase(Operator::if('$DOCS_SCAN_NEEDED === true', [
-                TaskTool::describe('@agent-documentation-master: Use brain docs {keywords} to find relevant documentation, then Read files'),
-                Store::as('DOCS_SCAN_FINDINGS', 'Documentation content from brain docs'),
+                TaskTool::describe('@agent-documentation-master: Use brain mcp:docs-search --query="{keywords}" to find relevant documentation, then Read files'),
+                Store:: as('DOCS_SCAN_FINDINGS', 'Documentation content from brain mcp:docs-search'),
             ]))
             ->phase(Operator::if('$WEB_RESEARCH_NEEDED === true', [
                 TaskTool::describe('@agent-web-research-master: Research best practices for {$TASK_DESCRIPTION}'),
-                Store::as('WEB_RESEARCH_FINDINGS', 'External knowledge'),
+                Store:: as('WEB_RESEARCH_FINDINGS', 'External knowledge'),
             ]))
-            ->phase(Store::as('CONTEXT_PACKAGES', '{agent_name: {context, materials, task_domain}, ...}'))
+            ->phase(Store:: as('CONTEXT_PACKAGES', '{agent_name: {context, materials, task_domain}, ...}'))
             ->phase('Store gathered context: ' . VectorMemoryMcp::callValidatedJson('store_memory', ['content' => 'Context for {$TASK_DESCRIPTION}\n\nMaterials: {summary}', 'category' => 'tool-usage', 'tags' => ['do-command', 'context-gathering']]))
             ->phase(Operator::output([
                 '=== PHASE 3: MATERIALS GATHERED ===',
@@ -146,7 +146,7 @@ class DoCommand extends CommandArchetype
             ->goal('Create atomic plan leveraging past execution patterns, analyze dependencies, and GET USER APPROVAL')
             ->example()
             ->phase('Search vector memory: ' . VectorMemoryMcp::callValidatedJson('search_memories', ['query' => 'execution approach for {task_type}', 'limit' => 5, 'category' => 'code-solution']))
-            ->phase(Store::as('EXECUTION_PATTERNS', 'Past successful execution approaches'))
+            ->phase(Store:: as('EXECUTION_PATTERNS', 'Past successful execution approaches'))
             ->phase('Create plan: atomic steps (≤2 files each), logical order, informed by $EXECUTION_PATTERNS')
             ->phase('Analyze step dependencies: file conflicts, context dependencies, data flow')
             ->phase('Determine execution mode: sequential (default/safe) OR parallel (independent tasks/user request/optimization)')
@@ -154,14 +154,16 @@ class DoCommand extends CommandArchetype
                 'Group independent steps into parallel batches',
                 'Ensure NO file conflicts within groups',
                 'Ensure NO context dependencies within groups',
-                Store::as('EXECUTION_MODE', 'parallel'),
-                Store::as('PARALLEL_GROUPS', '[[step1, step2], [step3], ...]'),
+                Store:: as('EXECUTION_MODE', 'parallel'),
+                Store:: as('PARALLEL_GROUPS', '[[step1, step2], [step3], ...]'),
             ]))
             ->phase(Operator::if('NOT parallel OR dependencies detected', [
-                Store::as('EXECUTION_MODE', 'sequential'),
+                Store:: as('EXECUTION_MODE', 'sequential'),
             ]))
-            ->phase(Store::as('EXECUTION_PLAN',
-                '{steps: [{step_number, agent_name, task_description, file_scope: [≤2 files], memory_search_query, expected_outcome}, ...], total_steps: N, execution_mode: "sequential|parallel", parallel_groups: [...]}'))
+            ->phase(Store:: as(
+                'EXECUTION_PLAN',
+                '{steps: [{step_number, agent_name, task_description, file_scope: [≤2 files], memory_search_query, expected_outcome}, ...], total_steps: N, execution_mode: "sequential|parallel", parallel_groups: [...]}'
+            ))
             ->phase(Operator::verify('Each step has ≤ 2 files'))
             ->phase(Operator::verify('Parallel groups have NO conflicts'))
             ->phase(Operator::output([
@@ -202,7 +204,7 @@ class DoCommand extends CommandArchetype
                     '  AFTER: You MUST execute: ' . VectorMemoryMcp::callValidatedJson('store_memory', ['content' => 'Step {N}: {outcome}\n\nApproach: {what_worked}\n\nLearnings: {insights}', 'category' => 'code-solution', 'tags' => ['do-command', 'step-{N}']]),
                     '',
                     TaskTool::describe('Task(@agent-{name}, {task_with_MANDATORY_memory_instructions})'),
-                    Store::as('STEP_RESULTS[{N}]', 'Result with memory trace'),
+                    Store:: as('STEP_RESULTS[{N}]', 'Result with memory trace'),
                     Operator::verify('Step completed AND memory stored'),
                     Operator::output(['✅ Step {N} complete | Memory updated ✓']),
                     'current_step++',
@@ -224,7 +226,7 @@ class DoCommand extends CommandArchetype
                     '',
                     'WAIT for ALL tasks in batch to complete',
                     Operator::verify('All batch steps completed AND memory stored'),
-                    Store::as('BATCH_RESULTS[{batch}]', 'All results from parallel batch'),
+                    Store:: as('BATCH_RESULTS[{batch}]', 'All results from parallel batch'),
                     Operator::output(['✅ Batch {batch} complete ({count} steps) | Memory updated ✓']),
                 ]),
             ]))
@@ -237,7 +239,7 @@ class DoCommand extends CommandArchetype
         $this->guideline('phase6-completion-report')
             ->goal('Report results and store comprehensive learnings to vector memory')
             ->example()
-            ->phase(Store::as('COMPLETION_SUMMARY', '{completed_steps, files_modified, outcomes, learnings}'))
+            ->phase(Store:: as('COMPLETION_SUMMARY', '{completed_steps, files_modified, outcomes, learnings}'))
             ->phase('Store final summary: ' . VectorMemoryMcp::callValidatedJson('store_memory', ['content' => 'Completed: {$TASK_DESCRIPTION}\n\nApproach: {summary}\n\nSteps: {outcomes}\n\nLearnings: {insights}\n\nFiles: {list}', 'category' => 'code-solution', 'tags' => ['do-command', 'completed']]))
             ->phase(Operator::output([
                 '',
@@ -280,43 +282,43 @@ class DoCommand extends CommandArchetype
             ->text('Graceful error handling with recovery options')
             ->example()
             ->phase()->if('no agents available', [
-                'Report: "No agents found via brain list:masters"',
-                'Suggest: Run /init-agents first',
-                'Abort command',
-            ])
+                    'Report: "No agents found via brain list:masters"',
+                    'Suggest: Run /init-agents first',
+                    'Abort command',
+                ])
             ->phase()->if('user rejects requirements plan', [
-                'Accept modifications',
-                'Rebuild requirements plan',
-                'Re-submit for approval',
-            ])
+                    'Accept modifications',
+                    'Rebuild requirements plan',
+                    'Re-submit for approval',
+                ])
             ->phase()->if('user rejects execution plan', [
-                'Accept modifications',
-                'Rebuild execution plan',
-                'Verify atomic task constraints',
-                'Re-submit for approval',
-            ])
+                    'Accept modifications',
+                    'Rebuild execution plan',
+                    'Verify atomic task constraints',
+                    'Re-submit for approval',
+                ])
             ->phase()->if('agent execution fails', [
-                'Log: "Step {N} failed: {error}"',
-                'Offer options:',
-                '  1. Retry current step',
-                '  2. Skip and continue',
-                '  3. Abort remaining steps',
-                'WAIT for user decision',
-            ])
+                    'Log: "Step {N} failed: {error}"',
+                    'Offer options:',
+                    '  1. Retry current step',
+                    '  2. Skip and continue',
+                    '  3. Abort remaining steps',
+                    'WAIT for user decision',
+                ])
             ->phase()->if('documentation scan fails', [
-                'Log: "brain docs command failed or no documentation found"',
-                'Proceed without documentation context',
-                'Note: "Documentation context unavailable"',
-            ])
+                    'Log: "brain mcp:docs-search command failed or no documentation found"',
+                    'Proceed without documentation context',
+                    'Note: "Documentation context unavailable"',
+                ])
             ->phase()->if('web research timeout', [
-                'Log: "Web research timed out - continuing without external knowledge"',
-                'Proceed with local context only',
-            ])
+                    'Log: "Web research timed out - continuing without external knowledge"',
+                    'Proceed with local context only',
+                ])
             ->phase()->if('context gathering fails', [
-                'Log: "Failed to gather {context_type}"',
-                'Proceed with available context',
-                'Warn: "Limited context may affect quality"',
-            ]);
+                    'Log: "Failed to gather {context_type}"',
+                    'Proceed with available context',
+                    'Warn: "Limited context may affect quality"',
+                ]);
 
         // Deep cognitive only: constraints validation, examples, response format, directive
         if ($this->isDeepCognitive()) {
@@ -385,9 +387,9 @@ class DoCommand extends CommandArchetype
                 ->example()
                 ->phase('input', '$ARGUMENTS = "Implement feature based on architecture described in documentation"')
                 ->phase('phase1', 'Agent Discovery: Selected @agent-documentation-master, @agent-code-master')
-                ->phase('phase2', 'Requirements Plan: Search documentation via brain docs, identify feature requirements')
+                ->phase('phase2', 'Requirements Plan: Search documentation via brain mcp:docs-search, identify feature requirements')
                 ->phase('approval1', 'User approves (including documentation scan)')
-                ->phase('phase3', 'Gather: Documentation results from brain docs, related code files')
+                ->phase('phase3', 'Gather: Documentation results from brain mcp:docs-search, related code files')
                 ->phase('phase4', 'Execution Plan:')
                 ->do([
                     'Step 1: @agent-code-master - Create FeatureService.php based on docs',

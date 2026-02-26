@@ -80,7 +80,7 @@
       "max_total_duration_ms": 1200000,
       "max_total_mcp_calls": 50,
       "agent": "opencode",
-      "default_model": "opencode/glm-4.7-free",
+      "default_model": "opencode/minimax-m2.5-free",
       "default_model_tier": "haiku"
     },
     "golden-live": {

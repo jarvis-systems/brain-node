@@ -28,7 +28,7 @@ class VectorMemoryMcp extends StdioMcp
         return [
             'vector-memory-mcp',
             '--working-dir',
-            getcwd() ?: '.',
+            '.',
             '--memory-limit',
             '2000000',
         ];

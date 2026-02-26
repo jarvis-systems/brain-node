@@ -1,0 +1,66 @@
+[1/19] PHP syntax check
+  PASS All PHP files valid
+[2/19] PHPUnit tests
+  PASS Core tests passed
+  WARN CLI worktree dirty — skipping CLI tests (parallel WIP detected)
+[3/19] Silent catch blocks
+  PASS No silent catch blocks
+[4/19] Debug artifacts
+  PASS No debug artifacts
+[5/19] TODO/FIXME markers
+  PASS No TODO/FIXME markers
+[6/19] Unsafe patterns (eval/shell_exec/die/exit)
+  PASS No unsafe patterns
+[7/19] Shell script safety headers
+  PASS All shell scripts use safe headers
+[8/19] No-op escape method detection
+  PASS No no-op escape methods
+[9/19] Late static binding in traits
+  PASS No self:: in trait files
+[10/19] Known typos in codebase
+  PASS No known typos
+[11/19] Dev dependencies in production require
+  PASS No dev deps in production require
+[12/19] PHPStan static analysis
+  PASS Core phpstan passed
+  WARN CLI worktree dirty — skipping CLI phpstan (parallel WIP detected)
+[13/19] Missing declare(strict_types=1)
+  PASS All PHP files declare strict_types
+[14/19] Secret patterns in tracked files
+  PASS No secret patterns in tracked files
+[15/19] Hardcoded user paths in tracked source files
+  PASS No hardcoded user paths in tracked source files
+[16/19] Degradation observability in catch blocks
+  PASS All degradation catches have observability (8 signals found)
+[17/19] Version consistency
+  PASS root=v0.5.0, core=v0.5.0 — consistent
+  PASS root: tag=v0.5.0 exists
+  PASS core: tag=v0.5.0 exists
+  PASS cli: tag=v0.5.0 exists
+[18/19] MCP schema bypass enforcement
+  PASS All schema-enabled MCP calls validated or annotated
+[19/20] Compile clean-worktree gate
+  PASS brain compile produces clean worktree
+[20/20] Agent schema enabled set
+  FAIL enabled set mismatch
+    Schema has: agent-master commit-master documentation-master explore-master prompt-master
+    Canon expects: agent-master commit-master documentation-master explore-master prompt-master script-master vector-master web-research-master
+[21/21] MCP tool policy contract
+  PASS MCP tool policy valid
+[22/22] Self-hosting workspace hygiene
+  PASS Self-hosting workspace hygiene OK
+[24/24] Test Mode Contract enforcement
+  PASS Test Mode Contract enforced
+[23/23] MCP policy inspector output contract
+  PASS MCP policy inspector output valid
+
+═══ Enterprise Audit Summary ═══
+
+  PASS: 23 categories
+  WARN: 0 categories
+  FAIL: 1 categories
+  Total findings: 1
+
+  Report: /Users/xsaven/PhpstormProjects/jarvis-brain-node/dist/audit-report.json
+
+  BLOCKED: 1 FAIL categories detected — P0 regression

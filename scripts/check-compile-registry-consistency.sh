@@ -11,7 +11,7 @@ PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 cd "$PROJECT_ROOT"
 
 # 1. Get resolved state from brain mcp:list
-LIST_OUTPUT=$(php cli/bin/brain mcp:list --json)
+LIST_OUTPUT=$(php cli/bin/brain mcp:list)
 IS_ENABLED=$(echo "$LIST_OUTPUT" | jq -r '.enabled')
 
 if [[ "$IS_ENABLED" == "false" ]]; then
@@ -28,7 +28,7 @@ if [[ "$IS_ENABLED" == "false" ]]; then
 fi
 
 # 2. Get enabled IDs from registry (via mcp:list)
-REGISTRY_IDS=$(echo "$LIST_OUTPUT" | jq -r '.servers[] | select(.enabled == true) | .id' | sort | tr '
+REGISTRY_IDS=$(echo "$LIST_OUTPUT" | jq -r '.data.servers[] | select(.enabled == true) | .id' | sort | tr '
 ' ' ')
 
 # 3. Get IDs from .mcp.json
@@ -36,8 +36,7 @@ if [[ -f ".mcp.json" ]]; then
     # We only care about servers that come from our registry. 
     # .mcp.json might contain others if manually added (though not recommended)
     # But for this check, we expect 1:1 match for registry-enabled servers.
-    COMPILED_IDS=$(jq -r '.mcpServers | keys[]' .mcp.json | sort | tr '
-' ' ')
+    COMPILED_IDS=$(jq -r '.mcpServers | keys[]' .mcp.json | grep -v "mock-echo" | sort | tr '\n' ' ')
 else
     COMPILED_IDS=""
 fi

@@ -45,7 +45,7 @@ BEFORE=$(git status --porcelain 2>/dev/null || true)
 
 # Run brain compile from isolated directory
 echo -e "${YELLOW}Running brain compile...${NC}"
-if ! (cd "$ISOLATED_DIR" && BRAIN_TEST_MODE=1 BRAIN_TEST_MODE_SOURCE=ci BRAIN_ALLOW_NO_LOCK=1 brain compile --no-lock >/dev/null 2>&1); then
+if ! (cd "$ISOLATED_DIR" && BRAIN_TEST_MODE=1 BRAIN_TEST_MODE_SOURCE=ci BRAIN_ALLOW_NO_LOCK=1 brain compile --no-lock --no-interaction >/dev/null 2>&1); then
     echo -e "${RED}FAIL${NC}: brain compile exited with error"
     exit 1
 fi

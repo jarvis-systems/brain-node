@@ -20,3 +20,4 @@ QWEN.md
 .claude
 .qwen
 settings.json
+.brain/agent-schema.json

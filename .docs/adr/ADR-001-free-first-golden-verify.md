@@ -27,7 +27,7 @@ Additionally, only `ClaudeClient` implemented `processParseOutputToolUse()` for 
 
 Implement a **free-first** strategy with **golden verification**:
 
-- **Free-first (nightly):** Run the same 8-scenario nightly proof set on a free model (`opencode/glm-4.7-free` via OpenCode CLI) at zero API cost. This catches structural instruction regressions without spending budget.
+- **Free-first (nightly):** Run the same 8-scenario nightly proof set on a free model (`opencode/minimax-m2.5-free` via OpenCode CLI) at zero API cost. This catches structural instruction regressions without spending budget.
 - **Golden verification (manual/weekly):** Run the same 8 scenarios on Claude Opus (`claude-opus-4-6`) for high-confidence behavioral verification. Golden reports are retained 90 days as long-term reference baselines.
 
 ### Universal ToolUse Parsing

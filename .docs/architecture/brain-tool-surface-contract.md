@@ -17,7 +17,7 @@ Canonical contract for Brain's tool surface — what agents see and can use.
 
 | Term | Definition |
 |------|------------|
-| **BrainDocs** | CLI tool (`brain docs`) for indexing/searching `.docs/`. Read-only. See `.docs/architecture/brain-docs-architecture.md`. |
+| **BrainDocs** | CLI tool (`brain mcp:docs-search`) for indexing/searching `.docs/`. Read-only. See `.docs/architecture/brain-docs-architecture.md`. |
 | **ProjectDocs** | Project-owned documentation in `.docs/` (product, architecture, operations). Indexed by BrainDocs. |
 | **Cookbook** | Procedural knowledge packs (skills, recipes) embedded in compiled instructions or via MCP tools. |
 | **Tool Surface** | Capabilities exposed to agents via CLI commands, MCP tools, or compiled includes. |
@@ -39,10 +39,10 @@ Canonical contract for Brain's tool surface — what agents see and can use.
 BrainDocs is the CLI indexer. ProjectDocs is the content it indexes.
 
 ```
-brain docs "query"           # Search .docs/
-brain docs --validate        # Validate front matter
-brain docs --download=<url>  # Persist external docs
-brain docs --undocumented    # Find code without docs
+brain mcp:docs-search --query="..."  # Search .docs/
+brain docs --validate                # Validate front matter (Direct CLI)
+brain docs --download=<url>          # Persist external docs (Direct CLI)
+brain docs --undocumented            # Find code without docs (Direct CLI)
 ```
 
 **Details:** See `.docs/architecture/brain-docs-architecture.md` for design rationale, security model, and search scoring.
@@ -109,7 +109,7 @@ MCP v1 exposes READ-ONLY only. See `.docs/architecture/mcp-tool-policy.md` for c
 | EXPERIMENTAL | 5 | `board`, `lab`, `run`, `meeting`, `custom-run` |
 | PRE-PUB | 2 | `release:prepare`, `memory:hygiene` |
 
-**Authoritative list:** Run `brain list --json` or see `.docs/architecture/mcp-tool-policy.md` § Allowed Commands.
+**Authoritative list:** Run `brain mcp:list` or see `.docs/architecture/mcp-tool-policy.md` § Allowed Commands.
 
 ## Explicit Non-Goals
 

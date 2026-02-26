@@ -157,7 +157,7 @@ validate_profile_agent() {
     esac
     if [ -n "$expected_agent" ] && [ "$AGENT" != "$expected_agent" ]; then
         echo "ERROR: Profile '$PROFILE' requires --agent $expected_agent but got '$AGENT'" >&2
-        echo "  free-live  → --agent opencode (zero cost, GLM-4.7-FREE)" >&2
+        echo "  free-live  → --agent opencode (zero cost, MINIMAX-M2.5-FREE)" >&2
         echo "  golden-live → --agent claude (paid, Opus reference)" >&2
         echo "  Use: --profile $PROFILE --agent $expected_agent" >&2
         exit 2

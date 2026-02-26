@@ -70,7 +70,7 @@ check() {
 # ============================================================
 $JSON_MODE || echo -e "\n${YELLOW}Phase 0: Compiling standard/standard${NC}"
 cd "$PROJECT_ROOT"
-STRICT_MODE=standard COGNITIVE_LEVEL=standard brain compile >/dev/null 2>&1
+STRICT_MODE=standard COGNITIVE_LEVEL=standard brain compile --no-interaction >/dev/null 2>&1
 
 # ============================================================
 # SCENARIO 1: Brain line count budget
@@ -213,7 +213,7 @@ elif command -v md5 &>/dev/null; then
 else
     HASH_BEFORE="no-hash-tool"
 fi
-STRICT_MODE=standard COGNITIVE_LEVEL=standard brain compile >/dev/null 2>&1
+STRICT_MODE=standard COGNITIVE_LEVEL=standard brain compile --no-interaction >/dev/null 2>&1
 if command -v md5sum &>/dev/null; then
     HASH_AFTER=$(md5sum "$CLAUDE_MD" | cut -d' ' -f1)
 elif command -v md5 &>/dev/null; then
@@ -235,14 +235,14 @@ check "S13" "agent count = 5" 5 "$AGENT_COUNT"
 # SCENARIO 14: Mode delta (exhaustive > standard)
 # ============================================================
 $JSON_MODE || echo -e "\n${CYAN}Scenario 14: Mode delta${NC}"
-STRICT_MODE=paranoid COGNITIVE_LEVEL=exhaustive brain compile >/dev/null 2>&1
+STRICT_MODE=paranoid COGNITIVE_LEVEL=exhaustive brain compile --no-interaction >/dev/null 2>&1
 LINES_EXH=$(wc -l < "$CLAUDE_MD" | tr -d ' ')
 DELTA=$((LINES_EXH - BRAIN_LINES))
 check "S14a" "exhaustive > standard" 0 "$DELTA" "gt"
 check "S14b" "delta >= 300 (gating effective)" 300 "$DELTA" "ge"
 
 # Restore standard
-STRICT_MODE=standard COGNITIVE_LEVEL=standard brain compile >/dev/null 2>&1
+STRICT_MODE=standard COGNITIVE_LEVEL=standard brain compile --no-interaction >/dev/null 2>&1
 
 # ============================================================
 # SCENARIO 15: Gate 5 reinterpretation present

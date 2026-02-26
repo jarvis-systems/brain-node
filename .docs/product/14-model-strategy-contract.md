@@ -13,7 +13,7 @@ status: "active"
 
 | Tier | Profile | Agent | Model | Cost | Schedule | Purpose |
 |------|---------|-------|-------|------|----------|---------|
-| Free | free-live | opencode | opencode/glm-4.7-free | $0 | Nightly (automatic) | Structural stress testing |
+| Free | free-live | opencode | opencode/minimax-m2.5-free | $0 | Nightly (automatic) | Structural stress testing |
 | Standard | nightly-live | claude | haiku/sonnet | Low-Medium | Nightly (automatic) | Behavioral verification |
 | Golden | golden-live | claude | claude-opus-4-6 | High | Manual/Weekly | High-confidence reference baseline |
 | PR Gate | (all profiles) | — | — | $0 | Every PR | Dry-run only, zero API calls |
@@ -41,7 +41,7 @@ Binding is enforced only during live runs (not `--dry-run`). Dry-run validates J
 
 ```
 ERROR: Profile 'free-live' requires --agent opencode but got 'claude'
-  free-live  → --agent opencode (zero cost, GLM-4.7-FREE)
+  free-live  → --agent opencode (zero cost, MINIMAX-M2.5-FREE)
   golden-live → --agent claude (paid, Opus reference)
   Use: --profile free-live --agent opencode
 ```
@@ -54,7 +54,7 @@ Scenarios can declare minimum model capability via `min_model_tier` in their JSO
 
 | Tier Name | Numeric | Models |
 |-----------|---------|--------|
-| haiku | 1 | haiku, free models (GLM-4.7-FREE, flash, lite, mini) |
+| haiku | 1 | haiku, free models (MINIMAX-M2.5-FREE, flash, lite, mini) |
 | sonnet | 2 | sonnet, medium, pro, standard |
 | opus | 3 | opus, max, codex-max |
 
@@ -122,7 +122,7 @@ Golden-live is never triggered automatically. It requires explicit `workflow_dis
 ```json
 {
   "agent": "opencode",
-  "model": "opencode/glm-4.7-free",
+  "model": "opencode/minimax-m2.5-free",
   "model_tier": 1,
   "model_tier_override": "haiku",
   "profile": "free-live",
@@ -136,7 +136,7 @@ Golden-live is never triggered automatically. It requires explicit `workflow_dis
 ```json
 {
   "id": "CMD-001",
-  "executed_model": "opencode/glm-4.7-free",
+  "executed_model": "opencode/minimax-m2.5-free",
   "model_tier": 1,
   "status": "PASS",
   ...
@@ -148,10 +148,10 @@ Golden-live is never triggered automatically. It requires explicit `workflow_dis
 ```json
 {
   "id": "MT-LP-001",
-  "executed_model": "opencode/glm-4.7-free",
+  "executed_model": "opencode/minimax-m2.5-free",
   "model_tier": 1,
   "status": "SKIP",
-  "skip_reason": "model_not_supported: opencode/glm-4.7-free < sonnet",
+  "skip_reason": "model_not_supported: opencode/minimax-m2.5-free < sonnet",
   ...
 }
 ```

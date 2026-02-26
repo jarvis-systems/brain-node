@@ -37,7 +37,7 @@ Live proof is obtained automatically via the next nightly run after merge. It is
 Two nightly live profiles run in parallel:
 
 - **nightly-live** (8 scenarios, claude/sonnet) — behavioral verification, paid
-- **free-live** (8 scenarios, opencode/glm-4.7-free) — structural stress test, $0 cost
+- **free-live** (8 scenarios, opencode/minimax-m2.5-free) — structural stress test, $0 cost
 
 Both profiles:
 - Retry: enabled (1 retry per scenario for flakiness detection)

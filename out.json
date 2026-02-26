@@ -1,0 +1,1 @@
+{"error":{"code":"TOOL_NOT_ALLOWED","reason":"policy_blocked","message":"Tool 'docs' is not in the allowed policy.","hint":"see mcp:allowlist"},"ok":false,"redactions_applied":false,"server":"unknown","tool":"unknown"}

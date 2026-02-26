@@ -57,7 +57,7 @@ echo ""
 
 # --- Standard/Standard ---
 echo -e "${YELLOW}Phase 1: standard/standard${NC}"
-STRICT_MODE=standard COGNITIVE_LEVEL=standard brain compile >/dev/null 2>&1
+STRICT_MODE=standard COGNITIVE_LEVEL=standard brain compile --no-interaction >/dev/null 2>&1
 
 LINES_STD=$(wc -l < "$CLAUDE_MD" | tr -d ' ')
 check "standard line count <= 400" 400 "$LINES_STD" "le"
@@ -113,7 +113,7 @@ echo ""
 
 # --- Paranoid/Exhaustive ---
 echo -e "${YELLOW}Phase 2: paranoid/exhaustive${NC}"
-STRICT_MODE=paranoid COGNITIVE_LEVEL=exhaustive brain compile >/dev/null 2>&1
+STRICT_MODE=paranoid COGNITIVE_LEVEL=exhaustive brain compile --no-interaction >/dev/null 2>&1
 
 LINES_EXH=$(wc -l < "$CLAUDE_MD" | tr -d ' ')
 check "exhaustive line count >= 550" 550 "$LINES_EXH" "gt"
@@ -165,7 +165,7 @@ echo ""
 
 # --- Restore ---
 echo -e "${YELLOW}Restoring standard/standard${NC}"
-STRICT_MODE=standard COGNITIVE_LEVEL=standard brain compile >/dev/null 2>&1
+STRICT_MODE=standard COGNITIVE_LEVEL=standard brain compile --no-interaction >/dev/null 2>&1
 
 # --- Mandatory anchors across all surfaces ---
 echo -e "${YELLOW}Phase 3: Mandatory anchors (all surfaces)${NC}"
@@ -209,7 +209,7 @@ OPENCODE_AGENT="$PROJECT_ROOT/.opencode/agents/web-research-master.md"
 TEST_MODEL="zai-coding-plan/test-model-override"
 
 # Compile with injected env override
-WEB_RESEARCH_MASTER_MODEL="$TEST_MODEL" brain compile opencode >/dev/null 2>&1
+WEB_RESEARCH_MASTER_MODEL="$TEST_MODEL" brain compile --no-interaction opencode >/dev/null 2>&1
 
 if [ -f "$OPENCODE_AGENT" ]; then
     COMPILED_MODEL=$(grep -E '^model:' "$OPENCODE_AGENT" | head -1 | sed 's/model: *//' | sed 's/\\//g' | tr -d '"' | tr -d "'" || true)
@@ -224,7 +224,7 @@ else
 fi
 
 # Restore standard compile
-STRICT_MODE=standard COGNITIVE_LEVEL=standard brain compile >/dev/null 2>&1
+STRICT_MODE=standard COGNITIVE_LEVEL=standard brain compile --no-interaction >/dev/null 2>&1
 
 echo ""
 echo "=========================================="

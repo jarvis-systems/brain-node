@@ -5,23 +5,25 @@ type: "tool"
 date: "2026-02-23"
 ---
 
-# Brain Docs CLI
+# Brain Docs & Search
 
-Primary tool for `.docs/` project documentation discovery and search. Self-documenting: `brain docs --help` for usage, `-v` for examples, `-vv` for best practices and use cases, `-vvv` for internal detection algorithms.
+PRIMARY: `brain mcp:docs-search` — Project documentation discovery and search. 
+FALLBACK: `brain docs` — Direct CLI tool for validation, gap analysis, and emergency search.
 
 ## Core Principle
 
-**Always use brain docs BEFORE any project-related reasoning.** One check, zero overhead, prevents costly rework. If the answer exists in `.docs/`, reading it is cheaper than guessing.
+**Always use brain mcp:docs-search BEFORE any project-related reasoning.** One check, zero overhead, prevents costly rework. If the answer exists in `.docs/`, reading it is cheaper than guessing.
+- Fallback: IF brain mcp:docs-search unavailable OR BRAIN_DISABLE_MCP=true → use brain docs "query".
 
 ## Search
 
-### Keyword Search (default)
+### Keyword Search (mcp:docs-search)
 
-OR logic, case-insensitive. Score: name match = +10, description = +5, content = +1 per occurrence. Results ranked by score DESC, then by path.
+OR logic, case-insensitive. Results ranked by score DESC, then by path.
 
-    brain docs api                       # search for "api" (limit 5)
-    brain docs api auth --limit=10       # "api" OR "auth", max 10 results
-    brain docs api --limit=0             # unlimited results
+    brain mcp:docs-search --query="api"                       # search for "api" (limit 5)
+    brain mcp:docs-search --query="api auth" --limit=10       # "api" OR "auth", max 10 results
+    brain mcp:docs-search --query="api" --limit=0             # unlimited results
 
 ### JSON Output (v2 schema)
 
@@ -170,12 +172,9 @@ Example downloaded doc result:
 
 ### Common Patterns
 
-    brain docs query --limit=3                                   # quick search
-    brain docs query --headers=2 --stats --code --keywords       # deep analysis
-    brain docs query --matches --limit=1                         # find exact location
-    brain docs --headers=2 --limit=0                             # full index with structure
-    brain docs api --freshness=7                                 # fresh docs about "api"
-    brain docs --trust=high --global                             # high-trust docs across project
+    brain mcp:docs-search --query="query" --limit=3                                   # quick search
+    brain mcp:docs-search --query="query" --headers=2                                # deep analysis
+    brain mcp:docs-search --query="api"                                              # fresh docs about "api" (auto-sorted)
 
 ## Download and Update
 
@@ -273,11 +272,11 @@ Filters 100+ English stop words, minimum 3-character length. Returns top 10 by f
 
 | Situation | Action |
 |-----------|--------|
-| Before writing code | `brain docs <topic>` — read first if found |
+| Before writing code | `brain mcp:docs-search --query="<topic>"` — read first if found |
 | After code changes | Document what changed; create doc if none exists |
 | During research | Download interesting docs, index, store insights to memory |
 | Found interesting URL | `brain docs --download=<url>` |
-| Task mentions feature | `brain docs feature --headers=2 --code` |
+| Task mentions feature | `brain mcp:docs-search --query="feature" --headers=2` |
 | Before commit | `brain docs --validate` — fix critical errors |
 | No search results | Split CamelCase, strip suffixes (Test, Controller), try parent context |
 | Task completion | `brain docs --undocumented` — log gaps in task comment |

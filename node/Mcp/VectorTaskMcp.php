@@ -28,7 +28,7 @@ class VectorTaskMcp extends StdioMcp
         return [
             'vector-task-mcp',
             '--working-dir',
-            getcwd() ?: '.',
+            '.',
             '--timezone',
             'Europe/Kyiv',
         ];

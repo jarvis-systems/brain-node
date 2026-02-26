@@ -2,14 +2,29 @@
 name: "MCP Tool Policy"
 description: "Canonical allowlist contract for Brain MCP toolset - defines which CLI commands can be exposed via MCP"
 type: architecture
-date: 2026-02-24
-version: "1.0.2"
+date: 2026-02-25
+version: "1.1.0"
 status: active
 ---
 
 # MCP Tool Policy
 
 This document defines the canonical policy for Brain MCP tool exposure.
+
+## Agent Workflow (Gated Discovery)
+
+For safe and token-efficient tool use, agents MUST follow this discovery-first workflow:
+
+1. **Guardrails Check**: `brain mcp:guardrails`
+   - Verify MCP is enabled and check remaining call budget.
+2. **Server Discovery**: `brain mcp:list`
+   - Identify available servers and their allowed tool names.
+3. **Tool Inspection**: `brain mcp:describe --server=<id>`
+   - Retrieve the specific input schema for tools on a chosen server.
+4. **Gated Call**: `brain mcp:call --server=<id> --tool=<name> --input='<json>'`
+   - Execute the tool with validated input. Use `--trace` for debugging.
+
+**Governance Rule**: Never guess tool schemas. Always describe before calling to ensure contract compatibility and budget efficiency.
 
 ## Status
 
@@ -116,7 +131,36 @@ This is also integrated into `audit-enterprise.sh` as Check 21.
 
 MCP v1 defines a stable programmatic interface for policy discovery.
 
-### Registry: `mcp:list`
+### Budget Governance
+
+MCP v1 implements a persistent call budget to prevent unbounded resource consumption and "denial of wallet" scenarios.
+
+### Budget Strategy
+
+- **Type:** `logical` (One logical intent = one budget unit).
+- **Retry behavior:** Retries for transport failures do NOT further decrement the budget.
+- **Scope:** Global per workspace (persisted).
+
+### Persistence
+
+Budget state is stored in the canonical runtime directory:
+- **Location:** `memory/mcp-budget.json` (relative to project root).
+- **Git Status:** Ignored (runtime state).
+- **Format:** `{"used": N}`
+
+### Reset Rules
+
+1. **Manual Reset:** Deleting the budget file is a permitted manual reset.
+2. **Programmatic Reset:** `brain mcp:budget-reset` safely resets the counter to 0.
+3. **CI / Test Mode:** When `BRAIN_TEST_MODE=true` is active, the budget is isolated to `dist/tmp/mcp-budget.json` to prevent cross-run pollution.
+
+### Kill-Switch Behavior
+
+When `BRAIN_DISABLE_MCP=true` is set:
+- MCP calls are blocked (existing behavior).
+- Budget I/O is disabled (no writes to the budget file occur).
+
+## Registry: `mcp:list`
 
 Returns available MCP servers from the canonical registry.
 
@@ -142,7 +186,7 @@ Returns the full resolved policy as a deterministic JSON object.
 
 **Command:**
 ```bash
-brain mcp:allowlist --json
+brain mcp:allowlist
 ```
 
 **Stable Output Keys:**
@@ -179,6 +223,18 @@ These require explicit GO and compile changes before activation.
 **Not emitted into compiled outputs.** Policy stays in source files for runtime resolution.
 
 **Future use:** MCP server + optional CLI safety checks.
+
+## No Tool-Name Leakage Policy
+
+To prevent information disclosure and maintain strict security boundaries, MCP error responses must adhere to the following **strict leakage prevention rules**:
+
+1. **Message Content**: Error messages (`error.message`) and hints (`error.hint`) MUST NOT mention any tool name OR server name (even the requested ones).
+2. **Generic Hints**: Hints MUST be generic. 
+   - **Required Format**: `Run: brain mcp:list ; brain mcp:describe --server=<server>`
+3. **Payload Fields**: The top-level `server` and `tool` fields in the root JSON payload are permitted as they echo user-supplied input for client-side correlation.
+4. **Policy Privacy**: No portions of the allowlist or denylist (internal policy state) should be printed in error outputs.
+
+This ensures that unauthorized agents cannot "probe" the system to discover available tools or internal server configurations through error responses.
 
 ## Related
 

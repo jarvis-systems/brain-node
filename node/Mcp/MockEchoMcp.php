@@ -14,11 +14,10 @@ class MockEchoMcp extends StdioMcp
     {
         return 'php';
     }
-
     public static function defaultArgs(): array
     {
         return [
-            __DIR__ . '/../../scripts/mock-mcp-server.php',
+            'scripts/mock-mcp-server.php',
         ];
     }
 }
