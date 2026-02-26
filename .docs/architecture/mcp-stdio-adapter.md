@@ -9,7 +9,18 @@ status: active
 
 # MCP Stdio Adapter Contract
 
-The Brain MCP v1 implementation treats external MCP servers strictly as CLI `stdio` tools. This document defines the canonical boundaries for how Brain orchestrates, spawns, and parses responses from external tools like `laravel-boost`.
+The Brain MCP v1 implementation treats external MCP servers strictly as CLI `stdio` tools. This document defines the canonical boundaries for how Brain orchestrates, spawns, and parses responses from external tools.
+
+## Language-Agnostic Model
+
+MCP v1 is a **schemas-as-tools** architecture. The term "server" refers exclusively to a
+**logical schema adapter** — a static descriptor of available tools, their input schemas,
+and validation rules. It is NOT a running process, daemon, or network listener.
+
+- **Transport**: `stdio` only. Every invocation is a single ephemeral CLI execution.
+- **No lifecycle**: There is no `start`, `stop`, `status`, or supervisor concept.
+- **Schema-first**: Each adapter declares tools via a deterministic schema class.
+  The schema is the source of truth for tool discovery and input validation.
 
 ## The `stdio` Adapter
 

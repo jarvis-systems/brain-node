@@ -75,6 +75,8 @@ The Brain MCP implementation explicitly and intentionally DOES NOT implement or 
 - `start`, `stop`, `status` lifecycle commands
 - Process supervisors or service managers
 
+**Terminology note**: In MCP v1, "server" means a **logical schema adapter** — a class that declares tool names, input schemas, and validation rules. It is never a running process or network endpoint.
+
 ### Allowed Commands
 
 | Command | Notes |

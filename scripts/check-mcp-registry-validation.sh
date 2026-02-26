@@ -41,6 +41,7 @@ cat > ".brain-config/mcp-registry.json" <<'EOF'
     {
       "id": "invalid-server",
       "class": "BrainNode\\Mcp\\NonExistentServer",
+      "transport": "stdio",
       "enabled": true
     }
   ]

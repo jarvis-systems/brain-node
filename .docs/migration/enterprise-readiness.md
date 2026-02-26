@@ -152,7 +152,7 @@ Both artifacts have ZERO `if strict/cognitive/mode` conditionals — the model s
 
 1. **Context7Mcp**: Intentionally schema-less (read-only API, no write mutations; JSON validity and legacy syntax rejection still enforced)
 2. **SequentialThinkingMcp**: No schema validation (single-method API)
-3. **GithubMcp / LaravelBoostMcp**: No schema validation (external tools)
+3. **GithubMcp**: No schema validation (external tool)
 4. **`call()` path**: Non-deterministic key order (used only for Store::get() runtime vars)
 5. **No CI compilation**: `brain compile` runs locally only; CI verifies artifacts via diff-guard
 
@@ -175,8 +175,7 @@ Both artifacts have ZERO `if strict/cognitive/mode` conditionals — the model s
 | vector-memory | 153 | Yes | 100% |
 | vector-task | 185 | Yes | 100% |
 | sequential-thinking | 15 | No (single-method API) | N/A |
-| laravel-boost | 17 | No (external tool) | N/A |
-| **Schema-covered** | **338/372** | | **90.9%** |
+| **Schema-covered** | **338/355** | | **95.2%** |
 
 Legacy pseudo-JSON calls: **0** (was 209+ pre-C2).
 

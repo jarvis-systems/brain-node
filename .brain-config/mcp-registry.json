@@ -4,31 +4,31 @@
     {
       "id": "context7",
       "class": "BrainNode\\Mcp\\Context7Mcp",
+      "transport": "stdio",
       "enabled": true
-    },
-    {
-      "id": "laravel-boost",
-      "class": "BrainNode\\Mcp\\LaravelBoostMcp",
-      "enabled": false
     },
     {
       "id": "mock-echo",
       "class": "BrainNode\\Mcp\\MockEchoMcp",
+      "transport": "stdio",
       "enabled": true
     },
     {
       "id": "sequential-thinking",
       "class": "BrainNode\\Mcp\\SequentialThinkingMcp",
+      "transport": "stdio",
       "enabled": true
     },
     {
       "id": "vector-memory",
       "class": "BrainNode\\Mcp\\VectorMemoryMcp",
+      "transport": "stdio",
       "enabled": true
     },
     {
       "id": "vector-task",
       "class": "BrainNode\\Mcp\\VectorTaskMcp",
+      "transport": "stdio",
       "enabled": true
     }
   ]
