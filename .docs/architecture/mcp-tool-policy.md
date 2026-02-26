@@ -66,7 +66,14 @@ $policy = $resolver->resolve(); // ResolvedPolicy DTO
 
 ## Policy v1 Summary
 
-**READ-ONLY ONLY** — MCP v1 exposes only commands with no side effects.
+**STDIO-ONLY CLI EXECUTION** — MCP v1 is designed exclusively as purely functional CLI stdio wrappers. It exposes only read-only commands with no side effects.
+
+### Explicit Non-goals
+The Brain MCP implementation explicitly and intentionally DOES NOT implement or support:
+- Background MCP servers
+- Daemons or persistent processes
+- `start`, `stop`, `status` lifecycle commands
+- Process supervisors or service managers
 
 ### Allowed Commands
 

@@ -19,7 +19,23 @@ status: "active"
 | Secret leakage | API keys in `.mcp.json` or `.env` | `.gitignore` exclusions, no secrets in PHP source | API keys referenced in MCP PHP classes (future: vault) |
 | Mode bypass | Agent changes strict/cognitive mode at runtime | `no-mode-self-switch` iron rule, ADV-003 benchmark | LLM non-compliance |
 | Memory pollution | Duplicate or incorrect vector memory entries | `search-before-store` iron rule, memory dedup | Semantic similarity thresholds |
-| Delegation abuse | Recursive or unauthorized delegation chains | `non-recursive` iron rule, delegation depth limit (2) | Complex multi-agent scenarios |
+| Command execution | Executing write/scaffold commands via MCP | Policy strictly allows read-only operations only | LLM hallucinations bypassing standard schema |
+| Persistent servers | Attacks on long-running daemon memory/sockets | Stdio-only execution model (no daemons) | OS-level isolation limits |
+
+## Architectural Boundaries: MCP Stdio-Only
+
+The Brain MCP implementation strictly adheres to a **CLI stdio-only** execution model.
+- **No background servers**: There are no daemons, supervisors, or background processes.
+- **Stateless execution**: Every MCP tool call is a discrete `brain mcp:call` CLI invocation that returns JSON and exits.
+- **Attack surface reduction**: By eliminating long-running servers, we eliminate persistent memory corruption risks, connection hijacking, and daemon privilege escalation vectors.
+
+### Test Fixtures (mock-echo)
+The `mock-echo` MCP server is a **test fixture strictly for audit/tests**.
+- It is hidden from standard `mcp:list` outputs.
+- It is blocked in normal `mcp:call` execution with `reason=test_server_not_available`.
+- It executes strictly only when `BRAIN_TEST_MODE=1` is provided.
+
+
 
 ## Enforcement Layers
 
