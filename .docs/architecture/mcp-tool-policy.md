@@ -77,6 +77,17 @@ The Brain MCP implementation explicitly and intentionally DOES NOT implement or 
 
 **Terminology note**: In MCP v1, "server" means a **logical schema adapter** — a class that declares tool names, input schemas, and validation rules. It is never a running process or network endpoint.
 
+### Schemas-as-Tools = Metadata Only
+
+MCP schema definitions provide **descriptive metadata** for tools, NOT product integrations:
+
+- **Purpose**: Describe tool inputs/outputs for agent discovery and validation
+- **NOT**: API clients, SDK wrappers, or integration adapters
+- **Contract**: Schema validates input structure before stdio call to external MCP server
+- **External execution**: Actual tool logic runs in external MCP servers (via `uvx`, `npx`, etc.)
+
+**Example**: `VectorMemorySchema` describes `search_memories` input parameters. The actual vector search is performed by the external `vector-memory-mcp` Python server, not by the Brain codebase.
+
 ### Allowed Commands
 
 | Command | Notes |
