@@ -88,6 +88,18 @@ MCP schema definitions provide **descriptive metadata** for tools, NOT product i
 
 **Example**: `VectorMemorySchema` describes `search_memories` input parameters. The actual vector search is performed by the external `vector-memory-mcp` Python server, not by the Brain codebase.
 
+### Vector-Task Schema Interpretation
+
+The `vector-task` server exposes 3 tools for task management:
+
+| Tool | Required | Purpose |
+|------|----------|---------|
+| `task_create` | `content`, `title` | Create new task with metadata |
+| `task_get` | `task_id` | Retrieve single task by ID |
+| `task_list` | none | Query tasks with filters/pagination |
+
+**Agent usage**: Call `mcp:describe --server=vector-task` to get current input_schema. Schema fields are metadata only — actual task storage is handled by external `vector-task-mcp` Python server.
+
 ### Allowed Commands
 
 | Command | Notes |
