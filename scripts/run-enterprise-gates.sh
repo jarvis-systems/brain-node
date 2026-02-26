@@ -108,7 +108,7 @@ fi
 
 # ── Gate 5: Docs Validation ──────────────────────────────────────────────
 echo -e "${YELLOW}[5/7] Docs Validation${NC}"
-DOCS_OUTPUT=$(brain docs --validate --no-interaction 2>&1) || true
+DOCS_OUTPUT=$(php cli/bin/brain docs --validate --no-interaction 2>&1) || true
 
 VALID_COUNT=$(echo "$DOCS_OUTPUT" | grep -oE '"valid":[0-9]+' | grep -oE '[0-9]+' || echo "0")
 INVALID_COUNT=$(echo "$DOCS_OUTPUT" | grep -oE '"invalid":[0-9]+' | grep -oE '[0-9]+' || echo "0")

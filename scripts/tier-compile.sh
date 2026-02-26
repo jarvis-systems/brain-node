@@ -37,4 +37,5 @@ case "$MODEL_TIER" in
 esac
 
 echo "Compiling: MODEL_TIER=$MODEL_TIER → STRICT_MODE=$STRICT_MODE, COGNITIVE_LEVEL=$COGNITIVE_LEVEL"
-brain compile "$@"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+php "$SCRIPT_DIR/../cli/bin/brain" compile "$@"

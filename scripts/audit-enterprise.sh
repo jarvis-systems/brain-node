@@ -884,7 +884,7 @@ if command -v brain &>/dev/null; then
     BEFORE_COMPILE=$(cd "$PROJECT_ROOT" && git status --porcelain 2>/dev/null || true)
 
     # Run compile from isolated directory
-    if (cd "$ISOLATED_DIR" && BRAIN_TEST_MODE=1 BRAIN_TEST_MODE_SOURCE=ci BRAIN_ALLOW_NO_LOCK=1 brain compile --no-lock --no-interaction >/dev/null 2>&1); then
+    if (cd "$ISOLATED_DIR" && BRAIN_TEST_MODE=1 BRAIN_TEST_MODE_SOURCE=ci BRAIN_ALLOW_NO_LOCK=1 php "$PROJECT_ROOT/cli/bin/brain" compile --no-lock --no-interaction >/dev/null 2>&1); then
         # Snapshot worktree AFTER compile — diff to find NEW changes only
         AFTER_COMPILE=$(cd "$PROJECT_ROOT" && git status --porcelain 2>/dev/null || true)
         NEW_COMPILE_CHANGES=$(diff <(echo "$BEFORE_COMPILE") <(echo "$AFTER_COMPILE") | grep '^>' | sed 's/^> //' || true)
@@ -1094,7 +1094,7 @@ MCPPOLICYINSPECTOR_FINDINGS="[]"
 MCPPOLICYINSPECTOR_COUNT=0
 
 # Run brain mcp:policy and validate output
-POLICY_OUTPUT=$(brain mcp:policy --no-interaction 2>&1) || true
+POLICY_OUTPUT=$(php "$PROJECT_ROOT/cli/bin/brain" mcp:policy --no-interaction 2>&1) || true
 
 # Check 1: Valid JSON
 if ! echo "$POLICY_OUTPUT" | jq empty 2>/dev/null; then
@@ -1150,7 +1150,7 @@ MCPALLOWLIST_FINDINGS="[]"
 MCPALLOWLIST_COUNT=0
 
 # Run brain mcp:allowlist and validate output
-ALLOWLIST_OUTPUT=$(brain mcp:allowlist --no-interaction 2>&1) || true
+ALLOWLIST_OUTPUT=$(php "$PROJECT_ROOT/cli/bin/brain" mcp:allowlist --no-interaction 2>&1) || true
 
 # Check 1: Valid JSON
 if ! echo "$ALLOWLIST_OUTPUT" | jq empty 2>/dev/null; then
@@ -1195,7 +1195,7 @@ fi
 
 # Check 4: Respects kill switch
 if [[ $MCPALLOWLIST_COUNT -eq 0 ]]; then
-    KILL_OUTPUT=$(BRAIN_DISABLE_MCP=true brain mcp:allowlist --no-interaction 2>&1) || true
+    KILL_OUTPUT=$(BRAIN_DISABLE_MCP=true php "$PROJECT_ROOT/cli/bin/brain" mcp:allowlist --no-interaction 2>&1) || true
     if [[ "$(echo "$KILL_OUTPUT" | jq -r '.enabled')" != "false" ]]; then
         MCPALLOWLIST_COUNT=$((MCPALLOWLIST_COUNT + 1))
         MCPALLOWLIST_FINDINGS=$(echo "$MCPALLOWLIST_FINDINGS" | jq '. + [{"message": "Kill switch ignored"}]')
@@ -1216,7 +1216,7 @@ MCPDOCSSEARCH_FINDINGS="[]"
 MCPDOCSSEARCH_COUNT=0
 
 # Run brain mcp:docs-search and validate output
-DOCS_SEARCH_OUTPUT=$(brain mcp:docs-search --query="mcp" --no-interaction 2>&1) || true
+DOCS_SEARCH_OUTPUT=$(php "$PROJECT_ROOT/cli/bin/brain" mcp:docs-search --query="mcp" --no-interaction 2>&1) || true
 
 # Check 1: Valid JSON
 if ! echo "$DOCS_SEARCH_OUTPUT" | jq empty 2>/dev/null; then
@@ -1268,7 +1268,7 @@ MCPDIAGNOSE_FINDINGS="[]"
 MCPDIAGNOSE_COUNT=0
 
 # Run brain mcp:diagnose and validate output
-DIAGNOSE_OUTPUT=$(brain mcp:diagnose --no-interaction 2>&1) || true
+DIAGNOSE_OUTPUT=$(php "$PROJECT_ROOT/cli/bin/brain" mcp:diagnose --no-interaction 2>&1) || true
 
 # Check 1: Valid JSON
 if ! echo "$DIAGNOSE_OUTPUT" | jq empty 2>/dev/null; then

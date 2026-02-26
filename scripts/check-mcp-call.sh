@@ -15,7 +15,8 @@ function log_check() {
 }
 
 # Reset budget to avoid exhaustion when running repeatedly via audit
-php cli/bin/brain mcp:budget-reset >/dev/null 2>&1 || true
+# Use BRAIN_TEST_MODE=1 to reset the same path that test calls use
+BRAIN_TEST_MODE=1 php cli/bin/brain mcp:budget-reset >/dev/null 2>&1 || true
 
 # 1. Test kill-switch
 log_check "Testing kill-switch"
