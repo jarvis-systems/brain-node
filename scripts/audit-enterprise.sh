@@ -41,6 +41,8 @@ PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 DIST_DIR="$PROJECT_ROOT/dist"
 REPORT_FILE="$DIST_DIR/audit-report.json"
 
+source "$SCRIPT_DIR/lib/brain-cli.sh"
+
 JSON_ONLY=false
 if [[ "${1:-}" == "--json-only" ]]; then
     JSON_ONLY=true
@@ -99,7 +101,7 @@ add_category() {
 
 # ── Check 1: PHP syntax ──────────────────────────────────────────────────
 
-log "${BOLD}[1/42] PHP syntax check${NC}"
+log "${BOLD}[1/60] PHP syntax check${NC}"
 
 PHP_ERRORS=0
 PHP_FINDINGS="[]"
@@ -136,7 +138,7 @@ add_category "php-syntax" "$([ $PHP_ERRORS -eq 0 ] && echo pass || echo fail)" "
 
 # ── Check 2: PHPUnit (if available) ─────────────────────────────────────
 
-log "${BOLD}[2/42] PHPUnit tests${NC}"
+log "${BOLD}[2/60] PHPUnit tests${NC}"
 
 TEST_FINDINGS="[]"
 TEST_COUNT=0
@@ -193,7 +195,7 @@ add_category "phpunit" "$([ $TEST_COUNT -eq 0 ] && echo pass || echo fail)" "$TE
 
 # ── Check 3: Silent catch blocks ────────────────────────────────────────
 
-log "${BOLD}[3/42] Silent catch blocks${NC}"
+log "${BOLD}[3/60] Silent catch blocks${NC}"
 
 CATCH_FINDINGS="[]"
 CATCH_COUNT=0
@@ -253,7 +255,7 @@ add_category "silent-catches" "$([ $CATCH_COUNT -eq 0 ] && echo pass || echo war
 
 # ── Check 4: Debug artifacts ────────────────────────────────────────────
 
-log "${BOLD}[4/42] Debug artifacts${NC}"
+log "${BOLD}[4/60] Debug artifacts${NC}"
 
 DEBUG_FINDINGS="[]"
 DEBUG_COUNT=0
@@ -298,7 +300,7 @@ add_category "debug-artifacts" "$([ $DEBUG_COUNT -eq 0 ] && echo pass || echo wa
 
 # ── Check 5: TODO/FIXME markers ────────────────────────────────────────
 
-log "${BOLD}[5/42] TODO/FIXME markers${NC}"
+log "${BOLD}[5/60] TODO/FIXME markers${NC}"
 
 TODO_FINDINGS="[]"
 TODO_COUNT=0
@@ -335,7 +337,7 @@ add_category "todo-fixme" "$([ $TODO_COUNT -eq 0 ] && echo pass || echo info)" "
 
 # ── Check 6: Unsafe patterns ───────────────────────────────────────────
 
-log "${BOLD}[6/42] Unsafe patterns (eval/shell_exec/die/exit)${NC}"
+log "${BOLD}[6/60] Unsafe patterns (eval/shell_exec/die/exit)${NC}"
 
 UNSAFE_FINDINGS="[]"
 UNSAFE_COUNT=0
@@ -382,7 +384,7 @@ add_category "unsafe-patterns" "$([ $UNSAFE_COUNT -eq 0 ] && echo pass || echo w
 
 # ── Check 7: Shell script safety ────────────────────────────────────────
 
-log "${BOLD}[7/42] Shell script safety headers${NC}"
+log "${BOLD}[7/60] Shell script safety headers${NC}"
 
 SHELL_FINDINGS="[]"
 SHELL_COUNT=0
@@ -410,7 +412,7 @@ add_category "shell-safety" "$([ $SHELL_COUNT -eq 0 ] && echo pass || echo warn)
 
 # ── Check 8: No-op escape methods ───────────────────────────────────────
 
-log "${BOLD}[8/42] No-op escape method detection${NC}"
+log "${BOLD}[8/60] No-op escape method detection${NC}"
 
 NOOP_FINDINGS="[]"
 NOOP_COUNT=0
@@ -448,7 +450,7 @@ add_category "noop-escape" "$([ $NOOP_COUNT -eq 0 ] && echo pass || echo warn)" 
 
 # ── Check 9: self:: in trait files ─────────────────────────────────────
 
-log "${BOLD}[9/42] Late static binding in traits${NC}"
+log "${BOLD}[9/60] Late static binding in traits${NC}"
 
 LSB_FINDINGS="[]"
 LSB_COUNT=0
@@ -480,7 +482,7 @@ add_category "trait-lsb" "$([ $LSB_COUNT -eq 0 ] && echo pass || echo warn)" "$L
 
 # ── Check 10: Known typos ──────────────────────────────────────────────
 
-log "${BOLD}[10/42] Known typos in codebase${NC}"
+log "${BOLD}[10/60] Known typos in codebase${NC}"
 
 TYPO_FINDINGS="[]"
 TYPO_COUNT=0
@@ -510,7 +512,7 @@ add_category "known-typos" "$([ $TYPO_COUNT -eq 0 ] && echo pass || echo fail)" 
 
 # ── Check 11: Dev deps in production require ───────────────────────────
 
-log "${BOLD}[11/42] Dev dependencies in production require${NC}"
+log "${BOLD}[11/60] Dev dependencies in production require${NC}"
 
 DEVDEP_FINDINGS="[]"
 DEVDEP_COUNT=0
@@ -541,7 +543,7 @@ add_category "dev-deps-prod" "$([ $DEVDEP_COUNT -eq 0 ] && echo pass || echo fai
 
 # ── Check 12: PHPStan (static analysis) ───────────────────────────────
 
-log "${BOLD}[12/42] PHPStan static analysis${NC}"
+log "${BOLD}[12/60] PHPStan static analysis${NC}"
 
 PHPSTAN_FINDINGS="[]"
 PHPSTAN_COUNT=0
@@ -577,7 +579,7 @@ add_category "phpstan" "$([ $PHPSTAN_COUNT -eq 0 ] && echo pass || echo fail)" "
 
 # ── Check 13: strict_types declaration ─────────────────────────────────
 
-log "${BOLD}[13/42] Missing declare(strict_types=1)${NC}"
+log "${BOLD}[13/60] Missing declare(strict_types=1)${NC}"
 
 STRICT_FINDINGS="[]"
 STRICT_COUNT=0
@@ -616,7 +618,7 @@ add_category "strict-types" "$([ $STRICT_COUNT -eq 0 ] && echo pass || echo fail
 
 # ── Check 14: Secret patterns in tracked files ─────────────────────────
 
-log "${BOLD}[14/42] Secret patterns in tracked files${NC}"
+log "${BOLD}[14/60] Secret patterns in tracked files${NC}"
 
 SECRET_FINDINGS="[]"
 SECRET_COUNT=0
@@ -656,7 +658,7 @@ add_category "secrets" "$([ $SECRET_COUNT -eq 0 ] && echo pass || echo fail)" "$
 
 # ── Check 15: Hardcoded user paths ────────────────────────────────────
 
-log "${BOLD}[15/42] Hardcoded user paths in tracked source files${NC}"
+log "${BOLD}[15/60] Hardcoded user paths in tracked source files${NC}"
 
 HPATH_FINDINGS="[]"
 HPATH_COUNT=0
@@ -697,7 +699,7 @@ add_category "hardcoded-paths" "$([ $HPATH_COUNT -eq 0 ] && echo pass || echo wa
 
 # ── Check 16: Degradation observability ────────────────────────────────
 
-log "${BOLD}[16/42] Degradation observability in catch blocks${NC}"
+log "${BOLD}[16/60] Degradation observability in catch blocks${NC}"
 
 DEGRAD_COUNT=0
 DEGRAD_FINDINGS="[]"
@@ -739,7 +741,7 @@ add_category "degradation-observability" "$([ $DEGRAD_COUNT -eq 0 ] && echo pass
 
 # ── Check 17: Version consistency ─────────────────────────────────────
 
-log "${BOLD}[17/42] Version consistency${NC}"
+log "${BOLD}[17/60] Version consistency${NC}"
 
 VER_FINDINGS="[]"
 VER_COUNT=0
@@ -816,7 +818,7 @@ fi
 
 # ── Check 18: MCP schema bypass enforcement ─────────────────────────────
 
-log "${BOLD}[18/42] MCP schema bypass enforcement${NC}"
+log "${BOLD}[18/60] MCP schema bypass enforcement${NC}"
 
 MCPBYPASS_FINDINGS="[]"
 MCPBYPASS_COUNT=0
@@ -869,7 +871,7 @@ add_category "mcp-schema-bypass" "$([ $MCPBYPASS_COUNT -eq 0 ] && echo pass || e
 
 # ── Check 19: Compile clean-worktree gate ────────────────────────────────
 
-log "${BOLD}[19/42] Compile clean-worktree gate${NC}"
+log "${BOLD}[19/60] Compile clean-worktree gate${NC}"
 
 COMPILECLEAN_FINDINGS="[]"
 COMPILECLEAN_COUNT=0
@@ -884,7 +886,7 @@ if command -v brain &>/dev/null; then
     BEFORE_COMPILE=$(cd "$PROJECT_ROOT" && git status --porcelain 2>/dev/null || true)
 
     # Run compile from isolated directory
-    if (cd "$ISOLATED_DIR" && BRAIN_TEST_MODE=1 BRAIN_TEST_MODE_SOURCE=ci BRAIN_ALLOW_NO_LOCK=1 php "$PROJECT_ROOT/cli/bin/brain" compile --no-lock --no-interaction >/dev/null 2>&1); then
+    if (cd "$ISOLATED_DIR" && BRAIN_TEST_MODE=1 BRAIN_TEST_MODE_SOURCE=ci BRAIN_ALLOW_NO_LOCK=1 brain_cli compile --no-lock --no-interaction >/dev/null 2>&1); then
         # Snapshot worktree AFTER compile — diff to find NEW changes only
         AFTER_COMPILE=$(cd "$PROJECT_ROOT" && git status --porcelain 2>/dev/null || true)
         NEW_COMPILE_CHANGES=$(diff <(echo "$BEFORE_COMPILE") <(echo "$AFTER_COMPILE") | grep '^>' | sed 's/^> //' || true)
@@ -909,7 +911,7 @@ add_category "compile-clean" "$([ $COMPILECLEAN_COUNT -eq 0 ] && echo pass || ec
 
 # ── Check 20: Agent schema enabled set consistency ───────────────────────────
 
-log "${BOLD}[20/42] Agent schema enabled set${NC}"
+log "${BOLD}[20/60] Agent schema enabled set${NC}"
 
 CANON_FILE="$PROJECT_ROOT/.brain-config/enabled-agents.json"
 AGENTSCHEMA_FINDINGS="[]"
@@ -924,7 +926,7 @@ else
 fi
 
 # Determine Observed list from deterministic filtered CLI source
-OBS_SORTED=$(brain list:masters --json | jq -r 'keys[]' | sort | tr '\n' ' ' | sed 's/ $//')
+OBS_SORTED=$(brain_cli list:masters --json | jq -r 'keys[]' | sort | tr '\n' ' ' | sed 's/ $//')
 
 if [[ "$OBS_SORTED" != "$CANON_SORTED" ]]; then
     AGENTSCHEMA_COUNT=1
@@ -942,7 +944,7 @@ add_category "agent-schema" "$([ $AGENTSCHEMA_COUNT -eq 0 ] && echo pass || echo
 
 # ── Check 21: MCP tool policy contract ───────────────────────────────────────
 
-log "${BOLD}[21/42] MCP tool policy contract${NC}"
+log "${BOLD}[21/60] MCP tool policy contract${NC}"
 
 MCPPOLICY_FINDINGS="[]"
 MCPPOLICY_COUNT=0
@@ -961,7 +963,7 @@ add_category "mcp-tool-policy" "$([ $MCPPOLICY_COUNT -eq 0 ] && echo pass || ech
 
 # ── Check 22: Self-hosting workspace hygiene ───────────────────────────────
 
-log "${BOLD}[22/42] Self-hosting workspace hygiene${NC}"
+log "${BOLD}[22/60] Self-hosting workspace hygiene${NC}"
 
 SELFSYMLINK_FINDINGS="[]"
 SELFSYMLINK_COUNT=0
@@ -1017,7 +1019,7 @@ fi
 
 # ── Check 23: Test Mode Contract enforcement ───────────────────────────────
 
-log "${BOLD}[23/42] Test Mode Contract enforcement${NC}"
+log "${BOLD}[23/60] Test Mode Contract enforcement${NC}"
 
 TESTMODE_FINDINGS="[]"
 TESTMODE_COUNT=0
@@ -1088,13 +1090,13 @@ add_category "test-mode-contract" "$([ $TESTMODE_COUNT -eq 0 ] && echo pass || e
 
 # ── Check 24: MCP policy inspector output contract ─────────────────────────
 
-log "${BOLD}[24/42] MCP policy inspector output contract${NC}"
+log "${BOLD}[24/60] MCP policy inspector output contract${NC}"
 
 MCPPOLICYINSPECTOR_FINDINGS="[]"
 MCPPOLICYINSPECTOR_COUNT=0
 
 # Run brain mcp:policy and validate output
-POLICY_OUTPUT=$(php "$PROJECT_ROOT/cli/bin/brain" mcp:policy --no-interaction 2>&1) || true
+POLICY_OUTPUT=$(brain_cli mcp:policy --no-interaction 2>&1) || true
 
 # Check 1: Valid JSON
 if ! echo "$POLICY_OUTPUT" | jq empty 2>/dev/null; then
@@ -1144,13 +1146,13 @@ add_category "mcp-policy-inspector" "$([ $MCPPOLICYINSPECTOR_COUNT -eq 0 ] && ec
 
 # ── Check 25: MCP allowlist contract ───────────────────────────────────────
 
-log "${BOLD}[25/42] MCP allowlist contract${NC}"
+log "${BOLD}[25/60] MCP allowlist contract${NC}"
 
 MCPALLOWLIST_FINDINGS="[]"
 MCPALLOWLIST_COUNT=0
 
 # Run brain mcp:allowlist and validate output
-ALLOWLIST_OUTPUT=$(php "$PROJECT_ROOT/cli/bin/brain" mcp:allowlist --no-interaction 2>&1) || true
+ALLOWLIST_OUTPUT=$(brain_cli mcp:allowlist --no-interaction 2>&1) || true
 
 # Check 1: Valid JSON
 if ! echo "$ALLOWLIST_OUTPUT" | jq empty 2>/dev/null; then
@@ -1195,7 +1197,7 @@ fi
 
 # Check 4: Respects kill switch
 if [[ $MCPALLOWLIST_COUNT -eq 0 ]]; then
-    KILL_OUTPUT=$(BRAIN_DISABLE_MCP=true php "$PROJECT_ROOT/cli/bin/brain" mcp:allowlist --no-interaction 2>&1) || true
+    KILL_OUTPUT=$(BRAIN_DISABLE_MCP=true brain_cli mcp:allowlist --no-interaction 2>&1) || true
     if [[ "$(echo "$KILL_OUTPUT" | jq -r '.enabled')" != "false" ]]; then
         MCPALLOWLIST_COUNT=$((MCPALLOWLIST_COUNT + 1))
         MCPALLOWLIST_FINDINGS=$(echo "$MCPALLOWLIST_FINDINGS" | jq '. + [{"message": "Kill switch ignored"}]')
@@ -1208,106 +1210,83 @@ if [[ $MCPALLOWLIST_COUNT -eq 0 ]]; then
 fi
 add_category "mcp-allowlist-contract" "$([ $MCPALLOWLIST_COUNT -eq 0 ] && echo pass || echo fail)" "$MCPALLOWLIST_COUNT" "$MCPALLOWLIST_FINDINGS"
 
-# ── Check 26: mcp:docs-search contract ─────────────────────────────────────
+# ── Check 26: brain-tools serve contract (docs.search) ─────────────────────
 
-log "${BOLD}[26/42] mcp:docs-search contract${NC}"
+log "${BOLD}[26/60] brain-tools serve contract (docs.search)${NC}"
 
-MCPDOCSSEARCH_FINDINGS="[]"
-MCPDOCSSEARCH_COUNT=0
+MCPSERVE_DOCS_FINDINGS="[]"
+MCPSERVE_DOCS_COUNT=0
 
-# Run brain mcp:docs-search and validate output
-DOCS_SEARCH_OUTPUT=$(php "$PROJECT_ROOT/cli/bin/brain" mcp:docs-search --query="mcp" --no-interaction 2>&1) || true
+# Test docs.search via mcp:serve JSON-RPC
+MCPSERVE_DOCS_OUT=$(echo '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"docs.search","arguments":{"query":"test","limit":1}}}' | BRAIN_AGENT_ID=claude brain_cli mcp:serve 2>/tmp/mcpserve_err_26.txt)
 
-# Check 1: Valid JSON
-if ! echo "$DOCS_SEARCH_OUTPUT" | jq empty 2>/dev/null; then
-    MCPDOCSSEARCH_COUNT=$((MCPDOCSSEARCH_COUNT + 1))
-    MCPDOCSSEARCH_FINDINGS=$(echo "$MCPDOCSSEARCH_FINDINGS" | jq '. + [{"message": "Invalid JSON output"}]')
-    log "  ${RED}FAIL${NC} Invalid JSON output"
+# Check stderr is empty
+if [[ -s /tmp/mcpserve_err_26.txt ]]; then
+    MCPSERVE_DOCS_COUNT=$((MCPSERVE_DOCS_COUNT + 1))
+    MCPSERVE_DOCS_FINDINGS=$(echo "$MCPSERVE_DOCS_FINDINGS" | jq '. + [{"message": "mcp:serve docs.search produced stderr output"}]')
+    log "  ${RED}FAIL${NC} stderr not empty"
 fi
 
-# Check 2: Required keys present
-if [[ $MCPDOCSSEARCH_COUNT -eq 0 ]]; then
-    REQUIRED_DOCS_KEYS="documents query limit headers summary"
-    for key in $REQUIRED_DOCS_KEYS; do
-        if ! echo "$DOCS_SEARCH_OUTPUT" | jq -e ".data | has(\"$key\")" >/dev/null 2>&1; then
-            MCPDOCSSEARCH_COUNT=$((MCPDOCSSEARCH_COUNT + 1))
-            MCPDOCSSEARCH_FINDINGS=$(echo "$MCPDOCSSEARCH_FINDINGS" | jq --arg key "$key" '. + [{"message": "Missing required docs-search key", "key": $key}]')
-            log "  ${RED}FAIL${NC} Missing docs-search key: $key"
-        fi
-    done
+# Check JSON-RPC response validity
+if ! echo "$MCPSERVE_DOCS_OUT" | jq -e '.result.content.type == "text"' >/dev/null 2>&1; then
+    MCPSERVE_DOCS_COUNT=$((MCPSERVE_DOCS_COUNT + 1))
+    MCPSERVE_DOCS_FINDINGS=$(echo "$MCPSERVE_DOCS_FINDINGS" | jq '. + [{"message": "mcp:serve docs.search invalid JSON-RPC response"}]')
+    log "  ${RED}FAIL${NC} invalid JSON-RPC response"
 fi
 
-# Check 3: Determinism (sorted arrays)
-if [[ $MCPDOCSSEARCH_COUNT -eq 0 ]]; then
-    # Check if paths are sorted (basic check)
-    PATHS=$(echo "$DOCS_SEARCH_OUTPUT" | jq -r '.data.documents[].path')
-    SORTED_PATHS=$(echo "$PATHS" | sort)
-    if [[ "$PATHS" != "$SORTED_PATHS" ]]; then
-        # Score DESC + Path ASC might not match plain sort, but if scores are same, path ASC is required.
-        # We check if score desc is maintained.
-        SCORES=$(echo "$DOCS_SEARCH_OUTPUT" | jq -r '.data.documents[].score')
-        SORTED_SCORES=$(echo "$SCORES" | sort -nr)
-        if [[ "$SCORES" != "$SORTED_SCORES" ]]; then
-            MCPDOCSSEARCH_COUNT=$((MCPDOCSSEARCH_COUNT + 1))
-            MCPDOCSSEARCH_FINDINGS=$(echo "$MCPDOCSSEARCH_FINDINGS" | jq '. + [{"message": "Output not sorted by score DESC"}]')
-            log "  ${RED}FAIL${NC} Output not sorted by score DESC"
-        fi
-    fi
+# Check response contains valid JSON in text field
+DOCS_TEXT=$(echo "$MCPSERVE_DOCS_OUT" | jq -r '.result.content.text' 2>/dev/null || echo "")
+if ! echo "$DOCS_TEXT" | jq -e '.total_matches' >/dev/null 2>&1; then
+    MCPSERVE_DOCS_COUNT=$((MCPSERVE_DOCS_COUNT + 1))
+    MCPSERVE_DOCS_FINDINGS=$(echo "$MCPSERVE_DOCS_FINDINGS" | jq '. + [{"message": "mcp:serve docs.search response missing total_matches"}]')
+    log "  ${RED}FAIL${NC} response missing total_matches"
 fi
 
-if [[ $MCPDOCSSEARCH_COUNT -eq 0 ]]; then
-    log "  ${GREEN}PASS${NC} mcp:docs-search output valid"
+if [[ $MCPSERVE_DOCS_COUNT -eq 0 ]]; then
+    log "  ${GREEN}PASS${NC} brain-tools docs.search contract valid"
 fi
-add_category "mcp-docs-search-contract" "$([ $MCPDOCSSEARCH_COUNT -eq 0 ] && echo pass || echo fail)" "$MCPDOCSSEARCH_COUNT" "$MCPDOCSSEARCH_FINDINGS"
+add_category "brain-tools-docs-search" "$([ $MCPSERVE_DOCS_COUNT -eq 0 ] && echo pass || echo fail)" "$MCPSERVE_DOCS_COUNT" "$MCPSERVE_DOCS_FINDINGS"
 
-# ── Check 27: mcp:diagnose contract ────────────────────────────────────────
+# ── Check 27: brain-tools serve contract (diagnose) ────────────────────────
 
-log "${BOLD}[27/42] mcp:diagnose contract${NC}"
+log "${BOLD}[27/60] brain-tools serve contract (diagnose)${NC}"
 
-MCPDIAGNOSE_FINDINGS="[]"
-MCPDIAGNOSE_COUNT=0
+MCPSERVE_DIAG_FINDINGS="[]"
+MCPSERVE_DIAG_COUNT=0
 
-# Run brain mcp:diagnose and validate output
-DIAGNOSE_OUTPUT=$(php "$PROJECT_ROOT/cli/bin/brain" mcp:diagnose --no-interaction 2>&1) || true
+# Test diagnose via mcp:serve JSON-RPC
+MCPSERVE_DIAG_OUT=$(echo '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"diagnose","arguments":{}}}' | BRAIN_AGENT_ID=claude brain_cli mcp:serve 2>/tmp/mcpserve_err_27.txt)
 
-# Check 1: Valid JSON
-if ! echo "$DIAGNOSE_OUTPUT" | jq empty 2>/dev/null; then
-    MCPDIAGNOSE_COUNT=$((MCPDIAGNOSE_COUNT + 1))
-    MCPDIAGNOSE_FINDINGS=$(echo "$MCPDIAGNOSE_FINDINGS" | jq '. + [{"message": "Invalid JSON output"}]')
-    log "  ${RED}FAIL${NC} Invalid JSON output"
-fi
-
-# Check 2: Required keys present
-if [[ $MCPDIAGNOSE_COUNT -eq 0 ]]; then
-    REQUIRED_DIAG_KEYS="env_checks modes self_dev_mode self_hosting test_mode_contract versions"
-    for key in $REQUIRED_DIAG_KEYS; do
-        if ! echo "$DIAGNOSE_OUTPUT" | jq -e ".data | has(\"$key\")" >/dev/null 2>&1; then
-            MCPDIAGNOSE_COUNT=$((MCPDIAGNOSE_COUNT + 1))
-            MCPDIAGNOSE_FINDINGS=$(echo "$MCPDIAGNOSE_FINDINGS" | jq --arg key "$key" '. + [{"message": "Missing required diagnose key", "key": $key}]')
-            log "  ${RED}FAIL${NC} Missing diagnose key: $key"
-        fi
-    done
+# Check stderr is empty
+if [[ -s /tmp/mcpserve_err_27.txt ]]; then
+    MCPSERVE_DIAG_COUNT=$((MCPSERVE_DIAG_COUNT + 1))
+    MCPSERVE_DIAG_FINDINGS=$(echo "$MCPSERVE_DIAG_FINDINGS" | jq '. + [{"message": "mcp:serve diagnose produced stderr output"}]')
+    log "  ${RED}FAIL${NC} stderr not empty"
 fi
 
-# Check 3: Redaction check
-if [[ $MCPDIAGNOSE_COUNT -eq 0 ]]; then
-    # Env checks should not contain actual values, only FOUND/NOT FOUND or [REDACTED]
-    SENSITIVE_REDACTED=$(echo "$DIAGNOSE_OUTPUT" | jq -r '.data.env_checks.ANTHROPIC_API_KEY')
-    if [[ "$SENSITIVE_REDACTED" != "[REDACTED]" ]]; then
-        MCPDIAGNOSE_COUNT=$((MCPDIAGNOSE_COUNT + 1))
-        MCPDIAGNOSE_FINDINGS=$(echo "$MCPDIAGNOSE_FINDINGS" | jq '. + [{"message": "Sensitive environment variable not redacted"}]')
-        log "  ${RED}FAIL${NC} Sensitive environment variable not redacted"
-    fi
+# Check JSON-RPC response validity
+if ! echo "$MCPSERVE_DIAG_OUT" | jq -e '.result.content.type == "text"' >/dev/null 2>&1; then
+    MCPSERVE_DIAG_COUNT=$((MCPSERVE_DIAG_COUNT + 1))
+    MCPSERVE_DIAG_FINDINGS=$(echo "$MCPSERVE_DIAG_FINDINGS" | jq '. + [{"message": "mcp:serve diagnose invalid JSON-RPC response"}]')
+    log "  ${RED}FAIL${NC} invalid JSON-RPC response"
 fi
 
-if [[ $MCPDIAGNOSE_COUNT -eq 0 ]]; then
-    log "  ${GREEN}PASS${NC} mcp:diagnose output valid"
+# Check response contains valid JSON with self_hosting field
+DIAG_TEXT=$(echo "$MCPSERVE_DIAG_OUT" | jq -r '.result.content.text' 2>/dev/null || echo "")
+if ! echo "$DIAG_TEXT" | jq -e '.self_hosting' >/dev/null 2>&1; then
+    MCPSERVE_DIAG_COUNT=$((MCPSERVE_DIAG_COUNT + 1))
+    MCPSERVE_DIAG_FINDINGS=$(echo "$MCPSERVE_DIAG_FINDINGS" | jq '. + [{"message": "mcp:serve diagnose response missing self_hosting"}]')
+    log "  ${RED}FAIL${NC} response missing self_hosting"
 fi
-add_category "mcp-diagnose-contract" "$([ $MCPDIAGNOSE_COUNT -eq 0 ] && echo pass || echo fail)" "$MCPDIAGNOSE_COUNT" "$MCPDIAGNOSE_FINDINGS"
+
+if [[ $MCPSERVE_DIAG_COUNT -eq 0 ]]; then
+    log "  ${GREEN}PASS${NC} brain-tools diagnose contract valid"
+fi
+add_category "brain-tools-diagnose" "$([ $MCPSERVE_DIAG_COUNT -eq 0 ] && echo pass || echo fail)" "$MCPSERVE_DIAG_COUNT" "$MCPSERVE_DIAG_FINDINGS"
 
 # ── Check 28: Secret reference hygiene ─────────────────────────────────────
 
-log "${BOLD}[28/42] Secret reference hygiene${NC}"
+log "${BOLD}[28/60] Secret reference hygiene${NC}"
 
 SECRETREF_FINDINGS="[]"
 SECRETREF_COUNT=0
@@ -1323,7 +1302,7 @@ add_category "secret-reference-hygiene" "$([ $SECRETREF_COUNT -eq 0 ] && echo pa
 
 # ── Check 29: MCP registry contract ─────────────────────────────────────────
 
-log "${BOLD}[29/42] MCP registry contract${NC}"
+log "${BOLD}[29/60] MCP registry contract${NC}"
 
 MCPREGISTRY_FINDINGS="[]"
 MCPREGISTRY_COUNT=0
@@ -1340,7 +1319,7 @@ add_category "mcp-registry" "$([ $MCPREGISTRY_COUNT -eq 0 ] && echo pass || echo
 
 # ── Check 30: MCP compile consistency ───────────────────────────────────────
 
-log "${BOLD}[30/42] MCP compile consistency${NC}"
+log "${BOLD}[30/60] MCP compile consistency${NC}"
 
 MCPCONSISTENCY_FINDINGS="[]"
 MCPCONSISTENCY_COUNT=0
@@ -1357,7 +1336,7 @@ add_category "mcp-compile-consistency" "$([ $MCPCONSISTENCY_COUNT -eq 0 ] && ech
 
 # ── Check 31: MCP registry validation ───────────────────────────────────────
 
-log "${BOLD}[31/42] MCP registry validation${NC}"
+log "${BOLD}[31/60] MCP registry validation${NC}"
 
 MCPVALIDATION_FINDINGS="[]"
 MCPVALIDATION_COUNT=0
@@ -1374,7 +1353,7 @@ add_category "mcp-registry-validation" "$([ $MCPVALIDATION_COUNT -eq 0 ] && echo
 
 # ── Check 32: MCP call bridge v1 ────────────────────────────────────────────
 
-log "${BOLD}[32/42] MCP call bridge v1${NC}"
+log "${BOLD}[32/60] MCP call bridge v1${NC}"
 
 MCPCALL_FINDINGS="[]"
 MCPCALL_COUNT=0
@@ -1391,7 +1370,7 @@ add_category "mcp-call-bridge" "$([ $MCPCALL_COUNT -eq 0 ] && echo pass || echo 
 
 # ── Check 33: MCP external tools policy ─────────────────────────────────────
 
-log "${BOLD}[33/42] MCP external tools policy${NC}"
+log "${BOLD}[33/60] MCP external tools policy${NC}"
 
 MCPEXTPOLICY_FINDINGS="[]"
 MCPEXTPOLICY_COUNT=0
@@ -1408,7 +1387,7 @@ add_category "mcp-external-tools-policy" "$([ $MCPEXTPOLICY_COUNT -eq 0 ] && ech
 
 # ── Check 34: MCP external tools call gating ───────────────────────────────
 
-log "${BOLD}[34/42] MCP external tools call gating${NC}"
+log "${BOLD}[34/60] MCP external tools call gating${NC}"
 
 MCPCALLGATE_FINDINGS="[]"
 MCPCALLGATE_COUNT=0
@@ -1425,12 +1404,12 @@ add_category "mcp-call-gating" "$([ $MCPCALLGATE_COUNT -eq 0 ] && echo pass || e
 
 # ── Check 35: MCP discovery list ───────────────────────────────────────────
 
-log "${BOLD}[35/42] MCP discovery list${NC}"
+log "${BOLD}[35/60] MCP discovery list${NC}"
 
 MCPLIST_FINDINGS="[]"
 MCPLIST_COUNT=0
 
-if php cli/bin/brain mcp:list >/dev/null 2>&1; then
+if brain_cli mcp:list >/dev/null 2>&1; then
     # Validate sorting and schema via discovery script
     if bash "$PROJECT_ROOT/scripts/check-mcp-discovery.sh" >/dev/null 2>&1; then
         log "  ${GREEN}PASS${NC} MCP discovery list valid and sorted"
@@ -1448,13 +1427,13 @@ add_category "mcp-discovery-list" "$([ $MCPLIST_COUNT -eq 0 ] && echo pass || ec
 
 # ── Check 36: MCP discovery describe ───────────────────────────────────────
 
-log "${BOLD}[36/42] MCP discovery describe${NC}"
+log "${BOLD}[36/60] MCP discovery describe${NC}"
 
 MCPDESC_FINDINGS="[]"
 MCPDESC_COUNT=0
 
 # Test with vector-task which has schema
-if php cli/bin/brain mcp:describe --server=vector-task >/dev/null 2>&1; then
+if brain_cli mcp:describe --server=vector-task >/dev/null 2>&1; then
     # Already verified by check-mcp-discovery.sh in Check 35, but we can do a quick extra check here
     log "  ${GREEN}PASS${NC} MCP discovery describe valid"
 else
@@ -1466,7 +1445,7 @@ add_category "mcp-discovery-describe" "$([ $MCPDESC_COUNT -eq 0 ] && echo pass |
 
 # ── Check 37: MCP call UX ───────────────────────────────────────────────────
 
-log "${BOLD}[37/42] MCP call UX (error hints)${NC}"
+log "${BOLD}[37/60] MCP call UX (error hints)${NC}"
 
 MCPUX_FINDINGS="[]"
 MCPUX_COUNT=0
@@ -1484,7 +1463,7 @@ add_category "mcp-call-ux" "$([ $MCPUX_COUNT -eq 0 ] && echo pass || echo fail)"
 
 # ── Check 38: MCP guardrails contract ──────────────────────────────────────
 
-log "${BOLD}[38/42] MCP guardrails contract${NC}"
+log "${BOLD}[38/60] MCP guardrails contract${NC}"
 
 MCPGUARD_FINDINGS="[]"
 MCPGUARD_COUNT=0
@@ -1503,7 +1482,7 @@ add_category "mcp-guardrails" "$([ $MCPGUARD_COUNT -eq 0 ] && echo pass || echo 
 
 # ── Check 39: MCP call preflight validation ───────────────────────────────
 
-log "${BOLD}[39/42] MCP call preflight validation${NC}"
+log "${BOLD}[39/60] MCP call preflight validation${NC}"
 
 MCPPREFLIGHT_FINDINGS="[]"
 MCPPREFLIGHT_COUNT=0
@@ -1520,7 +1499,7 @@ add_category "mcp-call-preflight" "$([ $MCPPREFLIGHT_COUNT -eq 0 ] && echo pass 
 
 # ── Check 40: MCP trace contract ───────────────────────────────────────────
 
-log "${BOLD}[40/42] MCP trace contract${NC}"
+log "${BOLD}[40/60] MCP trace contract${NC}"
 
 MCPTRACE_FINDINGS="[]"
 MCPTRACE_COUNT=0
@@ -1536,7 +1515,7 @@ add_category "mcp-trace-contract" "$([ $MCPTRACE_COUNT -eq 0 ] && echo pass || e
 
 # ── Check 41: MCP hardening (budget + normalized errors) ─────────────────────
 
-log "${BOLD}[41/42] MCP hardening check${NC}"
+log "${BOLD}[41/60] MCP hardening check${NC}"
 
 MCPHARDEN_FINDINGS="[]"
 MCPHARDEN_COUNT=0
@@ -1552,23 +1531,329 @@ else
 fi
 add_category "mcp-hardening" "$([ $MCPHARDEN_COUNT -eq 0 ] && echo pass || echo fail)" "$MCPHARDEN_COUNT" "$MCPHARDEN_FINDINGS"
 
-# ── Check 42: MCP Output Contract (single-line JSON) ──────────────────────
+# ── Check 42: MCP serve contract (brain-tools) ─────────────────────────────
 
-log "${BOLD}[42/42] MCP output contract check${NC}"
+log "${BOLD}[42/60] MCP serve contract (brain-tools)${NC}"
 
-MCPOUTPUT_FINDINGS="[]"
-MCPOUTPUT_COUNT=0
+MCPSERVE_FINDINGS="[]"
+MCPSERVE_COUNT=0
 
-if bash "$PROJECT_ROOT/scripts/check-mcp-output-contract.sh" >/dev/null 2>&1; then
-    log "  ${GREEN}PASS${NC} MCP output contract (single-line JSON) verified"
+if bash "$PROJECT_ROOT/scripts/check-mcp-serve-contract.sh" >/dev/null 2>&1; then
+    log "  ${GREEN}PASS${NC} MCP serve contract (brain-tools) verified"
 else
-    MCPOUTPUT_COUNT=1
-    MCPOUTPUT_FINDINGS=$(echo "$MCPOUTPUT_FINDINGS" | jq '. + [{"message": "MCP output contract validation failed"}]')
-    log "  ${RED}FAIL${NC} MCP output contract validation failed"
+    MCPSERVE_COUNT=1
+    MCPSERVE_FINDINGS=$(echo "$MCPSERVE_FINDINGS" | jq '. + [{"message": "MCP serve contract validation failed"}]')
+    log "  ${RED}FAIL${NC} MCP serve contract validation failed"
     # Re-run to show details
-    bash "$PROJECT_ROOT/scripts/check-mcp-output-contract.sh" 2>&1 | sed 's/^/    /'
+    bash "$PROJECT_ROOT/scripts/check-mcp-serve-contract.sh" 2>&1 | sed 's/^/    /'
 fi
-add_category "mcp-output-contract" "$([ $MCPOUTPUT_COUNT -eq 0 ] && echo pass || echo fail)" "$MCPOUTPUT_COUNT" "$MCPOUTPUT_FINDINGS"
+add_category "mcp-serve-contract" "$([ $MCPSERVE_COUNT -eq 0 ] && echo pass || echo fail)" "$MCPSERVE_COUNT" "$MCPSERVE_FINDINGS"
+
+# ── Check 43: No MCP wrapper commands ─────────────────────────────────────
+
+log "${BOLD}[43/60] No MCP wrapper commands${NC}"
+
+NOWRAPPER_FINDINGS="[]"
+NOWRAPPER_COUNT=0
+
+if bash "$PROJECT_ROOT/scripts/check-no-mcp-wrapper-commands.sh" >/dev/null 2>&1; then
+    log "  ${GREEN}PASS${NC} No MCP wrapper commands found"
+else
+    NOWRAPPER_COUNT=1
+    NOWRAPPER_FINDINGS=$(echo "$NOWRAPPER_FINDINGS" | jq '. + [{"message": "Forbidden MCP wrapper commands detected in CLI"}]')
+    log "  ${RED}FAIL${NC} Forbidden MCP wrapper commands detected"
+    bash "$PROJECT_ROOT/scripts/check-no-mcp-wrapper-commands.sh" 2>&1 | sed 's/^/    /'
+fi
+add_category "no-mcp-wrapper-commands" "$([ $NOWRAPPER_COUNT -eq 0 ] && echo pass || echo fail)" "$NOWRAPPER_COUNT" "$NOWRAPPER_FINDINGS"
+
+# ── Check 44: Brain entrypoint guard ─────────────────────────────────────
+
+log "${BOLD}[44/60] Brain entrypoint guard${NC}"
+
+ENTRYPOINT_FINDINGS="[]"
+ENTRYPOINT_COUNT=0
+
+if bash "$PROJECT_ROOT/scripts/check-brain-entrypoint.sh" >/dev/null 2>&1; then
+    log "  ${GREEN}PASS${NC} Brain CLI entrypoint valid"
+else
+    ENTRYPOINT_COUNT=1
+    ENTRYPOINT_FINDINGS=$(echo "$ENTRYPOINT_FINDINGS" | jq '. + [{"message": "Brain CLI entrypoint missing or invalid"}]')
+    log "  ${RED}FAIL${NC} Brain CLI entrypoint invalid"
+    bash "$PROJECT_ROOT/scripts/check-brain-entrypoint.sh" 2>&1 | sed 's/^/    /'
+fi
+add_category "brain-entrypoint" "$([ $ENTRYPOINT_COUNT -eq 0 ] && echo pass || echo fail)" "$ENTRYPOINT_COUNT" "$ENTRYPOINT_FINDINGS"
+
+# ── Check 45: No Closure in DTO union types ──────────────────────────────
+
+log "${BOLD}[45/60] No Closure in DTO union types${NC}"
+
+CLOSUREDTO_FINDINGS="[]"
+CLOSUREDTO_COUNT=0
+
+if bash "$PROJECT_ROOT/scripts/check-no-closure-dto.sh" >/dev/null 2>&1; then
+    log "  ${GREEN}PASS${NC} No Closure in DTO union types"
+else
+    CLOSUREDTO_COUNT=1
+    CLOSUREDTO_FINDINGS=$(echo "$CLOSUREDTO_FINDINGS" | jq '. + [{"message": "Closure found in DTO property union types - DI resolution risk"}]')
+    log "  ${RED}FAIL${NC} Closure in DTO union types detected"
+    bash "$PROJECT_ROOT/scripts/check-no-closure-dto.sh" 2>&1 | sed 's/^/    /'
+fi
+add_category "no-closure-dto" "$([ $CLOSUREDTO_COUNT -eq 0 ] && echo pass || echo fail)" "$CLOSUREDTO_COUNT" "$CLOSUREDTO_FINDINGS"
+
+# ── Check 46: MCP Thin Adapter Lock ───────────────────────────────────────
+
+log "${BOLD}[46/60] MCP Thin Adapter Lock${NC}"
+
+THINADAPTER_FINDINGS="[]"
+THINADAPTER_COUNT=0
+
+if bash "$PROJECT_ROOT/scripts/check-mcp-thin-adapter-lock.sh" >/dev/null 2>&1; then
+    log "  ${GREEN}PASS${NC} MCP Thin Adapter Lock"
+else
+    THINADAPTER_COUNT=1
+    THINADAPTER_FINDINGS=$(echo "$THINADAPTER_FINDINGS" | jq '. + [{"message": "Thin adapter invariants violated - shadow wrappers, shell calls, or filesystem scanning detected"}]')
+    log "  ${RED}FAIL${NC} MCP Thin Adapter Lock violated"
+    bash "$PROJECT_ROOT/scripts/check-mcp-thin-adapter-lock.sh" 2>&1 | sed 's/^/    /'
+fi
+add_category "mcp-thin-adapter-lock" "$([ $THINADAPTER_COUNT -eq 0 ] && echo pass || echo fail)" "$THINADAPTER_COUNT" "$THINADAPTER_FINDINGS"
+
+# ── Check 47: brain-tools Toolset Freeze ───────────────────────────────────
+
+log "${BOLD}[47/60] brain-tools Toolset Freeze${NC}"
+
+BRAINTOOLS_FREEZE_FINDINGS="[]"
+BRAINTOOLS_FREEZE_COUNT=0
+
+if bash "$PROJECT_ROOT/scripts/check-mcp-brain-tools-freeze.sh" >/dev/null 2>&1; then
+    log "  ${GREEN}PASS${NC} brain-tools Toolset Freeze"
+else
+    BRAINTOOLS_FREEZE_COUNT=1
+    BRAINTOOLS_FREEZE_FINDINGS=$(echo "$BRAINTOOLS_FREEZE_FINDINGS" | jq '. + [{"message": "brain-tools toolset/schema contract violated - drift detected"}]')
+    log "  ${RED}FAIL${NC} brain-tools Toolset Freeze violated"
+    bash "$PROJECT_ROOT/scripts/check-mcp-brain-tools-freeze.sh" 2>&1 | sed 's/^/    /'
+fi
+add_category "brain-tools-freeze" "$([ $BRAINTOOLS_FREEZE_COUNT -eq 0 ] && echo pass || echo fail)" "$BRAINTOOLS_FREEZE_COUNT" "$BRAINTOOLS_FREEZE_FINDINGS"
+
+# ── Check 48: MCP Tool Schema Drift ─────────────────────────────────────────
+
+log "${BOLD}[48/60] MCP Tool Schema Drift${NC}"
+
+SCHEMADRIFT_FINDINGS="[]"
+SCHEMADRIFT_COUNT=0
+
+if bash "$PROJECT_ROOT/scripts/check-mcp-tool-schema-drift.sh" >/dev/null 2>&1; then
+    log "  ${GREEN}PASS${NC} MCP Tool Schema Drift"
+else
+    SCHEMADRIFT_COUNT=1
+    SCHEMADRIFT_FINDINGS=$(echo "$SCHEMADRIFT_FINDINGS" | jq '. + [{"message": "MCP schema drift detected - schema does not match command signatures"}]')
+    log "  ${RED}FAIL${NC} MCP Tool Schema Drift detected"
+    bash "$PROJECT_ROOT/scripts/check-mcp-tool-schema-drift.sh" 2>&1 | sed 's/^/    /'
+fi
+add_category "mcp-tool-schema-drift" "$([ $SCHEMADRIFT_COUNT -eq 0 ] && echo pass || echo fail)" "$SCHEMADRIFT_COUNT" "$SCHEMADRIFT_FINDINGS"
+
+# ── Check 49: MCP tools/list Snapshot ───────────────────────────────────────
+
+log "${BOLD}[49/60] MCP tools/list Snapshot${NC}"
+
+TOOLSLIST_FINDINGS="[]"
+TOOLSLIST_COUNT=0
+
+if bash "$PROJECT_ROOT/scripts/check-mcp-tools-list-snapshot.sh" >/dev/null 2>&1; then
+    log "  ${GREEN}PASS${NC} MCP tools/list Snapshot"
+else
+    TOOLSLIST_COUNT=1
+    TOOLSLIST_FINDINGS=$(echo "$TOOLSLIST_FINDINGS" | jq '. + [{"message": "MCP tools/list schema contract violated - additionalProperties, required sorting, or property drift"}]')
+    log "  ${RED}FAIL${NC} MCP tools/list Snapshot violated"
+    bash "$PROJECT_ROOT/scripts/check-mcp-tools-list-snapshot.sh" 2>&1 | sed 's/^/    /'
+fi
+add_category "mcp-tools-list-snapshot" "$([ $TOOLSLIST_COUNT -eq 0 ] && echo pass || echo fail)" "$TOOLSLIST_COUNT" "$TOOLSLIST_FINDINGS"
+
+# ── Check 50: MCP tools/call Contract ───────────────────────────────────────
+
+log "${BOLD}[50/60] MCP tools/call Contract${NC}"
+
+TOOLSCALL_FINDINGS="[]"
+TOOLSCALL_COUNT=0
+
+if bash "$PROJECT_ROOT/scripts/check-mcp-tools-call-contract.sh" >/dev/null 2>&1; then
+    log "  ${GREEN}PASS${NC} MCP tools/call Contract"
+else
+    TOOLSCALL_COUNT=1
+    TOOLSCALL_FINDINGS=$(echo "$TOOLSCALL_FINDINGS" | jq '. + [{"message": "MCP tools/call JSON-RPC envelope contract violated - success/error format, stderr hygiene, or kill-switch"}]')
+    log "  ${RED}FAIL${NC} MCP tools/call Contract violated"
+    bash "$PROJECT_ROOT/scripts/check-mcp-tools-call-contract.sh" 2>&1 | sed 's/^/    /'
+fi
+add_category "mcp-tools-call-contract" "$([ $TOOLSCALL_COUNT -eq 0 ] && echo pass || echo fail)" "$TOOLSCALL_COUNT" "$TOOLSCALL_FINDINGS"
+
+# ── Check 51: Client MCP Parity ───────────────────────────────────────
+
+log "${BOLD}[51/60] Client MCP Parity${NC}"
+
+CLIENTPARITY_FINDINGS="[]"
+CLIENTPARITY_COUNT=0
+
+if bash "$PROJECT_ROOT/scripts/check-client-mcp-parity.sh" >/dev/null 2>&1; then
+    log "  ${GREEN}PASS${NC} Client MCP Parity"
+else
+    CLIENTPARITY_COUNT=1
+    CLIENTPARITY_FINDINGS=$(echo "$CLIENTPARITY_FINDINGS" | jq '. + [{"message": "Client MCP parity check failed - direct CLI vs MCP output mismatch"}]')
+    log "  ${RED}FAIL${NC} Client MCP Parity violated"
+    bash "$PROJECT_ROOT/scripts/check-client-mcp-parity.sh" 2>&1 | sed 's/^/    /'
+fi
+add_category "client-mcp-parity" "$([ $CLIENTPARITY_COUNT -eq 0 ] && echo pass || echo fail)" "$CLIENTPARITY_COUNT" "$CLIENTPARITY_FINDINGS"
+
+# ── Check 52: MCP No External Surface ───────────────────────────────────
+
+log "${BOLD}[52/60] MCP No External Surface${NC}"
+
+NOEXTERNAL_FINDINGS="[]"
+NOEXTERNAL_COUNT=0
+
+if bash "$PROJECT_ROOT/scripts/check-mcp-no-external-surface.sh" >/dev/null 2>&1; then
+    log "  ${GREEN}PASS${NC} MCP No External Surface"
+else
+    NOEXTERNAL_COUNT=1
+    NOEXTERNAL_FINDINGS=$(echo "$NOEXTERNAL_FINDINGS" | jq '. + [{"message": "MCP external surface check failed - brain-tools must use only mcp:serve, no mcp:list/describe/call, no shell execution"}]')
+    log "  ${RED}FAIL${NC} MCP No External Surface violated"
+    bash "$PROJECT_ROOT/scripts/check-mcp-no-external-surface.sh" 2>&1 | sed 's/^/    /'
+fi
+add_category "mcp-no-external-surface" "$([ $NOEXTERNAL_COUNT -eq 0 ] && echo pass || echo fail)" "$NOEXTERNAL_COUNT" "$NOEXTERNAL_FINDINGS"
+
+# ── Check 53: MCP Serve Framing Contract ───────────────────────────────
+
+log "${BOLD}[53/60] MCP Serve Framing Contract${NC}"
+
+FRAMING_FINDINGS="[]"
+FRAMING_COUNT=0
+
+if bash "$PROJECT_ROOT/scripts/check-mcp-serve-framing.sh" >/dev/null 2>&1; then
+    log "  ${GREEN}PASS${NC} MCP Serve Framing Contract"
+else
+    FRAMING_COUNT=1
+    FRAMING_FINDINGS=$(echo "$FRAMING_FINDINGS" | jq '. + [{"message": "MCP serve framing contract violated - 1 response per request, stderr=0, stable error codes"}]')
+    log "  ${RED}FAIL${NC} MCP Serve Framing Contract violated"
+    bash "$PROJECT_ROOT/scripts/check-mcp-serve-framing.sh" 2>&1 | sed 's/^/    /'
+fi
+add_category "mcp-serve-framing" "$([ $FRAMING_COUNT -eq 0 ] && echo pass || echo fail)" "$FRAMING_COUNT" "$FRAMING_FINDINGS"
+
+# ── Check 54: No User MCP Artifacts ───────────────────────────────────────
+
+log "${BOLD}[54/60] No User MCP Artifacts${NC}"
+
+NOJUNK_FINDINGS="[]"
+NOJUNK_COUNT=0
+
+if bash "$PROJECT_ROOT/scripts/check-no-user-mcp-artifacts.sh" >/dev/null 2>&1; then
+    log "  ${GREEN}PASS${NC} No User MCP Artifacts"
+else
+    NOJUNK_COUNT=1
+    NOJUNK_FINDINGS=$(echo "$NOJUNK_FINDINGS" | jq '. + [{"message": "User MCP artifacts found (MockEcho, forbidden terms, missing tools commands)"}]')
+    log "  ${RED}FAIL${NC} User MCP artifacts detected"
+    bash "$PROJECT_ROOT/scripts/check-no-user-mcp-artifacts.sh" 2>&1 | sed 's/^/    /'
+fi
+add_category "no-user-mcp-artifacts" "$([ $NOJUNK_COUNT -eq 0 ] && echo pass || echo fail)" "$NOJUNK_COUNT" "$NOJUNK_FINDINGS"
+
+# ── Check 55: MSP Call Contract ───────────────────────────────────────
+
+log "${BOLD}[55/60] MSP Call Contract${NC}"
+
+MSP_FINDINGS="[]"
+MSP_COUNT=0
+
+if bash "$PROJECT_ROOT/scripts/check-msp-call-contract.sh" >/dev/null 2>&1; then
+    log "  ${GREEN}PASS${NC} MSP Call Contract"
+else
+    MSP_COUNT=1
+    MSP_FINDINGS=$(echo "$MSP_FINDINGS" | jq '. + [{"message": "MSP call contract violated - JSON output, stderr hygiene, error codes, kill-switch"}]')
+    log "  ${RED}FAIL${NC} MSP Call Contract violated"
+    bash "$PROJECT_ROOT/scripts/check-msp-call-contract.sh" 2>&1 | sed 's/^/    /'
+fi
+add_category "msp-call-contract" "$([ $MSP_COUNT -eq 0 ] && echo pass || echo fail)" "$MSP_COUNT" "$MSP_FINDINGS"
+
+# ── Check 56: MSP Registry Contract ───────────────────────────────────────
+
+log "${BOLD}[56/60] MSP Registry Contract${NC}"
+
+MSPREG_FINDINGS="[]"
+MSPREG_COUNT=0
+
+if bash "$PROJECT_ROOT/scripts/check-msp-registry.sh" >/dev/null 2>&1; then
+    log "  ${GREEN}PASS${NC} MSP Registry Contract"
+else
+    MSPREG_COUNT=1
+    MSPREG_FINDINGS=$(echo "$MSPREG_FINDINGS" | jq '. + [{"message": "MSP registry contract violated - JSON valid, sorting, class exists, msp:list contract"}]')
+    log "  ${RED}FAIL${NC} MSP Registry Contract violated"
+    bash "$PROJECT_ROOT/scripts/check-msp-registry.sh" 2>&1 | sed 's/^/    /'
+fi
+add_category "msp-registry-contract" "$([ $MSPREG_COUNT -eq 0 ] && echo pass || echo fail)" "$MSPREG_COUNT" "$MSPREG_FINDINGS"
+
+# ── Check 57: Brain Tools MCP Artifact ───────────────────────────────────────
+
+log "${BOLD}[57/60] Brain Tools MCP Artifact${NC}"
+
+BTARTIFACT_FINDINGS="[]"
+BTARTIFACT_COUNT=0
+
+if bash "$PROJECT_ROOT/scripts/check-brain-tools-mcp-artifact.sh" >/dev/null 2>&1; then
+    log "  ${GREEN}PASS${NC} Brain Tools MCP Artifact"
+else
+    BTARTIFACT_COUNT=1
+    BTARTIFACT_FINDINGS=$(echo "$BTARTIFACT_FINDINGS" | jq '. + [{"message": "Brain tools MCP artifact violated - exists in mcpServers, args contain --agent, no absolute paths"}]')
+    log "  ${RED}FAIL${NC} Brain Tools MCP Artifact violated"
+    bash "$PROJECT_ROOT/scripts/check-brain-tools-mcp-artifact.sh" 2>&1 | sed 's/^/    /'
+fi
+add_category "brain-tools-mcp-artifact" "$([ $BTARTIFACT_COUNT -eq 0 ] && echo pass || echo fail)" "$BTARTIFACT_COUNT" "$BTARTIFACT_FINDINGS"
+
+# ── Check 58: Instructions Tooling Contract ───────────────────────────────────
+
+log "${BOLD}[58/60] Instructions Tooling Contract${NC}"
+
+TOOLING_FINDINGS="[]"
+TOOLING_COUNT=0
+
+if bash "$PROJECT_ROOT/scripts/check-instructions-tooling-contract.sh" >/dev/null 2>&1; then
+    log "  ${GREEN}PASS${NC} Instructions Tooling Contract"
+else
+    TOOLING_COUNT=1
+    TOOLING_FINDINGS=$(echo "$TOOLING_FINDINGS" | jq '. + [{"message": "Instructions tooling contract violated - forbidden mcp:* commands or missing tools:* examples"}]')
+    log "  ${RED}FAIL${NC} Instructions Tooling Contract violated"
+    bash "$PROJECT_ROOT/scripts/check-instructions-tooling-contract.sh" 2>&1 | sed 's/^/    /'
+fi
+add_category "instructions-tooling-contract" "$([ $TOOLING_COUNT -eq 0 ] && echo pass || echo fail)" "$TOOLING_COUNT" "$TOOLING_FINDINGS"
+
+# ── Check 59: Brain Tools Agent Args ─────────────────────────────────────────
+
+log "${BOLD}[59/60] Brain Tools Agent Args${NC}"
+
+AGENTARGS_FINDINGS="[]"
+AGENTARGS_COUNT=0
+
+if bash "$PROJECT_ROOT/scripts/check-brain-tools-agent-args.sh" >/dev/null 2>&1; then
+    log "  ${GREEN}PASS${NC} Brain Tools Agent Args"
+else
+    AGENTARGS_COUNT=1
+    AGENTARGS_FINDINGS=$(echo "$AGENTARGS_FINDINGS" | jq '. + [{"message": "Brain tools agent args violated - args contain --agent with value, list_masters schema empty, agent rejected in input"}]')
+    log "  ${RED}FAIL${NC} Brain Tools Agent Args violated"
+    bash "$PROJECT_ROOT/scripts/check-brain-tools-agent-args.sh" 2>&1 | sed 's/^/    /'
+fi
+add_category "brain-tools-agent-args" "$([ $AGENTARGS_COUNT -eq 0 ] && echo pass || echo fail)" "$AGENTARGS_COUNT" "$AGENTARGS_FINDINGS"
+
+# ── Check 60: Compile JSON Contract ─────────────────────────────────────────
+
+log "${BOLD}[60/60] Compile JSON Contract${NC}"
+
+CONTRACT_COUNT=0
+CONTRACT_FINDINGS="[]"
+
+if bash "$PROJECT_ROOT/scripts/check-compile-json-contract.sh" >/dev/null 2>&1; then
+    log "  ${GREEN}PASS${NC} Compile JSON Contract"
+else
+    CONTRACT_COUNT=1
+    CONTRACT_FINDINGS=$(echo "$CONTRACT_FINDINGS" | jq '. + [{"message": "Compile JSON contract violated - missing keys, absolute paths, or invalid structure"}]')
+    log "  ${RED}FAIL${NC} Compile JSON Contract violated"
+    bash "$PROJECT_ROOT/scripts/check-compile-json-contract.sh" 2>&1 | sed 's/^/    /'
+fi
+add_category "compile-json-contract" "$([ $CONTRACT_COUNT -eq 0 ] && echo pass || echo fail)" "$CONTRACT_COUNT" "$CONTRACT_FINDINGS"
 
 # ── Output JSON report ──────────────────────────────────────────────────
 
