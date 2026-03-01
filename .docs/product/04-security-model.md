@@ -29,11 +29,8 @@ The Brain MCP implementation strictly adheres to a **CLI stdio-only** execution 
 - **Stateless execution**: Every MCP tool call is a discrete `brain mcp:call` CLI invocation that returns JSON and exits.
 - **Attack surface reduction**: By eliminating long-running servers, we eliminate persistent memory corruption risks, connection hijacking, and daemon privilege escalation vectors.
 
-### Test Fixtures (mock-echo)
-The `mock-echo` MCP server is a **test fixture strictly for audit/tests**.
-- It is hidden from standard `mcp:list` outputs.
-- It is blocked in normal `mcp:call` execution with `reason=test_server_not_available`.
-- It executes strictly only when `BRAIN_TEST_MODE=1` is provided.
+### Test Fixtures
+No test fixtures are embedded in the codebase. All MCP servers are production servers or external packages.
 
 
 
@@ -88,7 +85,7 @@ The `--no-lock` flag bypasses the single-writer compile mutex. To prevent produc
 
 **Implementation:** `CompileLock::validateTestModeContract()` in CLI package.
 
-**Inspector:** `brain mcp:diagnose` includes `test_mode_contract` section with full diagnostics.
+**Inspector:** `brain diagnose` includes `test_mode_contract` section with full diagnostics.
 
 **Audit:** Check 24 in `scripts/audit-enterprise.sh` validates:
 - No `BRAIN_ALLOW_NO_LOCK` usage outside test files

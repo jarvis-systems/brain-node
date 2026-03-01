@@ -1,1 +1,0 @@
-{"error":{"code":"MCP_DISABLED","reason":"kill_switch_active","message":"MCP operations are disabled via kill-switch.","hint":"Run: brain mcp:list ; brain mcp:describe --server=<server>"},"ok":false,"redactions_applied":false}

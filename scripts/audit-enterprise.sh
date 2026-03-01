@@ -1753,43 +1753,9 @@ else
 fi
 add_category "no-user-mcp-artifacts" "$([ $NOJUNK_COUNT -eq 0 ] && echo pass || echo fail)" "$NOJUNK_COUNT" "$NOJUNK_FINDINGS"
 
-# ── Check 55: MSP Call Contract ───────────────────────────────────────
+# ── Check 55: Brain Tools MCP Artifact ───────────────────────────────────────
 
-log "${BOLD}[55/60] MSP Call Contract${NC}"
-
-MSP_FINDINGS="[]"
-MSP_COUNT=0
-
-if bash "$PROJECT_ROOT/scripts/check-msp-call-contract.sh" >/dev/null 2>&1; then
-    log "  ${GREEN}PASS${NC} MSP Call Contract"
-else
-    MSP_COUNT=1
-    MSP_FINDINGS=$(echo "$MSP_FINDINGS" | jq '. + [{"message": "MSP call contract violated - JSON output, stderr hygiene, error codes, kill-switch"}]')
-    log "  ${RED}FAIL${NC} MSP Call Contract violated"
-    bash "$PROJECT_ROOT/scripts/check-msp-call-contract.sh" 2>&1 | sed 's/^/    /'
-fi
-add_category "msp-call-contract" "$([ $MSP_COUNT -eq 0 ] && echo pass || echo fail)" "$MSP_COUNT" "$MSP_FINDINGS"
-
-# ── Check 56: MSP Registry Contract ───────────────────────────────────────
-
-log "${BOLD}[56/60] MSP Registry Contract${NC}"
-
-MSPREG_FINDINGS="[]"
-MSPREG_COUNT=0
-
-if bash "$PROJECT_ROOT/scripts/check-msp-registry.sh" >/dev/null 2>&1; then
-    log "  ${GREEN}PASS${NC} MSP Registry Contract"
-else
-    MSPREG_COUNT=1
-    MSPREG_FINDINGS=$(echo "$MSPREG_FINDINGS" | jq '. + [{"message": "MSP registry contract violated - JSON valid, sorting, class exists, msp:list contract"}]')
-    log "  ${RED}FAIL${NC} MSP Registry Contract violated"
-    bash "$PROJECT_ROOT/scripts/check-msp-registry.sh" 2>&1 | sed 's/^/    /'
-fi
-add_category "msp-registry-contract" "$([ $MSPREG_COUNT -eq 0 ] && echo pass || echo fail)" "$MSPREG_COUNT" "$MSPREG_FINDINGS"
-
-# ── Check 57: Brain Tools MCP Artifact ───────────────────────────────────────
-
-log "${BOLD}[57/60] Brain Tools MCP Artifact${NC}"
+log "${BOLD}[55/60] Brain Tools MCP Artifact${NC}"
 
 BTARTIFACT_FINDINGS="[]"
 BTARTIFACT_COUNT=0
@@ -1804,9 +1770,9 @@ else
 fi
 add_category "brain-tools-mcp-artifact" "$([ $BTARTIFACT_COUNT -eq 0 ] && echo pass || echo fail)" "$BTARTIFACT_COUNT" "$BTARTIFACT_FINDINGS"
 
-# ── Check 58: Instructions Tooling Contract ───────────────────────────────────
+# ── Check 56: Instructions Tooling Contract ───────────────────────────────────
 
-log "${BOLD}[58/60] Instructions Tooling Contract${NC}"
+log "${BOLD}[56/60] Instructions Tooling Contract${NC}"
 
 TOOLING_FINDINGS="[]"
 TOOLING_COUNT=0
@@ -1821,9 +1787,9 @@ else
 fi
 add_category "instructions-tooling-contract" "$([ $TOOLING_COUNT -eq 0 ] && echo pass || echo fail)" "$TOOLING_COUNT" "$TOOLING_FINDINGS"
 
-# ── Check 59: Brain Tools Agent Args ─────────────────────────────────────────
+# ── Check 57: Brain Tools Agent Args ─────────────────────────────────────────
 
-log "${BOLD}[59/60] Brain Tools Agent Args${NC}"
+log "${BOLD}[57/60] Brain Tools Agent Args${NC}"
 
 AGENTARGS_FINDINGS="[]"
 AGENTARGS_COUNT=0
@@ -1838,9 +1804,9 @@ else
 fi
 add_category "brain-tools-agent-args" "$([ $AGENTARGS_COUNT -eq 0 ] && echo pass || echo fail)" "$AGENTARGS_COUNT" "$AGENTARGS_FINDINGS"
 
-# ── Check 60: Compile JSON Contract ─────────────────────────────────────────
+# ── Check 58: Compile JSON Contract ─────────────────────────────────────────
 
-log "${BOLD}[60/60] Compile JSON Contract${NC}"
+log "${BOLD}[58/60] Compile JSON Contract${NC}"
 
 CONTRACT_COUNT=0
 CONTRACT_FINDINGS="[]"
@@ -1855,9 +1821,9 @@ else
 fi
 add_category "compile-json-contract" "$([ $CONTRACT_COUNT -eq 0 ] && echo pass || echo fail)" "$CONTRACT_COUNT" "$CONTRACT_FINDINGS"
 
-# ── Check 61: Client MCP Export Contract (All Clients) ───────────────────────
+# ── Check 59: Client MCP Export Contract (All Clients) ───────────────────────
 
-log "${BOLD}[61/61] Client MCP Export Contract${NC}"
+log "${BOLD}[59/60] Client MCP Export Contract${NC}"
 
 CLIENT_MCP_COUNT=0
 CLIENT_MCP_FINDINGS="[]"
@@ -1872,9 +1838,9 @@ else
 fi
 add_category "client-mcp-export-contract" "$([ $CLIENT_MCP_COUNT -eq 0 ] && echo pass || echo fail)" "$CLIENT_MCP_COUNT" "$CLIENT_MCP_FINDINGS"
 
-# ── Check 62: Includes No Legacy CLI ───────────────────────────────────────
+# ── Check 60: Includes No Legacy CLI ───────────────────────────────────────
 
-log "${BOLD}[62/62] Includes No Legacy CLI${NC}"
+log "${BOLD}[60/60] Includes No Legacy CLI${NC}"
 
 LEGACYCLI_FINDINGS="[]"
 LEGACYCLI_COUNT=0

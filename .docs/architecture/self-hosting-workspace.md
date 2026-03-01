@@ -81,7 +81,7 @@ If you see these patterns, verify self-hosting mode:
 
 ## Detection
 
-Run `brain mcp:diagnose` and check:
+Run `brain diagnose` and check:
 
 ```json
 {

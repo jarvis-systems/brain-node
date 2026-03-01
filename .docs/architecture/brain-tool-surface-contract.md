@@ -17,7 +17,7 @@ Canonical contract for Brain's tool surface — what agents see and can use.
 
 | Term | Definition |
 |------|------------|
-| **BrainDocs** | CLI tool (`brain mcp:docs-search`) for indexing/searching `.docs/`. Read-only. See `.docs/architecture/brain-docs-architecture.md`. |
+| **BrainDocs** | MCP tool (`mcp__brain-tools__docs_search`) for indexing/searching `.docs/`. Read-only. See `.docs/architecture/brain-docs-architecture.md`. |
 | **ProjectDocs** | Project-owned documentation in `.docs/` (product, architecture, operations). Indexed by BrainDocs. |
 | **Cookbook** | Procedural knowledge packs (skills, recipes) embedded in compiled instructions or via MCP tools. |
 | **Tool Surface** | Capabilities exposed to agents via CLI commands, MCP tools, or compiled includes. |
@@ -39,7 +39,7 @@ Canonical contract for Brain's tool surface — what agents see and can use.
 BrainDocs is the CLI indexer. ProjectDocs is the content it indexes.
 
 ```
-brain mcp:docs-search --query="..."  # Search .docs/
+mcp__brain-tools__docs_search({"query":"..."})  # Search .docs/
 brain docs --validate                # Validate front matter (Direct CLI)
 brain docs --download=<url>          # Persist external docs (Direct CLI)
 brain docs --undocumented            # Find code without docs (Direct CLI)
