@@ -72,14 +72,14 @@
         },
         "agentReference": {
             "type": "string",
-            "description": "Reference to a compiled agent. Available agents: agent-master, commit-master, documentation-master, explore-master, prompt-master, script-master, vector-master, web-research-master",
-            "pattern": "^(agent\\-master|commit\\-master|documentation\\-master|explore\\-master|prompt\\-master|script\\-master|vector\\-master|web\\-research\\-master)$",
+            "description": "Reference to a compiled agent. Available agents: commit-master, documentation-master, explore-master, vector-master, web-research-master",
+            "pattern": "^(commit\\-master|documentation\\-master|explore\\-master|vector\\-master|web\\-research\\-master)$",
             "examples": [
-                "agent-master",
                 "commit-master",
                 "documentation-master",
                 "explore-master",
-                "prompt-master"
+                "vector-master",
+                "web-research-master"
             ]
         },
         "commandReference": {
@@ -654,10 +654,6 @@
             "type": "object",
             "description": "Environment variables for .brain/.env file. Configure rules, guidelines, models, and disable flags per archetype.",
             "properties": {
-                "AGENTS_AGENT_MASTER_DISABLE": {
-                    "type": "string",
-                    "description": "Disable AgentMaster from compilation (true/false)"
-                },
                 "AGENTS_COMMIT_MASTER_DISABLE": {
                     "type": "string",
                     "description": "Disable CommitMaster from compilation (true/false)"
@@ -670,14 +666,6 @@
                     "type": "string",
                     "description": "Disable ExploreMaster from compilation (true/false)"
                 },
-                "AGENTS_PROMPT_MASTER_DISABLE": {
-                    "type": "string",
-                    "description": "Disable PromptMaster from compilation (true/false)"
-                },
-                "AGENTS_SCRIPT_MASTER_DISABLE": {
-                    "type": "string",
-                    "description": "Disable ScriptMaster from compilation (true/false)"
-                },
                 "AGENTS_VECTOR_MASTER_DISABLE": {
                     "type": "string",
                     "description": "Disable VectorMaster from compilation (true/false)"
@@ -685,34 +673,6 @@
                 "AGENTS_WEB_RESEARCH_MASTER_DISABLE": {
                     "type": "string",
                     "description": "Disable WebResearchMaster from compilation (true/false)"
-                },
-                "AGENT_MASTER_GUIDELINE_0": {
-                    "type": "string",
-                    "description": "Custom guideline #0 for AgentMaster"
-                },
-                "AGENT_MASTER_GUIDELINE_1": {
-                    "type": "string",
-                    "description": "Custom guideline #1 for AgentMaster"
-                },
-                "AGENT_MASTER_GUIDELINE_2": {
-                    "type": "string",
-                    "description": "Custom guideline #2 for AgentMaster"
-                },
-                "AGENT_MASTER_MODEL": {
-                    "type": "string",
-                    "description": "Model override for AgentMaster"
-                },
-                "AGENT_MASTER_RULE_0": {
-                    "type": "string",
-                    "description": "Custom CRITICAL rule #0 for AgentMaster"
-                },
-                "AGENT_MASTER_RULE_1": {
-                    "type": "string",
-                    "description": "Custom CRITICAL rule #1 for AgentMaster"
-                },
-                "AGENT_MASTER_RULE_2": {
-                    "type": "string",
-                    "description": "Custom CRITICAL rule #2 for AgentMaster"
                 },
                 "ASYNC_COMMAND_GUIDELINE_0": {
                     "type": "string",
@@ -1450,10 +1410,6 @@
                     "type": "string",
                     "description": "Disable Context7Mcp from compilation (true/false)"
                 },
-                "MCP_MOCK_ECHO_MCP_DISABLE": {
-                    "type": "string",
-                    "description": "Disable MockEchoMcp from compilation (true/false)"
-                },
                 "MCP_SEQUENTIAL_THINKING_MCP_DISABLE": {
                     "type": "string",
                     "description": "Disable SequentialThinkingMcp from compilation (true/false)"
@@ -1466,34 +1422,6 @@
                     "type": "string",
                     "description": "Disable VectorTaskMcp from compilation (true/false)"
                 },
-                "MOCK_ECHO_MCP_GUIDELINE_0": {
-                    "type": "string",
-                    "description": "Custom guideline #0 for MockEchoMcp"
-                },
-                "MOCK_ECHO_MCP_GUIDELINE_1": {
-                    "type": "string",
-                    "description": "Custom guideline #1 for MockEchoMcp"
-                },
-                "MOCK_ECHO_MCP_GUIDELINE_2": {
-                    "type": "string",
-                    "description": "Custom guideline #2 for MockEchoMcp"
-                },
-                "MOCK_ECHO_MCP_MODEL": {
-                    "type": "string",
-                    "description": "Model override for MockEchoMcp"
-                },
-                "MOCK_ECHO_MCP_RULE_0": {
-                    "type": "string",
-                    "description": "Custom CRITICAL rule #0 for MockEchoMcp"
-                },
-                "MOCK_ECHO_MCP_RULE_1": {
-                    "type": "string",
-                    "description": "Custom CRITICAL rule #1 for MockEchoMcp"
-                },
-                "MOCK_ECHO_MCP_RULE_2": {
-                    "type": "string",
-                    "description": "Custom CRITICAL rule #2 for MockEchoMcp"
-                },
                 "OPENCODE_MASTER_MODEL": {
                     "type": "string",
                     "description": "Default model for OpenCode CLI agents"
@@ -1501,34 +1429,6 @@
                 "OPENROUTER_MASTER_MODEL": {
                     "type": "string",
                     "description": "Default model for OpenRouter CLI agents"
-                },
-                "PROMPT_MASTER_GUIDELINE_0": {
-                    "type": "string",
-                    "description": "Custom guideline #0 for PromptMaster"
-                },
-                "PROMPT_MASTER_GUIDELINE_1": {
-                    "type": "string",
-                    "description": "Custom guideline #1 for PromptMaster"
-                },
-                "PROMPT_MASTER_GUIDELINE_2": {
-                    "type": "string",
-                    "description": "Custom guideline #2 for PromptMaster"
-                },
-                "PROMPT_MASTER_MODEL": {
-                    "type": "string",
-                    "description": "Model override for PromptMaster"
-                },
-                "PROMPT_MASTER_RULE_0": {
-                    "type": "string",
-                    "description": "Custom CRITICAL rule #0 for PromptMaster"
-                },
-                "PROMPT_MASTER_RULE_1": {
-                    "type": "string",
-                    "description": "Custom CRITICAL rule #1 for PromptMaster"
-                },
-                "PROMPT_MASTER_RULE_2": {
-                    "type": "string",
-                    "description": "Custom CRITICAL rule #2 for PromptMaster"
                 },
                 "QWEN_MASTER_MODEL": {
                     "type": "string",
@@ -1561,34 +1461,6 @@
                 "REPO_BOUNDARY_PREFLIGHT_SKILL_RULE_2": {
                     "type": "string",
                     "description": "Custom CRITICAL rule #2 for RepoBoundaryPreflightSkill"
-                },
-                "SCRIPT_MASTER_GUIDELINE_0": {
-                    "type": "string",
-                    "description": "Custom guideline #0 for ScriptMaster"
-                },
-                "SCRIPT_MASTER_GUIDELINE_1": {
-                    "type": "string",
-                    "description": "Custom guideline #1 for ScriptMaster"
-                },
-                "SCRIPT_MASTER_GUIDELINE_2": {
-                    "type": "string",
-                    "description": "Custom guideline #2 for ScriptMaster"
-                },
-                "SCRIPT_MASTER_MODEL": {
-                    "type": "string",
-                    "description": "Model override for ScriptMaster"
-                },
-                "SCRIPT_MASTER_RULE_0": {
-                    "type": "string",
-                    "description": "Custom CRITICAL rule #0 for ScriptMaster"
-                },
-                "SCRIPT_MASTER_RULE_1": {
-                    "type": "string",
-                    "description": "Custom CRITICAL rule #1 for ScriptMaster"
-                },
-                "SCRIPT_MASTER_RULE_2": {
-                    "type": "string",
-                    "description": "Custom CRITICAL rule #2 for ScriptMaster"
                 },
                 "SEARCH_COMMAND_GUIDELINE_0": {
                     "type": "string",
@@ -2004,26 +1876,26 @@
                 }
             },
             "examples": [
-                "AGENTS_AGENT_MASTER_DISABLE",
                 "AGENTS_COMMIT_MASTER_DISABLE",
                 "AGENTS_DOCUMENTATION_MASTER_DISABLE",
                 "AGENTS_EXPLORE_MASTER_DISABLE",
-                "AGENTS_PROMPT_MASTER_DISABLE",
-                "AGENTS_SCRIPT_MASTER_DISABLE",
                 "AGENTS_VECTOR_MASTER_DISABLE",
                 "AGENTS_WEB_RESEARCH_MASTER_DISABLE",
-                "AGENT_MASTER_GUIDELINE_0",
-                "AGENT_MASTER_GUIDELINE_1",
-                "AGENT_MASTER_GUIDELINE_2",
-                "AGENT_MASTER_MODEL",
-                "AGENT_MASTER_RULE_0",
-                "AGENT_MASTER_RULE_1",
-                "AGENT_MASTER_RULE_2",
                 "ASYNC_COMMAND_GUIDELINE_0",
                 "ASYNC_COMMAND_GUIDELINE_1",
                 "ASYNC_COMMAND_GUIDELINE_2",
                 "ASYNC_COMMAND_MODEL",
-                "ASYNC_COMMAND_RULE_0"
+                "ASYNC_COMMAND_RULE_0",
+                "ASYNC_COMMAND_RULE_1",
+                "ASYNC_COMMAND_RULE_2",
+                "BRAINSTORM_COMMAND_GUIDELINE_0",
+                "BRAINSTORM_COMMAND_GUIDELINE_1",
+                "BRAINSTORM_COMMAND_GUIDELINE_2",
+                "BRAINSTORM_COMMAND_MODEL",
+                "BRAINSTORM_COMMAND_RULE_0",
+                "BRAINSTORM_COMMAND_RULE_1",
+                "BRAINSTORM_COMMAND_RULE_2",
+                "BRAIN_DISABLE"
             ]
         },
         "envVariablePatterns": {

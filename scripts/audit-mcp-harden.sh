@@ -2,6 +2,8 @@
 #
 # Audit hardened MCP calls: budget + retries + normalized errors + contracts + JSON correctness + no leakage
 # Usage: scripts/audit-mcp-harden.sh
+#
+# Uses sequential-thinking for testing (allowed tool: think)
 
 set -euo pipefail
 
@@ -69,7 +71,7 @@ rm -f dist/tmp/mcp-budget.json
 
 # 1. Test budget enforcement and canonical location
 log_check "Budget enforcement and canonical location"
-env BRAIN_TEST_MODE=1 BRAIN_MCP_CALL_BUDGET=2 php cli/bin/brain mcp:call --server=mock-echo --tool=mock-echo --input='{"text":"t1"}' > out1.json
+env BRAIN_TEST_MODE=1 BRAIN_MCP_CALL_BUDGET=2 php cli/bin/brain mcp:call --server=sequential-thinking --tool=think --input='{"thought":"t1"}' > out1.json
 assert_json "$(cat out1.json)"
 if ! grep -q "memory/mcp-budget.json" <(php cli/bin/brain mcp:guardrails); then
     echo "FAIL: Budget file not at canonical location."
@@ -113,14 +115,14 @@ echo "  PASS: mcp:list sorted and JSON valid."
 # 4. Test --trace and no timestamps
 log_check "Trace contract and determinism"
 # Regular call
-CALL1=$(BRAIN_TEST_MODE=1 php cli/bin/brain mcp:call --server=mock-echo --tool=mock-echo --input='{"text":"hello"}')
+CALL1=$(BRAIN_TEST_MODE=1 php cli/bin/brain mcp:call --server=sequential-thinking --tool=think --input='{"thought":"hello"}')
 assert_json "$CALL1"
 if echo "$CALL1" | grep -q "request_id"; then
     echo "FAIL: request_id present without --trace"
     exit 1
 fi
 # Trace call
-CALL2=$(BRAIN_TEST_MODE=1 php cli/bin/brain mcp:call --server=mock-echo --tool=mock-echo --input='{"text":"hello"}' --trace)
+CALL2=$(BRAIN_TEST_MODE=1 php cli/bin/brain mcp:call --server=sequential-thinking --tool=think --input='{"thought":"hello"}' --trace)
 assert_json "$CALL2"
 if ! echo "$CALL2" | jq -e '.request_id' >/dev/null; then
     echo "FAIL: request_id missing with --trace"
@@ -143,7 +145,7 @@ echo "  PASS: Preflight JSON and no-leakage verified."
 
 # 6. Invalid JSON input
 log_check "Invalid JSON input"
-OUTPUT=$(BRAIN_TEST_MODE=1 php cli/bin/brain mcp:call --server=mock-echo --tool=mock-echo --input='{not-json}' || true)
+OUTPUT=$(BRAIN_TEST_MODE=1 php cli/bin/brain mcp:call --server=sequential-thinking --tool=think --input='{not-json}' || true)
 assert_json "$OUTPUT"
 if ! echo "$OUTPUT" | grep -q "invalid_json"; then
     echo "FAIL: Expected invalid_json reason"

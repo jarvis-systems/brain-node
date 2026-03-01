@@ -63,7 +63,7 @@ echo "  PASS: mcp:list is strictly single-line"
 
 # 2. Test mcp:describe
 log_check "mcp:describe output contract"
-assert_strictly_single_line "BRAIN_TEST_MODE=1 php cli/bin/brain mcp:describe --server=mock-echo --no-interaction" "mcp:describe"
+assert_strictly_single_line "BRAIN_TEST_MODE=1 php cli/bin/brain mcp:describe --server=sequential-thinking --no-interaction" "mcp:describe"
 echo "  PASS: mcp:describe is strictly single-line"
 
 # 3. Test mcp:call (blocked)

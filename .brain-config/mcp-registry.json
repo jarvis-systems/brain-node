@@ -8,12 +8,6 @@
       "enabled": true
     },
     {
-      "id": "mock-echo",
-      "class": "BrainNode\\Mcp\\MockEchoMcp",
-      "transport": "stdio",
-      "enabled": true
-    },
-    {
       "id": "sequential-thinking",
       "class": "BrainNode\\Mcp\\SequentialThinkingMcp",
       "transport": "stdio",

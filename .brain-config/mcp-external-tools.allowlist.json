@@ -8,12 +8,6 @@
                 "search"
             ]
         },
-        "mock-echo": {
-            "enabled": true,
-            "tools_allowed": [
-                "mock-echo"
-            ]
-        },
         "sequential-thinking": {
             "enabled": true,
             "tools_allowed": [

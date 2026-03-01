@@ -31,12 +31,11 @@ fi
 REGISTRY_IDS=$(echo "$LIST_OUTPUT" | jq -r '.data.servers[] | select(.enabled == true) | .id' | sort | tr '
 ' ' ')
 
-# 3. Get IDs from .mcp.json
+# 3. Get IDs from .mcp.json (excluding brain-tools builtin)
 if [[ -f ".mcp.json" ]]; then
-    # We only care about servers that come from our registry. 
-    # .mcp.json might contain others if manually added (though not recommended)
-    # But for this check, we expect 1:1 match for registry-enabled servers.
-    COMPILED_IDS=$(jq -r '.mcpServers | keys[]' .mcp.json | grep -v "mock-echo" | sort | tr '\n' ' ')
+    # brain-tools is a builtin internal server (not in registry) - exclude from comparison
+    # All other servers should match registry 1:1
+    COMPILED_IDS=$(jq -r '.mcpServers | keys[]' .mcp.json | grep -v "^brain-tools$" | sort | tr '\n' ' ')
 else
     COMPILED_IDS=""
 fi
