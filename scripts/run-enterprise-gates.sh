@@ -72,10 +72,12 @@ fi
 echo -e "${YELLOW}[2/7] Enterprise Audit${NC}"
 AUDIT_OUTPUT=$(bash scripts/audit-enterprise.sh 2>&1) || true
 AUDIT_PASS=$(echo "$AUDIT_OUTPUT" | grep -E 'PASS:.*categories' | grep -oE '[0-9]+' | head -1 || echo "0")
+AUDIT_WARN=$(echo "$AUDIT_OUTPUT" | grep -E 'WARN:.*categories' | grep -oE '[0-9]+' | head -1 || echo "0")
 AUDIT_FAIL=$(echo "$AUDIT_OUTPUT" | grep -E 'FAIL:.*categories' | grep -oE '[0-9]+' | head -1 || echo "0")
+AUDIT_TOTAL=$((AUDIT_PASS + AUDIT_WARN + AUDIT_FAIL))
 
 if [[ "$AUDIT_FAIL" == "0" && "$AUDIT_PASS" -gt 0 ]]; then
-    log_gate "enterprise-audit" "PASS" "${AUDIT_PASS}/42 checks"
+    log_gate "enterprise-audit" "PASS" "${AUDIT_PASS}/${AUDIT_TOTAL} categories"
 else
     log_gate "enterprise-audit" "FAIL" "${AUDIT_FAIL} failures"
 fi
