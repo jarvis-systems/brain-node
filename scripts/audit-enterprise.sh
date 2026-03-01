@@ -1210,42 +1210,42 @@ if [[ $MCPALLOWLIST_COUNT -eq 0 ]]; then
 fi
 add_category "mcp-allowlist-contract" "$([ $MCPALLOWLIST_COUNT -eq 0 ] && echo pass || echo fail)" "$MCPALLOWLIST_COUNT" "$MCPALLOWLIST_FINDINGS"
 
-# ── Check 26: brain-tools serve contract (docs.search) ─────────────────────
+# ── Check 26: brain-tools serve contract (docs_search) ─────────────────────
 
-log "${BOLD}[26/60] brain-tools serve contract (docs.search)${NC}"
+log "${BOLD}[26/60] brain-tools serve contract (docs_search)${NC}"
 
 MCPSERVE_DOCS_FINDINGS="[]"
 MCPSERVE_DOCS_COUNT=0
 
-# Test docs.search via mcp:serve JSON-RPC
-MCPSERVE_DOCS_OUT=$(echo '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"docs.search","arguments":{"query":"test","limit":1}}}' | BRAIN_AGENT_ID=claude brain_cli mcp:serve 2>/tmp/mcpserve_err_26.txt)
+# Test docs_search via mcp:serve JSON-RPC
+MCPSERVE_DOCS_OUT=$(echo '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"docs_search","arguments":{"query":"test","limit":1}}}' | BRAIN_AGENT_ID=claude brain_cli mcp:serve 2>/tmp/mcpserve_err_26.txt)
 
 # Check stderr is empty
 if [[ -s /tmp/mcpserve_err_26.txt ]]; then
     MCPSERVE_DOCS_COUNT=$((MCPSERVE_DOCS_COUNT + 1))
-    MCPSERVE_DOCS_FINDINGS=$(echo "$MCPSERVE_DOCS_FINDINGS" | jq '. + [{"message": "mcp:serve docs.search produced stderr output"}]')
+    MCPSERVE_DOCS_FINDINGS=$(echo "$MCPSERVE_DOCS_FINDINGS" | jq '. + [{"message": "mcp:serve docs_search produced stderr output"}]')
     log "  ${RED}FAIL${NC} stderr not empty"
 fi
 
 # Check JSON-RPC response validity
-if ! echo "$MCPSERVE_DOCS_OUT" | jq -e '.result.content.type == "text"' >/dev/null 2>&1; then
+if ! echo "$MCPSERVE_DOCS_OUT" | jq -e '.result.content[0].type == "text"' >/dev/null 2>&1; then
     MCPSERVE_DOCS_COUNT=$((MCPSERVE_DOCS_COUNT + 1))
-    MCPSERVE_DOCS_FINDINGS=$(echo "$MCPSERVE_DOCS_FINDINGS" | jq '. + [{"message": "mcp:serve docs.search invalid JSON-RPC response"}]')
+    MCPSERVE_DOCS_FINDINGS=$(echo "$MCPSERVE_DOCS_FINDINGS" | jq '. + [{"message": "mcp:serve docs_search invalid JSON-RPC response"}]')
     log "  ${RED}FAIL${NC} invalid JSON-RPC response"
 fi
 
 # Check response contains valid JSON in text field
-DOCS_TEXT=$(echo "$MCPSERVE_DOCS_OUT" | jq -r '.result.content.text' 2>/dev/null || echo "")
+DOCS_TEXT=$(echo "$MCPSERVE_DOCS_OUT" | jq -r '.result.content[0].text' 2>/dev/null || echo "")
 if ! echo "$DOCS_TEXT" | jq -e '.total_matches' >/dev/null 2>&1; then
     MCPSERVE_DOCS_COUNT=$((MCPSERVE_DOCS_COUNT + 1))
-    MCPSERVE_DOCS_FINDINGS=$(echo "$MCPSERVE_DOCS_FINDINGS" | jq '. + [{"message": "mcp:serve docs.search response missing total_matches"}]')
+    MCPSERVE_DOCS_FINDINGS=$(echo "$MCPSERVE_DOCS_FINDINGS" | jq '. + [{"message": "mcp:serve docs_search response missing total_matches"}]')
     log "  ${RED}FAIL${NC} response missing total_matches"
 fi
 
 if [[ $MCPSERVE_DOCS_COUNT -eq 0 ]]; then
-    log "  ${GREEN}PASS${NC} brain-tools docs.search contract valid"
+    log "  ${GREEN}PASS${NC} brain-tools docs_search contract valid"
 fi
-add_category "brain-tools-docs-search" "$([ $MCPSERVE_DOCS_COUNT -eq 0 ] && echo pass || echo fail)" "$MCPSERVE_DOCS_COUNT" "$MCPSERVE_DOCS_FINDINGS"
+add_category "brain-tools-docs_search" "$([ $MCPSERVE_DOCS_COUNT -eq 0 ] && echo pass || echo fail)" "$MCPSERVE_DOCS_COUNT" "$MCPSERVE_DOCS_FINDINGS"
 
 # ── Check 27: brain-tools serve contract (diagnose) ────────────────────────
 
@@ -1265,14 +1265,14 @@ if [[ -s /tmp/mcpserve_err_27.txt ]]; then
 fi
 
 # Check JSON-RPC response validity
-if ! echo "$MCPSERVE_DIAG_OUT" | jq -e '.result.content.type == "text"' >/dev/null 2>&1; then
+if ! echo "$MCPSERVE_DIAG_OUT" | jq -e '.result.content[0].type == "text"' >/dev/null 2>&1; then
     MCPSERVE_DIAG_COUNT=$((MCPSERVE_DIAG_COUNT + 1))
     MCPSERVE_DIAG_FINDINGS=$(echo "$MCPSERVE_DIAG_FINDINGS" | jq '. + [{"message": "mcp:serve diagnose invalid JSON-RPC response"}]')
     log "  ${RED}FAIL${NC} invalid JSON-RPC response"
 fi
 
 # Check response contains valid JSON with self_hosting field
-DIAG_TEXT=$(echo "$MCPSERVE_DIAG_OUT" | jq -r '.result.content.text' 2>/dev/null || echo "")
+DIAG_TEXT=$(echo "$MCPSERVE_DIAG_OUT" | jq -r '.result.content[0].text' 2>/dev/null || echo "")
 if ! echo "$DIAG_TEXT" | jq -e '.self_hosting' >/dev/null 2>&1; then
     MCPSERVE_DIAG_COUNT=$((MCPSERVE_DIAG_COUNT + 1))
     MCPSERVE_DIAG_FINDINGS=$(echo "$MCPSERVE_DIAG_FINDINGS" | jq '. + [{"message": "mcp:serve diagnose response missing self_hosting"}]')
@@ -1469,7 +1469,7 @@ MCPGUARD_FINDINGS="[]"
 MCPGUARD_COUNT=0
 
 # We already ran the script above, but for clarity and simplicity we can rely on its success for Check 38 too
-# or just run it again if we want independent checks. 
+# or just run it again if we want independent checks.
 # Since Check 37 and 38 are in the same script, if it returns 0, both are likely fine.
 if [[ $MCPUX_COUNT -eq 0 ]]; then
     log "  ${GREEN}PASS${NC} MCP guardrails contract verified"
@@ -1815,7 +1815,7 @@ if bash "$PROJECT_ROOT/scripts/check-instructions-tooling-contract.sh" >/dev/nul
     log "  ${GREEN}PASS${NC} Instructions Tooling Contract"
 else
     TOOLING_COUNT=1
-    TOOLING_FINDINGS=$(echo "$TOOLING_FINDINGS" | jq '. + [{"message": "Instructions tooling contract violated - forbidden mcp:* commands or missing tools:* examples"}]')
+    TOOLING_FINDINGS=$(echo "$TOOLING_FINDINGS" | jq '. + [{"message": "Instructions tooling contract violated - forbidden CLI patterns or missing mcp__brain-tools__* tool IDs"}]')
     log "  ${RED}FAIL${NC} Instructions Tooling Contract violated"
     bash "$PROJECT_ROOT/scripts/check-instructions-tooling-contract.sh" 2>&1 | sed 's/^/    /'
 fi
@@ -1854,6 +1854,40 @@ else
     bash "$PROJECT_ROOT/scripts/check-compile-json-contract.sh" 2>&1 | sed 's/^/    /'
 fi
 add_category "compile-json-contract" "$([ $CONTRACT_COUNT -eq 0 ] && echo pass || echo fail)" "$CONTRACT_COUNT" "$CONTRACT_FINDINGS"
+
+# ── Check 61: Client MCP Export Contract (All Clients) ───────────────────────
+
+log "${BOLD}[61/61] Client MCP Export Contract${NC}"
+
+CLIENT_MCP_COUNT=0
+CLIENT_MCP_FINDINGS="[]"
+
+if bash "$PROJECT_ROOT/scripts/check-opencode-mcp-export.sh" >/dev/null 2>&1; then
+    log "  ${GREEN}PASS${NC} Client MCP Export Contract"
+else
+    CLIENT_MCP_COUNT=1
+    CLIENT_MCP_FINDINGS=$(echo "$CLIENT_MCP_FINDINGS" | jq '. + [{"message": "Client MCP export contract violated - missing brain-tools in one or more clients"}]')
+    log "  ${RED}FAIL${NC} Client MCP Export Contract violated"
+    bash "$PROJECT_ROOT/scripts/check-opencode-mcp-export.sh" 2>&1 | sed 's/^/    /'
+fi
+add_category "client-mcp-export-contract" "$([ $CLIENT_MCP_COUNT -eq 0 ] && echo pass || echo fail)" "$CLIENT_MCP_COUNT" "$CLIENT_MCP_FINDINGS"
+
+# ── Check 62: Includes No Legacy CLI ───────────────────────────────────────
+
+log "${BOLD}[62/62] Includes No Legacy CLI${NC}"
+
+LEGACYCLI_FINDINGS="[]"
+LEGACYCLI_COUNT=0
+
+if bash "$PROJECT_ROOT/scripts/check-includes-no-legacy-cli.sh" >/dev/null 2>&1; then
+    log "  ${GREEN}PASS${NC} Includes No Legacy CLI"
+else
+    LEGACYCLI_COUNT=1
+    LEGACYCLI_FINDINGS=$(echo "$LEGACYCLI_FINDINGS" | jq '. + [{"message": "Legacy CLI invocations found in includes - use brain tools:* commands instead"}]')
+    log "  ${RED}FAIL${NC} Legacy CLI invocations detected"
+    bash "$PROJECT_ROOT/scripts/check-includes-no-legacy-cli.sh" 2>&1 | sed 's/^/    /'
+fi
+add_category "includes-no-legacy-cli" "$([ $LEGACYCLI_COUNT -eq 0 ] && echo pass || echo fail)" "$LEGACYCLI_COUNT" "$LEGACYCLI_FINDINGS"
 
 # ── Output JSON report ──────────────────────────────────────────────────
 
