@@ -26,7 +26,6 @@ status: "active"
 
 The Brain MCP implementation strictly adheres to a **CLI stdio-only** execution model.
 - **No background servers**: There are no daemons, supervisors, or background processes.
-- **Stateless execution**: Every MCP tool call is a discrete `brain mcp:call` CLI invocation that returns JSON and exits.
 - **Attack surface reduction**: By eliminating long-running servers, we eliminate persistent memory corruption risks, connection hijacking, and daemon privilege escalation vectors.
 
 ### Test Fixtures

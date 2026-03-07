@@ -87,7 +87,7 @@ For PHP code that needs to execute Brain tools (future MCP server, internal serv
 | READ-ONLY (`docs`, `diagnose`, `status`, `list*`) | ✅ | ✅ | ✅ | ✅ |
 | SCAFFOLD (`make:*`, `init`) | ❌ | ✅ | ✅ | ✅ |
 | WRITE (`compile`, `update`, `add`, `detail`) | ❌ | ❌ | ✅ | ✅ |
-| DESTRUCTIVE (`memory:hygiene`, `mcp:migrate`) | ❌ | ❌ | ✅ | ✅ |
+| DESTRUCTIVE (`memory:hygiene`) | ❌ | ❌ | ✅ | ✅ |
 | RELEASE (`release:prepare`) | ❌ | ❌ | ❌ | ✅ |
 | EXPERIMENTAL (`board`, `lab`, `run`, `meeting`) | ❌ | ❌ | ⚠️ | ⚠️ |
 

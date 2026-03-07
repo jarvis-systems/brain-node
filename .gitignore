@@ -21,3 +21,4 @@ QWEN.md
 .qwen
 settings.json
 .brain/agent-schema.json
+agent-schema.json

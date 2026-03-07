@@ -68,21 +68,6 @@ if [[ -n "$BRAIN_VENDOR_ROOT" ]]; then
 fi
 
 # ═══════════════════════════════════════════════════════════════════════════
-# SUB-CHECK 60.1: Vendor surface - No mcp:* commands in core includes
-# ═══════════════════════════════════════════════════════════════════════════
-if [[ -n "$CORE_INCLUDES_PATH" ]]; then
-    mcp_in_vendor=$(grep -rE "mcp:list|mcp:describe|mcp:call|mcp:docs_search|mcp:diagnose" "$CORE_INCLUDES_PATH/" --include="*.php" 2>/dev/null | head -10 || true)
-    if [[ -n "$mcp_in_vendor" ]]; then
-        ERRORS=$((ERRORS + 1))
-        FINDINGS+=$'\n[60.1 FAIL] mcp:* commands found in vendor includes:\n'"$mcp_in_vendor"
-    else
-        FINDINGS+=$'\n[60.1 PASS] No mcp:* commands in vendor includes'
-    fi
-else
-    FINDINGS+=$'\n[60.1 SKIP] Core includes path not found'
-fi
-
-# ═══════════════════════════════════════════════════════════════════════════
 # SUB-CHECK 60.2: Vendor surface - BrainCLI::MCP__* methods present
 # ═══════════════════════════════════════════════════════════════════════════
 if [[ -n "$CORE_INCLUDES_PATH" ]]; then
@@ -98,37 +83,6 @@ else
 fi
 
 # ═══════════════════════════════════════════════════════════════════════════
-# SUB-CHECK 60.3: Compiled surface - No mcp:* commands
-# ═══════════════════════════════════════════════════════════════════════════
-if [[ -n "$COMPILED_DIRS" ]]; then
-    mcp_in_compiled=""
-    MISSING_DIRS=""
-    for dir in $COMPILED_DIRS; do
-        if [[ ! -d "$dir" ]]; then
-            MISSING_DIRS+="$dir "
-            continue
-        fi
-        found=$(grep -rE "mcp:list|mcp:describe|mcp:call|mcp:docs_search|mcp:diagnose" "$dir/" --include="*.md" --include="*.toml" 2>/dev/null | grep -v node_modules | head -10 || true)
-        if [[ -n "$found" ]]; then
-            mcp_in_compiled+="[$dir] $found"$'\n'
-        fi
-    done
-
-    if [[ -n "$MISSING_DIRS" ]]; then
-        ERRORS=$((ERRORS + 1))
-        FINDINGS+=$'\n[60.3 FAIL] Compile surface missing, rerun compile: '"$MISSING_DIRS"
-    elif [[ -n "$mcp_in_compiled" ]]; then
-        ERRORS=$((ERRORS + 1))
-        FINDINGS+=$'\n[60.3 FAIL] mcp:* commands found in compiled output:\n'"$mcp_in_compiled"
-    else
-        FINDINGS+=$'\n[60.3 PASS] No mcp:* commands in compiled output'
-    fi
-else
-    ERRORS=$((ERRORS + 1))
-    FINDINGS+=$'\n[60.3 FAIL] No compiled directories detected'
-fi
-
-# ═══════════════════════════════════════════════════════════════════════════
 # SUB-CHECK 60.4: Compiled surface - mcp__brain-tools__* tool IDs present
 # ═══════════════════════════════════════════════════════════════════════════
 if [[ -n "$COMPILED_DIRS" ]]; then
@@ -136,7 +90,7 @@ if [[ -n "$COMPILED_DIRS" ]]; then
     for dir in $COMPILED_DIRS; do
         if [[ -d "$dir" ]]; then
             set +e
-            count=$(grep -rE "mcp__brain-tools__(docs_search|diagnose|list-masters)" "$dir/" --include="*.md" --include="*.toml" 2>/dev/null | grep -v node_modules | wc -l | tr -d ' ')
+            count=$(grep -rE "mcp__brain-tools__(docs_search|diagnose|list_masters)" "$dir/" --include="*.md" --include="*.toml" 2>/dev/null | grep -v node_modules | wc -l | tr -d ' ')
             set -e
             total_mcp_tools=$((total_mcp_tools + count))
         fi

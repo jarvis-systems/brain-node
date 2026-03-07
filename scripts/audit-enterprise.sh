@@ -913,7 +913,7 @@ add_category "compile-clean" "$([ $COMPILECLEAN_COUNT -eq 0 ] && echo pass || ec
 
 log "${BOLD}[20/60] Agent schema enabled set${NC}"
 
-CANON_FILE="$PROJECT_ROOT/.brain-config/enabled-agents.json"
+CANON_FILE="$PROJECT_ROOT/scripts/.brain-config/enabled-agents.json"
 AGENTSCHEMA_FINDINGS="[]"
 AGENTSCHEMA_COUNT=0
 
@@ -1087,128 +1087,6 @@ if [[ $TESTMODE_COUNT -eq 0 ]]; then
     log "  ${GREEN}PASS${NC} Test Mode Contract enforced"
 fi
 add_category "test-mode-contract" "$([ $TESTMODE_COUNT -eq 0 ] && echo pass || echo fail)" "$TESTMODE_COUNT" "$TESTMODE_FINDINGS"
-
-# ── Check 24: MCP policy inspector output contract ─────────────────────────
-
-log "${BOLD}[24/60] MCP policy inspector output contract${NC}"
-
-MCPPOLICYINSPECTOR_FINDINGS="[]"
-MCPPOLICYINSPECTOR_COUNT=0
-
-# Run brain mcp:policy and validate output
-POLICY_OUTPUT=$(brain_cli mcp:policy --no-interaction 2>&1) || true
-
-# Check 1: Valid JSON
-if ! echo "$POLICY_OUTPUT" | jq empty 2>/dev/null; then
-    MCPPOLICYINSPECTOR_COUNT=$((MCPPOLICYINSPECTOR_COUNT + 1))
-    MCPPOLICYINSPECTOR_FINDINGS=$(echo "$MCPPOLICYINSPECTOR_FINDINGS" | jq '. + [{"message": "Invalid JSON output"}]')
-    log "  ${RED}FAIL${NC} Invalid JSON output"
-fi
-
-# Check 2: Required keys present
-if [[ $MCPPOLICYINSPECTOR_COUNT -eq 0 ]]; then
-    REQUIRED_TOP_KEYS="enabled kill_switch_env"
-    for key in $REQUIRED_TOP_KEYS; do
-        if ! echo "$POLICY_OUTPUT" | jq -e "has(\"$key\")" >/dev/null 2>&1; then
-            MCPPOLICYINSPECTOR_COUNT=$((MCPPOLICYINSPECTOR_COUNT + 1))
-            MCPPOLICYINSPECTOR_FINDINGS=$(echo "$MCPPOLICYINSPECTOR_FINDINGS" | jq --arg key "$key" '. + [{"message": "Missing required top-level key", "key": $key}]')
-            log "  ${RED}FAIL${NC} Missing required top-level key: $key"
-        fi
-    done
-
-    REQUIRED_DATA_KEYS="resolved_path schema_version allowed_count never_count overlap"
-    for key in $REQUIRED_DATA_KEYS; do
-        if ! echo "$POLICY_OUTPUT" | jq -e ".data | has(\"$key\")" >/dev/null 2>&1; then
-            MCPPOLICYINSPECTOR_COUNT=$((MCPPOLICYINSPECTOR_COUNT + 1))
-            MCPPOLICYINSPECTOR_FINDINGS=$(echo "$MCPPOLICYINSPECTOR_FINDINGS" | jq --arg key "$key" '. + [{"message": "Missing required data key", "key": $key}]')
-            log "  ${RED}FAIL${NC} Missing required data key: $key"
-        fi
-    done
-fi
-
-# Check 3: No forbidden patterns (tool names, secrets)
-if [[ $MCPPOLICYINSPECTOR_COUNT -eq 0 ]]; then
-    FORBIDDEN_PATTERNS="docs compile make: token secret api_key bearer sk- gsk_ ctx7sk"
-    OUTPUT_LOWER=$(echo "$POLICY_OUTPUT" | tr '[:upper:]' '[:lower:]')
-    for pattern in $FORBIDDEN_PATTERNS; do
-        if echo "$OUTPUT_LOWER" | grep -qE "$pattern"; then
-            MCPPOLICYINSPECTOR_COUNT=$((MCPPOLICYINSPECTOR_COUNT + 1))
-            MCPPOLICYINSPECTOR_FINDINGS=$(echo "$MCPPOLICYINSPECTOR_FINDINGS" | jq --arg pattern "$pattern" '. + [{"message": "Forbidden pattern in output", "pattern": $pattern}]')
-            log "  ${RED}FAIL${NC} Forbidden pattern detected: $pattern"
-        fi
-    done
-fi
-
-if [[ $MCPPOLICYINSPECTOR_COUNT -eq 0 ]]; then
-    log "  ${GREEN}PASS${NC} MCP policy inspector output valid"
-fi
-add_category "mcp-policy-inspector" "$([ $MCPPOLICYINSPECTOR_COUNT -eq 0 ] && echo pass || echo fail)" "$MCPPOLICYINSPECTOR_COUNT" "$MCPPOLICYINSPECTOR_FINDINGS"
-
-# ── Check 25: MCP allowlist contract ───────────────────────────────────────
-
-log "${BOLD}[25/60] MCP allowlist contract${NC}"
-
-MCPALLOWLIST_FINDINGS="[]"
-MCPALLOWLIST_COUNT=0
-
-# Run brain mcp:allowlist and validate output
-ALLOWLIST_OUTPUT=$(brain_cli mcp:allowlist --no-interaction 2>&1) || true
-
-# Check 1: Valid JSON
-if ! echo "$ALLOWLIST_OUTPUT" | jq empty 2>/dev/null; then
-    MCPALLOWLIST_COUNT=$((MCPALLOWLIST_COUNT + 1))
-    MCPALLOWLIST_FINDINGS=$(echo "$MCPALLOWLIST_FINDINGS" | jq '. + [{"message": "Invalid JSON output"}]')
-    log "  ${RED}FAIL${NC} Invalid JSON output"
-fi
-
-# Check 2: Required keys present (programmatic v1 contract)
-if [[ $MCPALLOWLIST_COUNT -eq 0 ]]; then
-    REQUIRED_TOP_ALLOWLIST_KEYS="enabled kill_switch_env"
-    for key in $REQUIRED_TOP_ALLOWLIST_KEYS; do
-        if ! echo "$ALLOWLIST_OUTPUT" | jq -e "has(\"$key\")" >/dev/null 2>&1; then
-            MCPALLOWLIST_COUNT=$((MCPALLOWLIST_COUNT + 1))
-            MCPALLOWLIST_FINDINGS=$(echo "$MCPALLOWLIST_FINDINGS" | jq --arg key "$key" '. + [{"message": "Missing required programmatic top-level key", "key": $key}]')
-            log "  ${RED}FAIL${NC} Missing programmatic top-level key: $key"
-        fi
-    done
-
-    REQUIRED_DATA_ALLOWLIST_KEYS="allowed clients never resolved_path schema_version"
-    for key in $REQUIRED_DATA_ALLOWLIST_KEYS; do
-        if ! echo "$ALLOWLIST_OUTPUT" | jq -e ".data | has(\"$key\")" >/dev/null 2>&1; then
-            MCPALLOWLIST_COUNT=$((MCPALLOWLIST_COUNT + 1))
-            MCPALLOWLIST_FINDINGS=$(echo "$MCPALLOWLIST_FINDINGS" | jq --arg key "$key" '. + [{"message": "Missing required programmatic data key", "key": $key}]')
-            log "  ${RED}FAIL${NC} Missing programmatic data key: $key"
-        fi
-    done
-fi
-
-# Check 3: No secrets
-if [[ $MCPALLOWLIST_COUNT -eq 0 ]]; then
-    FORBIDDEN_ALLOWLIST_PATTERNS="token secret api_key bearer sk- gsk_ ctx7sk"
-    ALLOWLIST_OUTPUT_LOWER=$(echo "$ALLOWLIST_OUTPUT" | tr '[:upper:]' '[:lower:]')
-    for pattern in $FORBIDDEN_ALLOWLIST_PATTERNS; do
-        if echo "$ALLOWLIST_OUTPUT_LOWER" | grep -qE "$pattern"; then
-            MCPALLOWLIST_COUNT=$((MCPALLOWLIST_COUNT + 1))
-            MCPALLOWLIST_FINDINGS=$(echo "$MCPALLOWLIST_FINDINGS" | jq --arg pattern "$pattern" '. + [{"message": "Secret pattern in allowlist output", "pattern": $pattern}]')
-            log "  ${RED}FAIL${NC} Secret pattern detected: $pattern"
-        fi
-    done
-fi
-
-# Check 4: Respects kill switch
-if [[ $MCPALLOWLIST_COUNT -eq 0 ]]; then
-    KILL_OUTPUT=$(BRAIN_DISABLE_MCP=true brain_cli mcp:allowlist --no-interaction 2>&1) || true
-    if [[ "$(echo "$KILL_OUTPUT" | jq -r '.enabled')" != "false" ]]; then
-        MCPALLOWLIST_COUNT=$((MCPALLOWLIST_COUNT + 1))
-        MCPALLOWLIST_FINDINGS=$(echo "$MCPALLOWLIST_FINDINGS" | jq '. + [{"message": "Kill switch ignored"}]')
-        log "  ${RED}FAIL${NC} Kill switch ignored"
-    fi
-fi
-
-if [[ $MCPALLOWLIST_COUNT -eq 0 ]]; then
-    log "  ${GREEN}PASS${NC} MCP allowlist programmatic output valid"
-fi
-add_category "mcp-allowlist-contract" "$([ $MCPALLOWLIST_COUNT -eq 0 ] && echo pass || echo fail)" "$MCPALLOWLIST_COUNT" "$MCPALLOWLIST_FINDINGS"
 
 # ── Check 26: brain-tools serve contract (docs_search) ─────────────────────
 
@@ -1424,42 +1302,6 @@ else
     log "  ${RED}FAIL${NC} mcp:list command failed"
 fi
 add_category "mcp-discovery-list" "$([ $MCPLIST_COUNT -eq 0 ] && echo pass || echo fail)" "$MCPLIST_COUNT" "$MCPLIST_FINDINGS"
-
-# ── Check 36: MCP discovery describe ───────────────────────────────────────
-
-log "${BOLD}[36/60] MCP discovery describe${NC}"
-
-MCPDESC_FINDINGS="[]"
-MCPDESC_COUNT=0
-
-# Test with vector-task which has schema
-if brain_cli mcp:describe --server=vector-task >/dev/null 2>&1; then
-    # Already verified by check-mcp-discovery.sh in Check 35, but we can do a quick extra check here
-    log "  ${GREEN}PASS${NC} MCP discovery describe valid"
-else
-    MCPDESC_COUNT=1
-    MCPDESC_FINDINGS=$(echo "$MCPDESC_FINDINGS" | jq '. + [{"message": "mcp:describe command failed"}]')
-    log "  ${RED}FAIL${NC} mcp:describe command failed"
-fi
-add_category "mcp-discovery-describe" "$([ $MCPDESC_COUNT -eq 0 ] && echo pass || echo fail)" "$MCPDESC_COUNT" "$MCPDESC_FINDINGS"
-
-# ── Check 37: MCP call UX ───────────────────────────────────────────────────
-
-log "${BOLD}[37/60] MCP call UX (error hints)${NC}"
-
-MCPUX_FINDINGS="[]"
-MCPUX_COUNT=0
-
-# Run script and capture output for findings on failure
-UX_OUTPUT=$(bash "$PROJECT_ROOT/scripts/check-mcp-ux.sh" 2>&1)
-if [[ $? -eq 0 ]]; then
-    log "  ${GREEN}PASS${NC} MCP call error hints verified"
-else
-    MCPUX_COUNT=1
-    MCPUX_FINDINGS=$(echo "$MCPUX_FINDINGS" | jq --arg msg "MCP call error hints validation failed: $UX_OUTPUT" '. + [{"message": $msg}]')
-    log "  ${RED}FAIL${NC} MCP call error hints validation failed"
-fi
-add_category "mcp-call-ux" "$([ $MCPUX_COUNT -eq 0 ] && echo pass || echo fail)" "$MCPUX_COUNT" "$MCPUX_FINDINGS"
 
 # ── Check 38: MCP guardrails contract ──────────────────────────────────────
 

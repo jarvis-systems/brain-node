@@ -46,13 +46,8 @@ The following are FORBIDDEN for brain-tools internal operations:
 
 | Forbidden | Reason |
 |-----------|--------|
-| `mcp:list` | External MCP only (context7, vector-memory) |
-| `mcp:describe` | External MCP only (context7, vector-memory) |
-| `mcp:call` | External MCP only (context7, vector-memory) |
 | `shell_exec/proc_open` in serve path | Must use in-process dispatch |
 | `node/Mcp/*` classes for brain-tools | brain-tools is CLI-only |
-
-**NOTE:** `mcp:list`, `mcp:call`, `mcp:describe` are legitimate CLI commands for EXTERNAL MCP servers (context7, vector-memory, etc.). They are only forbidden for brain-tools internal routing.
 
 ### I/O Contract
 
@@ -103,15 +98,9 @@ brain-tools is a thin adapter. These are permanently out of scope:
 The following constraints are enforced by automated checks:
 
 1. **Only mcp:serve exists for brain-tools** — No other entrypoint for brain-tools internal tools
-2. **No brain-tools wrapper commands** — These files are FORBIDDEN in `cli/src/Console/Commands/`:
-   - `McpDocsSearchCommand.php` — would shadow docs_search
-   - `McpDiagnoseCommand.php` — would shadow diagnose
-   - `McpListMastersCommand.php` — would shadow list_masters
-   
-   NOTE: `mcp:list`, `mcp:call`, `mcp:describe`, etc. are for EXTERNAL MCP servers (context7, vector-memory) and are NOT forbidden.
-3. **No node/Mcp server classes for brain-tools** — brain-tools is CLI-only
-4. **Toolset freeze** — tools/list returns EXACTLY `["docs_search", "diagnose", "list_masters"]` in this order
-5. **Mapping freeze** — Internal routing must map:
+2. **No node/Mcp server classes for brain-tools** — brain-tools is CLI-only
+3. **Toolset freeze** — tools/list returns EXACTLY `["docs_search", "diagnose", "list_masters"]` in this order
+4. **Mapping freeze** — Internal routing must map:
    - `docs_search` → `DocsCommand::class`
    - `diagnose` → `DiagnoseCommand::class`
    - `list_masters` → `ListMastersCommand::class`
@@ -343,10 +332,6 @@ All remote MCP servers MUST integrate with Brain via a generic `StdioAdapter`.
 | `3`  | Policy Blocked | Tool forbidden by allowlist or kill-switch. |
 
 **Retries (Transport Only)**: If the binary execution fails (non-zero exit without a valid JSON representation), the Adapter evaluates `McpCallRetryPolicy`. Typical HTTP timeout or pipe flush errors map to `transport_error`, triggering backoff up to 3 times.
-
-### Budget Semantics
-
-The generic **logical-call budget** applies seamlessly. `brain mcp:call` executes the adapter, decrementing the budget strictly once. Stdio-adapter transport retries (e.g., pipes failing) do NOT deduct extra budget counters.
 
 ### Dry-Run Sanitization
 

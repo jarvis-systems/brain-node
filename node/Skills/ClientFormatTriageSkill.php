@@ -22,31 +22,31 @@ class ClientFormatTriageSkill extends SkillArchetype
     {
         $this->guideline('triage-sequence')
             ->text('Client format triage sequence:')
-            ->example()->do([
+            ->example()->do(
                 '1. Run: bash scripts/verify-client-formats.sh',
                 '2. Parse output for [FAIL] markers',
                 '3. Classify failure type by pattern',
                 '4. Map to remediation action',
-            ]);
+            );
 
         $this->guideline('failure-patterns')
             ->text('Common failure patterns and fixes:')
-            ->example()->do([
+            ->example()->do(
                 'missing YAML front matter → Add --- header with name/description',
                 'wrong file extension → Rename or regenerate',
                 'bare model ID → Translate alias via client enum',
                 'empty skills dir → Add at least 1 skill',
                 'missing trust_level → Add to .codex/config.toml',
-            ]);
+            );
 
         $this->guideline('client-specific-notes')
             ->text('Client-specific format requirements:')
-            ->example()->do([
+            ->example()->do(
                 'Claude: .md files, flat skills/',
                 'OpenCode: .md files, flat skills/, provider/model IDs',
                 'Codex: .md prompts, .agents/skills/*/SKILL.md',
                 'Gemini/Qwen: .toml commands, .md skills',
-            ]);
+            );
 
         $this->guideline('evidence-required')
             ->text('Provide: raw FAIL output, classified issue type, remediation command.');
