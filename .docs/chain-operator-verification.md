@@ -1,3 +1,8 @@
+---
+name: "Command Chain Operator Verification"
+description: "Verification report for command chain operator parsing and execution behavior."
+---
+
 # Command Chain Operator (<<) Verification Report
 
 **Date:** 2025-12-17

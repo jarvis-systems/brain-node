@@ -1,6 +1,6 @@
 {
   "id": "CMD-AUTO-task-validate",
-  "title": "Auto: /task:validate — Async validation of vector task with 3 parallel agents",
+  "title": "Auto: /task:validate — Async validation of vector task with 4 parallel agents",
   "difficulty": "L1",
   "prompt": "Опиши команду /task:validate: що вона робить, які iron rules має, які safety gates застосовуються. Коротко, по суті.",
   "timeout_s": 60,

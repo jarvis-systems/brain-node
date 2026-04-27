@@ -24,7 +24,7 @@
     },
     "scripts": {
         "test": "cd core && ./vendor/bin/phpunit",
-        "analyse": "cd core && ./vendor/bin/phpstan analyse && cd ../cli && ./vendor/bin/phpstan analyse",
+        "analyse": "cd core && ./vendor/bin/phpstan analyse --memory-limit=1G && cd ../cli && ./vendor/bin/phpstan analyse --memory-limit=1G",
         "benchmark": "bash scripts/benchmark-llm-suite.sh",
         "benchmark:ci": "bash scripts/benchmark-llm-suite.sh --json --profile ci --model haiku",
         "benchmark:telemetry": "bash scripts/benchmark-llm-suite.sh --json --profile telemetry-ci --model haiku",
@@ -38,6 +38,15 @@
         "benchmark:regression": "bash scripts/benchmark-regression-check.sh",
         "demo:enterprise": "bash scripts/demo-enterprise.sh"
     },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "./core",
+            "options": {
+                "symlink": true
+            }
+        }
+    ],
     "require": {
         "php": "^8.2",
         "jarvis-brain/core": "*",
