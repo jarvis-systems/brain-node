@@ -38,15 +38,6 @@
         "benchmark:regression": "bash scripts/benchmark-regression-check.sh",
         "demo:enterprise": "bash scripts/demo-enterprise.sh"
     },
-    "repositories": [
-        {
-            "type": "path",
-            "url": "./core",
-            "options": {
-                "symlink": true
-            }
-        }
-    ],
     "require": {
         "php": "^8.2",
         "jarvis-brain/core": "*",
