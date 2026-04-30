@@ -277,17 +277,19 @@ TaskCommandCommonTrait   DoCommandCommonTrait
 (~40 rules, lifecycle)   (~18 rules, do workflow)
 ```
 
+Lifecycle task commands additionally include `TaskContextHandoffInclude` for compact warm-context reuse. It applies only to execution/validation commands, not task list/create/status/decompose/brainstorm surfaces.
+
 ### Command Groups
 
 #### Task Commands (10) — TaskCommandCommonTrait
 
 | Command ID | Specific Include |
 |------------|-----------------|
-| `task:async` | TaskAsyncInclude |
-| `task:sync` | TaskSyncInclude |
-| `task:validate` | TaskValidateInclude |
-| `task:validate-sync` | TaskValidateSyncInclude |
-| `task:test-validate` | TaskTestValidateInclude |
+| `task:async` | TaskAsyncInclude + TaskContextHandoffInclude |
+| `task:sync` | TaskSyncInclude + TaskContextHandoffInclude |
+| `task:validate` | TaskValidateInclude + TaskContextHandoffInclude |
+| `task:validate-sync` | TaskValidateSyncInclude + TaskContextHandoffInclude |
+| `task:test-validate` | TaskTestValidateInclude + TaskContextHandoffInclude |
 | `task:create` | TaskCreateInclude |
 | `task:decompose` | TaskDecomposeInclude |
 | `task:list` | TaskListInclude |
