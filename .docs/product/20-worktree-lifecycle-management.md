@@ -38,8 +38,8 @@ git worktree add <worktree-path> -b <branch-name> <base-ref>
 ```
 
 Parameters:
-- `<worktree-path>`: Per convention from doc 17 (e.g., `.worktrees/commit-master/task-42/`)
-- `<branch-name>`: Per naming convention (e.g., `ai/commit-master/task-42/a1`)
+- `<worktree-path>`: Per convention from doc 17 (e.g., `.worktrees/web-research-master/task-42/`)
+- `<branch-name>`: Per naming convention (e.g., `ai/web-research-master/task-42/a1`)
 - `<base-ref>`: Usually `master` or `HEAD`
 
 ### Creation Checklist
@@ -194,7 +194,7 @@ Before cleanup, extract valuable artifacts from the worktree:
 
 ```bash
 TASK_ID="task-42"
-WORKTREE_PATH=".worktrees/commit-master/$TASK_ID"
+WORKTREE_PATH=".worktrees/web-research-master/$TASK_ID"
 ARTIFACT_DIR="$HOME/brain/artifacts/$TASK_ID"
 
 mkdir -p "$ARTIFACT_DIR"
@@ -219,8 +219,8 @@ Handled by the Parallel Merge Protocol (`19-parallel-merge-protocol.md`). This p
 ### Standard Cleanup (after successful merge)
 
 ```bash
-WORKTREE_PATH=".worktrees/commit-master/task-42"
-BRANCH_NAME="ai/commit-master/task-42/a1"
+WORKTREE_PATH=".worktrees/web-research-master/task-42"
+BRANCH_NAME="ai/web-research-master/task-42/a1"
 
 # 1. Remove worktree (Git validates clean state)
 git worktree remove "$WORKTREE_PATH"

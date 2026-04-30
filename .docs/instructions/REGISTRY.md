@@ -17,8 +17,8 @@ Re-generate after any include modification or artifact addition.
 
 | Metric | Value |
 |--------|-------|
-| Compiled artifacts | 34 (1 Brain + 5 agents + 28 commands) |
-| Source agents | 8 (5 compiled + 3 system-only) |
+| Compiled artifacts | 33 (1 Brain + 4 agents + 28 commands) |
+| Source agents | 7 (4 compiled + 3 system-only) |
 | Brain rules (iron) | ~35 unique IDs |
 | Agent-specific rules | ~25 unique IDs |
 | Command trait rules | ~70+ unique IDs |
@@ -188,18 +188,6 @@ Plus all rules from VectorMemoryInclude, VectorTaskInclude (Master only), BrainD
 | `thoroughness-compliance` | MEDIUM | `PROMPT` |
 | `tools-execution-mandatory` | CRITICAL | `PROMPT` |
 
-#### CommitMaster (compiled: `agents/commit-master`)
-
-- **Base**: Master | **Model**: sonnet | **Budget**: 339 lines
-- **Specific includes**: `CommitMasterInclude` (sub: `GitConventionalCommitsInclude`)
-
-| Rule ID | Severity | Enforcement |
-|---------|----------|-------------|
-| `tool-enforcement` | CRITICAL | `PROMPT` |
-| `git-constraints` | HIGH | `PROMPT` |
-| `format-required` | CRITICAL | `PROMPT` |
-| `issue-linking` | HIGH | `PROMPT` |
-
 #### DocumentationMaster (compiled: `agents/documentation-master`)
 
 - **Base**: Master | **Model**: haiku | **Budget**: 306 lines
@@ -278,6 +266,8 @@ TaskCommandCommonTrait   DoCommandCommonTrait
 ```
 
 Lifecycle task commands additionally include `TaskContextHandoffInclude` for compact warm-context reuse. It applies only to execution/validation commands, not task list/create/status/decompose/brainstorm surfaces.
+
+Commands that use `InputCaptureTrait` share the automation flag contract (`RUN_MODE_FLAGS`) for unattended execution constraints: dry-run, JSON output, checkpoint mode, offline mode, timeouts, agent limits, sequential mode, fail-fast, resume/restart, and validation-only audit/full-suite flags.
 
 ### Command Groups
 
@@ -465,29 +455,28 @@ From `instruction-budgets.json` (threshold: 10%):
 
 | Category | Baseline | Max Lines |
 |----------|----------|-----------|
-| commands_total | 2362 | 2598 |
-| agents_total | 1641 | 1805 |
-| brain_total | 695 | 764 |
-| **grand_total** | **4698** | **5167** |
+| commands_total | 2123 | 2335 |
+| agents_total | 1390 | 1529 |
+| brain_total | 750 | 825 |
+| **grand_total** | **4263** | **4689** |
 
 Per-artifact breakdown:
 
 | Artifact | Lines |
 |----------|-------|
-| brain/CLAUDE | 695 |
-| agents/explore | 347 |
-| agents/web-research-master | 373 |
-| agents/commit-master | 339 |
-| agents/documentation-master | 306 |
-| agents/vector-master | 276 |
-| commands/init-brain | 647 |
-| commands/init-agents | 418 |
-| commands/init-task | 413 |
-| commands/do | 328 |
-| commands/init-docs | 288 |
-| commands/init-vector | 268 |
+| brain/CLAUDE | 750 |
+| agents/explore | 368 |
+| agents/web-research-master | 398 |
+| agents/documentation-master | 327 |
+| agents/vector-master | 297 |
+| commands/init-brain | 625 |
+| commands/init-agents | 330 |
+| commands/init-task | 325 |
+| commands/do | 331 |
+| commands/init-docs | 266 |
+| commands/init-vector | 246 |
 
-Note: Only 6 commands tracked individually (init-* + do). Other 22 commands contribute to `commands_total` aggregate but lack individual baselines. System agents (AgentMaster, PromptMaster, ScriptMaster) are not compiled and have no budget.
+Note: Only 6 commands tracked individually (init-* + do). Other 22 commands contribute to `commands_total` aggregate but lack individual baselines. System-only agents (AgentMaster, PromptMaster, ScriptMaster) may compile for clients but are intentionally excluded from the enabled-agent budget.
 
 ## Enforcement Summary
 

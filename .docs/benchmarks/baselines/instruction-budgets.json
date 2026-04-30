@@ -1,41 +1,40 @@
 {
   "_meta": {
     "description": "Instruction budget baselines — compiled artifact line counts. Budget = baseline + threshold_pct headroom.",
-    "date": "2026-02-21T04:48:30Z",
+    "date": "2026-04-30T22:49:36Z",
     "threshold_pct": 10,
     "action": "strict"
   },
   "budgets": {
     "commands_total": {
-      "max_lines": 2598,
-      "baseline": 2362
+      "max_lines": 2335,
+      "baseline": 2123
     },
     "agents_total": {
-      "max_lines": 1805,
-      "baseline": 1641
+      "max_lines": 1529,
+      "baseline": 1390
     },
     "brain_total": {
-      "max_lines": 764,
-      "baseline": 695
+      "max_lines": 825,
+      "baseline": 750
     },
     "grand_total": {
-      "max_lines": 5167,
-      "baseline": 4698
+      "max_lines": 4689,
+      "baseline": 4263
     }
   },
   "artifacts": {
-    "agents/commit-master": 339,
-    "agents/documentation-master": 306,
-    "agents/explore": 347,
-    "agents/vector-master": 276,
-    "agents/web-research-master": 373,
-    "brain/CLAUDE": 695,
-    "commands/do": 328,
-    "commands/init-agents": 418,
-    "commands/init-brain": 647,
-    "commands/init-docs": 288,
-    "commands/init-task": 413,
-    "commands/init-vector": 268
+    "agents/documentation-master": 327,
+    "agents/explore": 368,
+    "agents/vector-master": 297,
+    "agents/web-research-master": 398,
+    "brain/CLAUDE": 750,
+    "commands/do": 331,
+    "commands/init-agents": 330,
+    "commands/init-brain": 625,
+    "commands/init-docs": 266,
+    "commands/init-task": 325,
+    "commands/init-vector": 246
   },
   "required_safety_rules": {
     "description": "CRITICAL safety rules that must exist in init-* command artifacts",

@@ -26,7 +26,7 @@ Defines the semantic boundaries and valid inclusion chains to prevent duplicatio
 
 3. **Command/Agent Specific** (`node/Commands/*`, `node/Agents/*` -> `core/src/Includes/.../*Include`)
    - **Scope:** Unique logic mapping 1:1 to a specific CLI workflow or Agent capability.
-   - **Examples:** `TaskAsyncInclude`, `CommitMasterInclude`.
+   - **Examples:** `TaskAsyncInclude`, `DocumentationMasterInclude`.
    - **Rule:** May compositionally include Shared includes via `#[Includes(SharedTaskInclude::class)]`.
 
 ## Anti-Patterns Addressed

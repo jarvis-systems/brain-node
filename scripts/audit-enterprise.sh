@@ -921,8 +921,8 @@ AGENTSCHEMA_COUNT=0
 if [[ -f "$CANON_FILE" ]]; then
     CANON_SORTED=$(jq -r '.enabled[]' "$CANON_FILE" | sort | tr '\n' ' ' | sed 's/ $//')
 else
-    # Fallback to hardcoded enterprise canon (5 agents)
-    CANON_SORTED=$(echo "commit-master documentation-master explore-master vector-master web-research-master" | tr ' ' '\n' | sort | tr '\n' ' ' | sed 's/ $//')
+    # Fallback to hardcoded enterprise canon (4 agents)
+    CANON_SORTED=$(echo "documentation-master explore-master vector-master web-research-master" | tr ' ' '\n' | sort | tr '\n' ' ' | sed 's/ $//')
 fi
 
 # Determine Observed list from deterministic filtered CLI source

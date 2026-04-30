@@ -100,7 +100,6 @@ cd core && ./vendor/bin/phpunit tests/McpSchemaValidatorTest.php
 ```bash
 wc -l .claude/agents/*.md
 # Expected:
-#   310 commit-master.md
 #   275 documentation-master.md
 #   318 explore.md
 #   247 vector-master.md

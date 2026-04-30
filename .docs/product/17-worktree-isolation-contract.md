@@ -47,13 +47,13 @@ ai/<agent-name>/<taskId>/<attempt>
 
 Fields:
 - `ai/` — namespace prefix separating agent branches from human branches
-- `<agent-name>` — agent ID (e.g. `commit-master`, `explore`, `prompt-master`)
+- `<agent-name>` — agent ID (e.g. `explore`, `web-research-master`, `prompt-master`)
 - `<taskId>` — vector task ID or ticket reference (e.g. `task-42`, `security-posture`)
 - `<attempt>` — attempt number for circuit breaker tracking (e.g. `a1`, `a2`, `a3`)
 
 Examples:
-- `ai/commit-master/task-42/a1`
 - `ai/explore/security-posture/a1`
+- `ai/web-research-master/task-42/a1`
 - `ai/prompt-master/dd-cleanup/a2`
 
 Rationale: (a) unique branch per attempt prevents checkout conflicts, (b) machine-parsable for automation, (c) supports circuit-breaker/attempt semantics, (d) `ai/` prefix enables bulk operations (`git branch --list 'ai/*'`).
@@ -79,8 +79,8 @@ Example filesystem layout (Layout A):
 ```
 ./                                    # Root repo (operator + Brain)
 .worktrees/
-  commit-master/
-    task-42/                          # Worktree for commit-master
+  web-research-master/
+    task-42/                          # Worktree for web-research-master
       .brain/ .claude/ core/ ...      # Full repo checkout
       vendor/                         # Own composer dependencies
   explore/

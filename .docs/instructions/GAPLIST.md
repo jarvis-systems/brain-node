@@ -22,7 +22,7 @@ Prioritized gaps from REGISTRY and COVERAGE analysis. Each gap includes risk, ef
 | # | Gap | Risk | Effort | ROI | Status |
 |---|-----|------|--------|-----|--------|
 | 1 | `file-safety` untested | HIGH | LOW | HIGH | **CLOSED** — ADV-008 |
-| 2 | Agent tool rules untested (5 agents) | MED | MED | MED | **CLOSED** (explore) — ST-006; remaining agents deferred |
+| 2 | Agent tool rules untested (4 agents) | MED | MED | MED | **CLOSED** (explore) — ST-006; remaining agents deferred |
 | 3 | `delegation-depth` untested adversarially | MED | LOW | HIGH | **CLOSED** — L3-008 |
 | 4 | `never-write-compiled` untested adversarially | MED | LOW | HIGH | **CLOSED** — ADV-009 |
 | 5 | CMD-AUTO lack `expected_tools` | LOW | HIGH | LOW | Accepted risk |
@@ -62,7 +62,7 @@ Prioritized gaps from REGISTRY and COVERAGE analysis. Each gap includes risk, ef
 - **Profile impact**: ci, full (+1 scenario each)
 - **Baseline impact**: Dry-run only
 
-Remaining agent rules (commit-master, documentation-master, web-research-master, vector-master) deferred to future iteration — lower invocation frequency, more complex to test without live API.
+Remaining agent rules (documentation-master, web-research-master, vector-master) deferred to future iteration — lower invocation frequency, more complex to test without live API.
 
 ### Gap 3: `delegation-depth` untested adversarially (GAP-3) — CLOSED
 

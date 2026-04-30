@@ -72,14 +72,14 @@
         },
         "agentReference": {
             "type": "string",
-            "description": "Reference to a compiled agent. Available agents: agent-master, commit-master, documentation-master, explore-master, prompt-master, script-master, vector-master, web-research-master",
-            "pattern": "^(agent\\-master|commit\\-master|documentation\\-master|explore\\-master|prompt\\-master|script\\-master|vector\\-master|web\\-research\\-master)$",
+            "description": "Reference to a compiled agent. Available agents: agent-master, documentation-master, explore-master, prompt-master, script-master, vector-master, web-research-master",
+            "pattern": "^(agent\\-master|documentation\\-master|explore\\-master|prompt\\-master|script\\-master|vector\\-master|web\\-research\\-master)$",
             "examples": [
                 "agent-master",
-                "commit-master",
                 "documentation-master",
                 "explore-master",
-                "prompt-master"
+                "prompt-master",
+                "script-master"
             ]
         },
         "commandReference": {
@@ -686,10 +686,6 @@
                     "type": "string",
                     "description": "Disable AgentMaster from compilation (true/false)"
                 },
-                "AGENTS_COMMIT_MASTER_DISABLE": {
-                    "type": "string",
-                    "description": "Disable CommitMaster from compilation (true/false)"
-                },
                 "AGENTS_DOCUMENTATION_MASTER_DISABLE": {
                     "type": "string",
                     "description": "Disable DocumentationMaster from compilation (true/false)"
@@ -981,34 +977,6 @@
                 "COMMANDS_WORK_COMMAND_DISABLE": {
                     "type": "string",
                     "description": "Disable WorkCommand from compilation (true/false)"
-                },
-                "COMMIT_MASTER_GUIDELINE_0": {
-                    "type": "string",
-                    "description": "Custom guideline #0 for CommitMaster"
-                },
-                "COMMIT_MASTER_GUIDELINE_1": {
-                    "type": "string",
-                    "description": "Custom guideline #1 for CommitMaster"
-                },
-                "COMMIT_MASTER_GUIDELINE_2": {
-                    "type": "string",
-                    "description": "Custom guideline #2 for CommitMaster"
-                },
-                "COMMIT_MASTER_MODEL": {
-                    "type": "string",
-                    "description": "Model override for CommitMaster"
-                },
-                "COMMIT_MASTER_RULE_0": {
-                    "type": "string",
-                    "description": "Custom CRITICAL rule #0 for CommitMaster"
-                },
-                "COMMIT_MASTER_RULE_1": {
-                    "type": "string",
-                    "description": "Custom CRITICAL rule #1 for CommitMaster"
-                },
-                "COMMIT_MASTER_RULE_2": {
-                    "type": "string",
-                    "description": "Custom CRITICAL rule #2 for CommitMaster"
                 },
                 "CONTEXT7_MCP_GUIDELINE_0": {
                     "type": "string",
@@ -2033,7 +2001,6 @@
             },
             "examples": [
                 "AGENTS_AGENT_MASTER_DISABLE",
-                "AGENTS_COMMIT_MASTER_DISABLE",
                 "AGENTS_DOCUMENTATION_MASTER_DISABLE",
                 "AGENTS_EXPLORE_MASTER_DISABLE",
                 "AGENTS_PROMPT_MASTER_DISABLE",
@@ -2051,7 +2018,8 @@
                 "ASYNC_COMMAND_GUIDELINE_1",
                 "ASYNC_COMMAND_GUIDELINE_2",
                 "ASYNC_COMMAND_MODEL",
-                "ASYNC_COMMAND_RULE_0"
+                "ASYNC_COMMAND_RULE_0",
+                "ASYNC_COMMAND_RULE_1"
             ]
         },
         "envVariablePatterns": {

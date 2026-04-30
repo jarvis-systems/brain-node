@@ -32,7 +32,7 @@ date: "2026-02-20"
 - Added `use ModeResolverTrait;`
 - Reordered: `phase-flow` moved first (always-on)
 - Wrapped `phase-analysis`, `phase-inference`, `phase-evaluation`, `phase-decision` in `if ($this->isDeepCognitive()) { ... }`
-- Impact: 5 agents × 32 lines = 160 lines saved in standard
+- Impact: active agents × 32 lines saved in standard
 
 ## Cookbook Governance Policy (2 files in `core/`)
 

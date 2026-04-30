@@ -31,7 +31,7 @@ status: active
 | 7 | Release Discipline | 3 | 3 | -- | 3.0 | Pinning, manifest, bundle, release CI -- all good |
 | 8 | Operability | 3 | 3 | -- | 3.0 | Benchmarks, runbooks, ops-evidence, demo -- comprehensive; **Refactor Batch 6**: 3 P0 script bugs fixed (jq key mismatch, md5 portability, version consistency check) |
 | 9 | Footguns | 3 | 3 | -- | 3.0 | ~~Debug artifacts~~ **FIXED**; ~~typo in class name~~ **FIXED**; ~~dead scaffold~~ **FIXED**; ~~hardcoded MCP paths~~ **FIXED** (generator emits getcwd()); **Refactor Batch 2**: awesome-mcp.json `--save-as` → `--as` CLI bug fix; **Refactor Batch 4**: ~~Guideline::workflow() dead method~~ **REMOVED**; **Refactor Batch 5**: ~~BlueprintArchitecture::id() broken~~ **FIXED** (→ set()); **Refactor Batch 6**: ~~Core::getVariable @return scalar lie~~ **FIXED**, ~~McpArchitecture::id() copy-paste docblock~~ **FIXED**; **Refactor Batch 7**: ~~Test2Mcp.php stub artifact~~ **REMOVED**; **Refactor Batch 8**: ~~AgentArchetype::id() silent 'explore' fallback~~ **FIXED** (→ throw), ~~McpArchitecture::id() silent 'unknown' fallback~~ **FIXED** (→ throw) |
-| 10 | Maintainability | 3 | 3 | -- | 3.0 | ~~strict_types~~ **FIXED**; ~~CompileStandartsTrait typo~~ **FIXED**; ~~faker in prod~~ **FIXED**; ~~hardcoded paths~~ **FIXED** (generator + test); **Refactor Batch 1**: var-dumper→require-dev (17 prod deps); **Refactor Batch 2**: workspace.json portable paths, both Compilation traits 100% return-typed (verified); **Refactor Batch 4**: BlueprintArchitecture::mutateToString() `: mixed` return type added; **Refactor Batch 6**: core/composer.json version v0.0.1→v0.2.0, `^v12.0`→`^12.0` normalize; **Refactor Batch 7**: all 8 agents now have `#[Meta('model')]`; **Refactor Batch 8**: ~~commands-no-includes false rule~~ **AMENDED** (→ commands-no-brain-includes), shebang consistency (7 scripts normalized to `#!/usr/bin/env bash`) |
+| 10 | Maintainability | 3 | 3 | -- | 3.0 | ~~strict_types~~ **FIXED**; ~~CompileStandartsTrait typo~~ **FIXED**; ~~faker in prod~~ **FIXED**; ~~hardcoded paths~~ **FIXED** (generator + test); **Refactor Batch 1**: var-dumper→require-dev (17 prod deps); **Refactor Batch 2**: workspace.json portable paths, both Compilation traits 100% return-typed (verified); **Refactor Batch 4**: BlueprintArchitecture::mutateToString() `: mixed` return type added; **Refactor Batch 6**: core/composer.json version v0.0.1→v0.2.0, `^v12.0`→`^12.0` normalize; **Refactor Batch 7**: then-active agents received `#[Meta('model')]`; **Refactor Batch 8**: ~~commands-no-includes false rule~~ **AMENDED** (→ commands-no-brain-includes), shebang consistency (7 scripts normalized to `#!/usr/bin/env bash`) |
 
 **Overall Score: 30.0 / 30 (100%)** — Testability CLI upgraded 1→3 (Roadmap 15.4 complete)
 
@@ -194,7 +194,7 @@ All controls met under standard criteria (no mitigated-history variant needed):
 
 **Refactor Batch 7 — Metadata Consistency + Artifact Cleanup:**
 - `Test2Mcp.php` stub removed (0 callers, artifact from `brain make:mcp Test2`)
-- `#[Meta('model')]` added to all 8 agents: haiku (explore, documentation-master), sonnet (commit-master, web-research-master, vector-master, agent-master, prompt-master, script-master)
+- `#[Meta('model')]` added to then-active agents across explore, documentation, web research, vector, orchestration, prompt, and script surfaces
 - `NodeIntegrityTest` +1 test (`testNoTestStubMcpFiles`) + `Meta('model')` mandatory assertion
 - Suite: 228→229 tests, 510→511 assertions
 

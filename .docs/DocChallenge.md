@@ -94,7 +94,6 @@ core/src/Includes
 core/src/Includes/Agent
 core/src/Includes/Agent/CoreInclude.php
 core/src/Includes/Agent/DocumentationFirstInclude.php
-core/src/Includes/Agent/GitConventionalCommitsInclude.php
 core/src/Includes/Agent/LifecycleInclude.php
 core/src/Includes/Agent/WebBasicResearchInclude.php
 core/src/Includes/Agent/WebRecursiveResearchInclude.php
@@ -159,7 +158,6 @@ core/src/Variations/Brain/PythonCharacter.php
 core/src/Variations/Brain/Scrutinizer.php
 core/src/Variations/Masters
 core/src/Variations/Masters/AgentMasterInclude.php
-core/src/Variations/Masters/CommitMasterInclude.php
 core/src/Variations/Masters/DocumentationMasterInclude.php
 core/src/Variations/Masters/ExploreMasterInclude.php
 core/src/Variations/Masters/PromptMasterInclude.php

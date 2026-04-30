@@ -222,10 +222,6 @@ Agent-specific rules with ZERO dedicated scenario:
 |---------|----------|-------|----------|
 | `thoroughness-compliance` | MEDIUM | ExploreMaster | GAP-A3 |
 | `tools-execution-mandatory` | CRITICAL | ExploreMaster | GAP-A4 |
-| `tool-enforcement` | CRITICAL | CommitMaster | GAP-A5 |
-| `git-constraints` | HIGH | CommitMaster | GAP-A6 |
-| `format-required` | CRITICAL | CommitMaster | GAP-A7 |
-| `issue-linking` | HIGH | CommitMaster | GAP-A8 |
 | `evidence-based` | HIGH | DocumentationMaster | GAP-A9 |
 | `tool-policy` | CRITICAL | VectorMaster | GAP-A10 |
 | `temporal-context` | CRITICAL | WebResearchMaster | GAP-A11 |
@@ -241,7 +237,6 @@ Artifacts with NO dedicated benchmark scenario (tested only indirectly):
 | Artifact | Indirect Coverage | Gap Flag |
 |----------|------------------|----------|
 | agents/explore | ST-006 tests tool rules + L1-005 mentions explore | — |
-| agents/commit-master | no scenario | GAP-ART-2 |
 | agents/documentation-master | no scenario | GAP-ART-3 |
 | agents/vector-master | no scenario | GAP-ART-4 |
 | agents/web-research-master | no scenario | GAP-ART-5 |

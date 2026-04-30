@@ -84,7 +84,6 @@ The following agents are enabled by default and appear in `agent-schema.json`:
 
 | Agent ID | Model | Purpose |
 |----------|-------|---------|
-| `commit-master` | sonnet | Conventional commits, git workflow |
 | `documentation-master` | haiku | Package/library documentation research |
 | `explore-master` | haiku | Fast codebase exploration |
 | `vector-master` | sonnet | Deep vector memory operations |

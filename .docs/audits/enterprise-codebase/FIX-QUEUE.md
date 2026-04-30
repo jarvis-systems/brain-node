@@ -453,7 +453,7 @@ status: active
 | Item | Change | Proof |
 |------|--------|-------|
 | Test2Mcp.php removed | Deleted stub artifact (0 callers, `defaultCommand()='test'`) | testNoTestStubMcpFiles prevents regression |
-| Agent Meta('model') | All 8 agents now have `#[Meta('model')]`: haiku (explore, documentation-master), sonnet (commit-master, web-research-master, vector-master, agent-master, prompt-master, script-master) | NodeIntegrityTest Meta('model') assertion |
+| Agent Meta('model') | Then-active agents received `#[Meta('model')]` across explore, documentation, web research, vector, orchestration, prompt, and script surfaces | NodeIntegrityTest Meta('model') assertion |
 | NodeIntegrityTest +1 test | `testNoTestStubMcpFiles` + Meta('model') mandatory check | 229/229 PASS, 511 assertions |
 
 ### Refactor Batch 8

@@ -23,6 +23,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 BUDGETS_FILE="$PROJECT_ROOT/.docs/benchmarks/baselines/instruction-budgets.json"
+ENABLED_AGENTS_FILE="$PROJECT_ROOT/scripts/.brain-config/enabled-agents.json"
 
 STRICT=false
 UPDATE=false
@@ -81,9 +82,17 @@ for f in "$PROJECT_ROOT"/.claude/commands/*.md; do
 done
 
 # Agents
+ENABLED_AGENTS=""
+if [[ -f "$ENABLED_AGENTS_FILE" ]]; then
+    ENABLED_AGENTS=$(jq -r '.enabled[]' "$ENABLED_AGENTS_FILE" | tr '\n' ' ')
+fi
+
 for f in "$PROJECT_ROOT"/.claude/agents/*.md; do
     [[ -f "$f" ]] || continue
     name=$(basename "$f" .md)
+    if [[ -n "$ENABLED_AGENTS" && " $ENABLED_AGENTS " != *" $name "* ]]; then
+        continue
+    fi
     lines=$(wc -l < "$f" | tr -d ' ')
     add_measurement "agents/$name" "$lines"
 done

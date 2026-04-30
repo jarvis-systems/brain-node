@@ -1,7 +1,6 @@
 {
   "version": "1.0.0",
   "enabled": [
-    "commit-master",
     "documentation-master",
     "explore",
     "vector-master",

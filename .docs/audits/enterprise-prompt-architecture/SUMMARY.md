@@ -32,7 +32,7 @@ Research shows models degrade on long prompts when critical instructions sit in 
 | Phase 1 | DelegationProtocolsInclude | Gate 14 guidelines (levels, types, workflows) | ~80 in Brain |
 | Phase 1 | ResponseValidationInclude | Early return in standard (4 guidelines) | ~20 in Brain |
 | Phase 1 | ErrorHandlingInclude | Gate 5 error guidelines | ~30 in Brain |
-| Phase 1b | SequentialReasoningInclude | Gate 4 phase details, keep phase-flow | 160 across 5 agents |
+| Phase 1b | SequentialReasoningInclude | Gate 4 phase details, keep phase-flow | line savings across active agents |
 | Cookbook | VectorTaskInclude + VectorMemoryInclude | +1 rule, +2 guidelines each | +25 in Brain (policy) |
 
 ## Final Metrics
@@ -48,7 +48,6 @@ Research shows models degrade on long prompts when critical instructions sit in 
 
 | Agent | Before | After | Delta |
 |-------|--------|-------|-------|
-| commit-master | 342 | 310 | -32 |
 | documentation-master | 307 | 275 | -32 |
 | explore | 350 | 318 | -32 |
 | vector-master | 279 | 247 | -32 |
