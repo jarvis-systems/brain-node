@@ -37,6 +37,15 @@ class DocsTruthSyncSkill extends SkillArchetype
                 'Gate counts match audit output',
             ]);
 
+        $this->guideline('authoring-rules')
+            ->text('When editing .docs/ files, enforce markdown-only content with YAML front matter and concise human descriptions.')
+            ->example()->do([
+                'Required front matter: name and description',
+                'Use markdown files only',
+                'Prefer prose over code blocks unless code is cheaper than explanation',
+                'Run docs_search validate before commit or release',
+            ]);
+
         $this->guideline('stop-conditions')
             ->text('STOP if LIVING doc has:')
             ->example()->do([

@@ -44,7 +44,7 @@ class ClientFormatTriageSkill extends SkillArchetype
             ->example()->do(
                 'Claude: .md files, flat skills/',
                 'OpenCode: .md files, flat skills/, provider/model IDs',
-                'Codex: .md prompts, .agents/skills/*/SKILL.md',
+                'Codex: .md prompts, .codex/skills/*/SKILL.md',
                 'Gemini/Qwen: .toml commands, .md skills',
             );
 

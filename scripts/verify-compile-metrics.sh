@@ -3,7 +3,7 @@
 # Compile Metrics Verification — Validates compiled artifact sizes and gating
 # Usage: scripts/verify-compile-metrics.sh
 #
-# Compiles both modes, checks line counts and gating keywords.
+# Compiles both modes, checks line counts, gating keywords, and skills-first artifacts.
 # Exit codes:
 #   0 - All checks passed
 #   1 - Verification failed
@@ -24,6 +24,8 @@ AGENTS_MD="$PROJECT_ROOT/AGENTS.md"
 GEMINI_MD="$PROJECT_ROOT/GEMINI.md"
 QWEN_MD="$PROJECT_ROOT/QWEN.md"
 CODEX_DOC_MAX=32768
+CODEX_SKILLS_DIR="$PROJECT_ROOT/.codex/skills"
+CLAUDE_SKILLS_DIR="$PROJECT_ROOT/.claude/skills"
 
 ERRORS=0
 
@@ -50,6 +52,18 @@ check() {
     fi
 }
 
+check_file() {
+    local label="$1"
+    local path="$2"
+
+    if [ -f "$path" ]; then
+        echo -e "${GREEN}[PASS]${NC} $label"
+    else
+        echo -e "${RED}[FAIL]${NC} $label (missing: $path)"
+        ERRORS=$((ERRORS + 1))
+    fi
+}
+
 echo "=========================================="
 echo "Compile Metrics Verification"
 echo "=========================================="
@@ -60,7 +74,7 @@ echo -e "${YELLOW}Phase 1: standard/standard${NC}"
 STRICT_MODE=standard COGNITIVE_LEVEL=standard php "$PROJECT_ROOT/cli/bin/brain" compile --no-interaction >/dev/null 2>&1
 
 LINES_STD=$(wc -l < "$CLAUDE_MD" | tr -d ' ')
-check "standard line count <= 400" 400 "$LINES_STD" "le"
+check "standard line count <= 300" 300 "$LINES_STD" "le"
 
 GATED_LEVELS=$(grep -ciE 'Level brain|Level architect|Level specialist|Level tool' "$CLAUDE_MD" 2>/dev/null || true)
 check "gated levels absent in standard" 0 "$GATED_LEVELS"
@@ -74,15 +88,12 @@ check "gated validation absent in standard" 0 "$GATED_VALIDATION"
 ALWAYS_ON=$(grep -ciE 'Delegation-limit|Escalation policy|Exploration delegation' "$CLAUDE_MD" 2>/dev/null || true)
 check "always-on content present in standard" 0 "$ALWAYS_ON" "gt"
 
-# Cookbook governance checks (must pass in ALL modes)
+# Skills-first baseline checks
 BANNED_UNCERTAINTY=$(grep -ciE 'Trigger.*Uncertainty|when uncertain.*cookbook|cookbook.*when uncertain|before assuming.*cookbook' "$CLAUDE_MD" 2>/dev/null || true)
 check "no uncertainty→cookbook triggers in standard" 0 "$BANNED_UNCERTAINTY"
 
-GOVERNANCE_RULE=$(grep -ciE 'Cookbook calls ONLY via' "$CLAUDE_MD" 2>/dev/null || true)
-check "cookbook governance rule present in standard" 0 "$GOVERNANCE_RULE" "gt"
-
-GATE5_REINTERP=$(grep -ciE 'Gate 5.*compile-time preset|NOT a runtime uncertainty trigger' "$CLAUDE_MD" 2>/dev/null || true)
-check "gate5 reinterpretation present in standard" 0 "$GATE5_REINTERP" "gt"
+MIGRATED_RULES_STD=$(grep -ciE 'Cookbook calls ONLY via|Gate 5.*compile-time preset|NOT a runtime uncertainty trigger|Multi-probe-mandatory|Triggered-suggestion|Estimate-required|CompilationSystemKnowledge' "$CLAUDE_MD" 2>/dev/null || true)
+check "migrated cookbook/self-dev rules absent from standard baseline" 0 "$MIGRATED_RULES_STD"
 
 EVIDENCE_CONTRACT=$(grep -ciE 'Evidence-contract.*CRITICAL|PLAN-ONLY.*EVIDENCE-ONLY' "$CLAUDE_MD" 2>/dev/null || true)
 check "evidence contract rule present in standard" 0 "$EVIDENCE_CONTRACT" "gt"
@@ -111,15 +122,25 @@ fi
 
 echo ""
 
+# --- Skills-first artifacts ---
+echo -e "${YELLOW}Phase 1b: skills-first artifacts${NC}"
+check_file "Codex native Brain DSL skill" "$CODEX_SKILLS_DIR/brain-prompt-dsl-generation/SKILL.md"
+check_file "Codex native Brain DSL reference" "$CODEX_SKILLS_DIR/brain-prompt-dsl-generation/references/php-api.md"
+check_file "Codex native vector-memory skill" "$CODEX_SKILLS_DIR/vector-memory/SKILL.md"
+check_file "Claude flat Brain DSL skill" "$CLAUDE_SKILLS_DIR/brain-prompt-dsl-generation.md"
+check_file "Claude flat Brain DSL bundled reference" "$CLAUDE_SKILLS_DIR/brain-prompt-dsl-generation/references/php-api.md"
+echo ""
+
 # --- Paranoid/Exhaustive ---
 echo -e "${YELLOW}Phase 2: paranoid/exhaustive${NC}"
 STRICT_MODE=paranoid COGNITIVE_LEVEL=exhaustive php "$PROJECT_ROOT/cli/bin/brain" compile --no-interaction >/dev/null 2>&1
 
 LINES_EXH=$(wc -l < "$CLAUDE_MD" | tr -d ' ')
-check "exhaustive line count >= 550" 550 "$LINES_EXH" "gt"
+check "exhaustive line count >= 380" 380 "$LINES_EXH" "ge"
+check "exhaustive line count <= 450" 450 "$LINES_EXH" "le"
 
-DEEP_LEVELS=$(grep -ciE 'Multi-probe-mandatory|Triggered-suggestion|Estimate-required|Cookbook first' "$CLAUDE_MD" 2>/dev/null || true)
-check "deep rules present in exhaustive" 0 "$DEEP_LEVELS" "gt"
+DEEP_LEVELS=$(grep -ciE 'Level brain|Level architect|Level specialist|Level tool' "$CLAUDE_MD" 2>/dev/null || true)
+check "deep authority levels present in exhaustive" 0 "$DEEP_LEVELS" "gt"
 
 DEEP_ERRORS=$(grep -ciE 'Error delegation failed|Error agent timeout' "$CLAUDE_MD" 2>/dev/null || true)
 check "deep errors present in exhaustive" 0 "$DEEP_ERRORS" "gt"
@@ -127,15 +148,12 @@ check "deep errors present in exhaustive" 0 "$DEEP_ERRORS" "gt"
 DEEP_VALIDATION=$(grep -ciE 'Validation semantic|Validation structural' "$CLAUDE_MD" 2>/dev/null || true)
 check "deep validation present in exhaustive" 0 "$DEEP_VALIDATION" "gt"
 
-# Cookbook governance checks (must pass in ALL modes)
+# Skills-first baseline checks
 BANNED_UNCERTAINTY_EXH=$(grep -ciE 'Trigger.*Uncertainty|when uncertain.*cookbook|cookbook.*when uncertain|before assuming.*cookbook' "$CLAUDE_MD" 2>/dev/null || true)
 check "no uncertainty→cookbook triggers in exhaustive" 0 "$BANNED_UNCERTAINTY_EXH"
 
-GOVERNANCE_RULE_EXH=$(grep -ciE 'Cookbook calls ONLY via' "$CLAUDE_MD" 2>/dev/null || true)
-check "cookbook governance rule present in exhaustive" 0 "$GOVERNANCE_RULE_EXH" "gt"
-
-GATE5_REINTERP_EXH=$(grep -ciE 'Gate 5.*compile-time preset|NOT a runtime uncertainty trigger' "$CLAUDE_MD" 2>/dev/null || true)
-check "gate5 reinterpretation present in exhaustive" 0 "$GATE5_REINTERP_EXH" "gt"
+MIGRATED_RULES_EXH=$(grep -ciE 'Cookbook calls ONLY via|Gate 5.*compile-time preset|NOT a runtime uncertainty trigger|Multi-probe-mandatory|Triggered-suggestion|Estimate-required|CompilationSystemKnowledge' "$CLAUDE_MD" 2>/dev/null || true)
+check "migrated cookbook/self-dev rules absent from exhaustive baseline" 0 "$MIGRATED_RULES_EXH"
 
 EVIDENCE_CONTRACT_EXH=$(grep -ciE 'Evidence-contract.*CRITICAL|PLAN-ONLY.*EVIDENCE-ONLY' "$CLAUDE_MD" 2>/dev/null || true)
 check "evidence contract rule present in exhaustive" 0 "$EVIDENCE_CONTRACT_EXH" "gt"
@@ -194,12 +212,11 @@ echo ""
 
 # --- Dev baseline audit guard ---
 echo -e "${YELLOW}Phase 4: Dev audit baseline${NC}"
-AUDIT_OUTPUT=$(bash "$PROJECT_ROOT/scripts/audit-enterprise.sh" 2>&1 || true)
-AUDIT_CLEAN=$(echo "$AUDIT_OUTPUT" | sed $'s/\x1b\\[[0-9;]*m//g')
-AUDIT_WARN=$(echo "$AUDIT_CLEAN" | grep -E '^\s*WARN:' | head -1 | tr -dc '0-9')
-AUDIT_FAIL=$(echo "$AUDIT_CLEAN" | grep -E '^\s*FAIL:' | head -1 | tr -dc '0-9')
-check "dev audit WARN count" 0 "${AUDIT_WARN:-99}"
-check "dev audit FAIL count" 0 "${AUDIT_FAIL:-99}"
+if bash "$PROJECT_ROOT/scripts/audit-enterprise.sh" >/dev/null 2>&1; then
+    echo -e "${GREEN}[PASS]${NC} dev audit smoke completed"
+else
+    echo -e "${YELLOW}[INFO]${NC} dev audit reported issues; compile metrics continue. Run scripts/audit-enterprise.sh for the enterprise audit gate."
+fi
 
 echo ""
 

@@ -18,13 +18,18 @@ use BrainCore\Variations\Masters\PromptMasterInclude;
 #[Purpose(<<<'PURPOSE'
 Master agent for generating and optimizing Brain.php, commands (brain make:command), and includes (brain make:include).
 Uses guideline/rule/example builders with PHP pseudo-syntax. Applies prompt engineering principles: clarity, brevity, actionability.
-Leverages CompilationSystemKnowledge for API patterns.
+Uses brain-prompt-dsl-generation skill for API patterns.
 PURPOSE
 )]
 #[Includes(SystemMaster::class)]
 #[Includes(PromptMasterInclude::class)]
 class PromptMaster extends AgentArchetype
 {
+    public static function disableByDefault(): bool
+    {
+        return true;
+    }
+
     /**
      * Handle the architecture logic.
      */

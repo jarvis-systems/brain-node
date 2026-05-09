@@ -72,14 +72,13 @@
         },
         "agentReference": {
             "type": "string",
-            "description": "Reference to a compiled agent. Available agents: agent-master, documentation-master, explore-master, prompt-master, script-master, vector-master, web-research-master",
-            "pattern": "^(agent\\-master|documentation\\-master|explore\\-master|prompt\\-master|script\\-master|vector\\-master|web\\-research\\-master)$",
+            "description": "Reference to a compiled agent. Available agents: documentation-master, explore-master, vector-master, web-research-master",
+            "pattern": "^(documentation\\-master|explore\\-master|vector\\-master|web\\-research\\-master)$",
             "examples": [
-                "agent-master",
                 "documentation-master",
                 "explore-master",
-                "prompt-master",
-                "script-master"
+                "vector-master",
+                "web-research-master"
             ]
         },
         "commandReference": {
@@ -682,10 +681,6 @@
             "type": "object",
             "description": "Environment variables for .brain/.env file. Configure rules, guidelines, models, and disable flags per archetype.",
             "properties": {
-                "AGENTS_AGENT_MASTER_DISABLE": {
-                    "type": "string",
-                    "description": "Disable AgentMaster from compilation (true/false)"
-                },
                 "AGENTS_DOCUMENTATION_MASTER_DISABLE": {
                     "type": "string",
                     "description": "Disable DocumentationMaster from compilation (true/false)"
@@ -694,14 +689,6 @@
                     "type": "string",
                     "description": "Disable ExploreMaster from compilation (true/false)"
                 },
-                "AGENTS_PROMPT_MASTER_DISABLE": {
-                    "type": "string",
-                    "description": "Disable PromptMaster from compilation (true/false)"
-                },
-                "AGENTS_SCRIPT_MASTER_DISABLE": {
-                    "type": "string",
-                    "description": "Disable ScriptMaster from compilation (true/false)"
-                },
                 "AGENTS_VECTOR_MASTER_DISABLE": {
                     "type": "string",
                     "description": "Disable VectorMaster from compilation (true/false)"
@@ -709,34 +696,6 @@
                 "AGENTS_WEB_RESEARCH_MASTER_DISABLE": {
                     "type": "string",
                     "description": "Disable WebResearchMaster from compilation (true/false)"
-                },
-                "AGENT_MASTER_GUIDELINE_0": {
-                    "type": "string",
-                    "description": "Custom guideline #0 for AgentMaster"
-                },
-                "AGENT_MASTER_GUIDELINE_1": {
-                    "type": "string",
-                    "description": "Custom guideline #1 for AgentMaster"
-                },
-                "AGENT_MASTER_GUIDELINE_2": {
-                    "type": "string",
-                    "description": "Custom guideline #2 for AgentMaster"
-                },
-                "AGENT_MASTER_MODEL": {
-                    "type": "string",
-                    "description": "Model override for AgentMaster"
-                },
-                "AGENT_MASTER_RULE_0": {
-                    "type": "string",
-                    "description": "Custom CRITICAL rule #0 for AgentMaster"
-                },
-                "AGENT_MASTER_RULE_1": {
-                    "type": "string",
-                    "description": "Custom CRITICAL rule #1 for AgentMaster"
-                },
-                "AGENT_MASTER_RULE_2": {
-                    "type": "string",
-                    "description": "Custom CRITICAL rule #2 for AgentMaster"
                 },
                 "ASYNC_COMMAND_GUIDELINE_0": {
                     "type": "string",
@@ -813,6 +772,34 @@
                 "BRAIN_MODEL": {
                     "type": "string",
                     "description": "Model override for Brain"
+                },
+                "BRAIN_PROMPT_DSL_GENERATION_NATIVE_SKILL_GUIDELINE_0": {
+                    "type": "string",
+                    "description": "Custom guideline #0 for BrainPromptDslGenerationNativeSkill"
+                },
+                "BRAIN_PROMPT_DSL_GENERATION_NATIVE_SKILL_GUIDELINE_1": {
+                    "type": "string",
+                    "description": "Custom guideline #1 for BrainPromptDslGenerationNativeSkill"
+                },
+                "BRAIN_PROMPT_DSL_GENERATION_NATIVE_SKILL_GUIDELINE_2": {
+                    "type": "string",
+                    "description": "Custom guideline #2 for BrainPromptDslGenerationNativeSkill"
+                },
+                "BRAIN_PROMPT_DSL_GENERATION_NATIVE_SKILL_MODEL": {
+                    "type": "string",
+                    "description": "Model override for BrainPromptDslGenerationNativeSkill"
+                },
+                "BRAIN_PROMPT_DSL_GENERATION_NATIVE_SKILL_RULE_0": {
+                    "type": "string",
+                    "description": "Custom CRITICAL rule #0 for BrainPromptDslGenerationNativeSkill"
+                },
+                "BRAIN_PROMPT_DSL_GENERATION_NATIVE_SKILL_RULE_1": {
+                    "type": "string",
+                    "description": "Custom CRITICAL rule #1 for BrainPromptDslGenerationNativeSkill"
+                },
+                "BRAIN_PROMPT_DSL_GENERATION_NATIVE_SKILL_RULE_2": {
+                    "type": "string",
+                    "description": "Custom CRITICAL rule #2 for BrainPromptDslGenerationNativeSkill"
                 },
                 "BRAIN_RULE_0": {
                     "type": "string",
@@ -1406,6 +1393,34 @@
                     "type": "string",
                     "description": "Custom CRITICAL rule #2 for InitVectorCommand"
                 },
+                "LARAVEL_BOOST_NATIVE_SKILL_GUIDELINE_0": {
+                    "type": "string",
+                    "description": "Custom guideline #0 for LaravelBoostNativeSkill"
+                },
+                "LARAVEL_BOOST_NATIVE_SKILL_GUIDELINE_1": {
+                    "type": "string",
+                    "description": "Custom guideline #1 for LaravelBoostNativeSkill"
+                },
+                "LARAVEL_BOOST_NATIVE_SKILL_GUIDELINE_2": {
+                    "type": "string",
+                    "description": "Custom guideline #2 for LaravelBoostNativeSkill"
+                },
+                "LARAVEL_BOOST_NATIVE_SKILL_MODEL": {
+                    "type": "string",
+                    "description": "Model override for LaravelBoostNativeSkill"
+                },
+                "LARAVEL_BOOST_NATIVE_SKILL_RULE_0": {
+                    "type": "string",
+                    "description": "Custom CRITICAL rule #0 for LaravelBoostNativeSkill"
+                },
+                "LARAVEL_BOOST_NATIVE_SKILL_RULE_1": {
+                    "type": "string",
+                    "description": "Custom CRITICAL rule #1 for LaravelBoostNativeSkill"
+                },
+                "LARAVEL_BOOST_NATIVE_SKILL_RULE_2": {
+                    "type": "string",
+                    "description": "Custom CRITICAL rule #2 for LaravelBoostNativeSkill"
+                },
                 "LIST_COMMAND_GUIDELINE_0": {
                     "type": "string",
                     "description": "Custom guideline #0 for ListCommand"
@@ -1494,34 +1509,6 @@
                     "type": "string",
                     "description": "Custom CRITICAL rule #2 for PromptGenerationSkill"
                 },
-                "PROMPT_MASTER_GUIDELINE_0": {
-                    "type": "string",
-                    "description": "Custom guideline #0 for PromptMaster"
-                },
-                "PROMPT_MASTER_GUIDELINE_1": {
-                    "type": "string",
-                    "description": "Custom guideline #1 for PromptMaster"
-                },
-                "PROMPT_MASTER_GUIDELINE_2": {
-                    "type": "string",
-                    "description": "Custom guideline #2 for PromptMaster"
-                },
-                "PROMPT_MASTER_MODEL": {
-                    "type": "string",
-                    "description": "Model override for PromptMaster"
-                },
-                "PROMPT_MASTER_RULE_0": {
-                    "type": "string",
-                    "description": "Custom CRITICAL rule #0 for PromptMaster"
-                },
-                "PROMPT_MASTER_RULE_1": {
-                    "type": "string",
-                    "description": "Custom CRITICAL rule #1 for PromptMaster"
-                },
-                "PROMPT_MASTER_RULE_2": {
-                    "type": "string",
-                    "description": "Custom CRITICAL rule #2 for PromptMaster"
-                },
                 "QWEN_MASTER_MODEL": {
                     "type": "string",
                     "description": "Default model for Qwen CLI agents"
@@ -1553,34 +1540,6 @@
                 "REPO_BOUNDARY_PREFLIGHT_SKILL_RULE_2": {
                     "type": "string",
                     "description": "Custom CRITICAL rule #2 for RepoBoundaryPreflightSkill"
-                },
-                "SCRIPT_MASTER_GUIDELINE_0": {
-                    "type": "string",
-                    "description": "Custom guideline #0 for ScriptMaster"
-                },
-                "SCRIPT_MASTER_GUIDELINE_1": {
-                    "type": "string",
-                    "description": "Custom guideline #1 for ScriptMaster"
-                },
-                "SCRIPT_MASTER_GUIDELINE_2": {
-                    "type": "string",
-                    "description": "Custom guideline #2 for ScriptMaster"
-                },
-                "SCRIPT_MASTER_MODEL": {
-                    "type": "string",
-                    "description": "Model override for ScriptMaster"
-                },
-                "SCRIPT_MASTER_RULE_0": {
-                    "type": "string",
-                    "description": "Custom CRITICAL rule #0 for ScriptMaster"
-                },
-                "SCRIPT_MASTER_RULE_1": {
-                    "type": "string",
-                    "description": "Custom CRITICAL rule #1 for ScriptMaster"
-                },
-                "SCRIPT_MASTER_RULE_2": {
-                    "type": "string",
-                    "description": "Custom CRITICAL rule #2 for ScriptMaster"
                 },
                 "SEARCH_COMMAND_GUIDELINE_0": {
                     "type": "string",
@@ -1638,6 +1597,10 @@
                     "type": "string",
                     "description": "Custom CRITICAL rule #2 for SequentialThinkingMcp"
                 },
+                "SKILLS_BRAIN_PROMPT_DSL_GENERATION_NATIVE_SKILL_DISABLE": {
+                    "type": "string",
+                    "description": "Disable BrainPromptDslGenerationNativeSkill from compilation (true/false)"
+                },
                 "SKILLS_CLIENT_FORMAT_TRIAGE_SKILL_DISABLE": {
                     "type": "string",
                     "description": "Disable ClientFormatTriageSkill from compilation (true/false)"
@@ -1654,6 +1617,10 @@
                     "type": "string",
                     "description": "Disable HealthCheckSkill from compilation (true/false)"
                 },
+                "SKILLS_LARAVEL_BOOST_NATIVE_SKILL_DISABLE": {
+                    "type": "string",
+                    "description": "Disable LaravelBoostNativeSkill from compilation (true/false)"
+                },
                 "SKILLS_PROMPT_GENERATION_SKILL_DISABLE": {
                     "type": "string",
                     "description": "Disable PromptGenerationSkill from compilation (true/false)"
@@ -1661,6 +1628,18 @@
                 "SKILLS_REPO_BOUNDARY_PREFLIGHT_SKILL_DISABLE": {
                     "type": "string",
                     "description": "Disable RepoBoundaryPreflightSkill from compilation (true/false)"
+                },
+                "SKILLS_STRUCTURED_REASONING_NATIVE_SKILL_DISABLE": {
+                    "type": "string",
+                    "description": "Disable StructuredReasoningNativeSkill from compilation (true/false)"
+                },
+                "SKILLS_VECTOR_MEMORY_NATIVE_SKILL_DISABLE": {
+                    "type": "string",
+                    "description": "Disable VectorMemoryNativeSkill from compilation (true/false)"
+                },
+                "SKILLS_VECTOR_TASK_NATIVE_SKILL_DISABLE": {
+                    "type": "string",
+                    "description": "Disable VectorTaskNativeSkill from compilation (true/false)"
                 },
                 "STATS_COMMAND_GUIDELINE_0": {
                     "type": "string",
@@ -1745,6 +1724,34 @@
                 "STORE_COMMAND_RULE_2": {
                     "type": "string",
                     "description": "Custom CRITICAL rule #2 for StoreCommand"
+                },
+                "STRUCTURED_REASONING_NATIVE_SKILL_GUIDELINE_0": {
+                    "type": "string",
+                    "description": "Custom guideline #0 for StructuredReasoningNativeSkill"
+                },
+                "STRUCTURED_REASONING_NATIVE_SKILL_GUIDELINE_1": {
+                    "type": "string",
+                    "description": "Custom guideline #1 for StructuredReasoningNativeSkill"
+                },
+                "STRUCTURED_REASONING_NATIVE_SKILL_GUIDELINE_2": {
+                    "type": "string",
+                    "description": "Custom guideline #2 for StructuredReasoningNativeSkill"
+                },
+                "STRUCTURED_REASONING_NATIVE_SKILL_MODEL": {
+                    "type": "string",
+                    "description": "Model override for StructuredReasoningNativeSkill"
+                },
+                "STRUCTURED_REASONING_NATIVE_SKILL_RULE_0": {
+                    "type": "string",
+                    "description": "Custom CRITICAL rule #0 for StructuredReasoningNativeSkill"
+                },
+                "STRUCTURED_REASONING_NATIVE_SKILL_RULE_1": {
+                    "type": "string",
+                    "description": "Custom CRITICAL rule #1 for StructuredReasoningNativeSkill"
+                },
+                "STRUCTURED_REASONING_NATIVE_SKILL_RULE_2": {
+                    "type": "string",
+                    "description": "Custom CRITICAL rule #2 for StructuredReasoningNativeSkill"
                 },
                 "SYNC_COMMAND_GUIDELINE_0": {
                     "type": "string",
@@ -1914,6 +1921,34 @@
                     "type": "string",
                     "description": "Custom CRITICAL rule #2 for VectorMemoryMcp"
                 },
+                "VECTOR_MEMORY_NATIVE_SKILL_GUIDELINE_0": {
+                    "type": "string",
+                    "description": "Custom guideline #0 for VectorMemoryNativeSkill"
+                },
+                "VECTOR_MEMORY_NATIVE_SKILL_GUIDELINE_1": {
+                    "type": "string",
+                    "description": "Custom guideline #1 for VectorMemoryNativeSkill"
+                },
+                "VECTOR_MEMORY_NATIVE_SKILL_GUIDELINE_2": {
+                    "type": "string",
+                    "description": "Custom guideline #2 for VectorMemoryNativeSkill"
+                },
+                "VECTOR_MEMORY_NATIVE_SKILL_MODEL": {
+                    "type": "string",
+                    "description": "Model override for VectorMemoryNativeSkill"
+                },
+                "VECTOR_MEMORY_NATIVE_SKILL_RULE_0": {
+                    "type": "string",
+                    "description": "Custom CRITICAL rule #0 for VectorMemoryNativeSkill"
+                },
+                "VECTOR_MEMORY_NATIVE_SKILL_RULE_1": {
+                    "type": "string",
+                    "description": "Custom CRITICAL rule #1 for VectorMemoryNativeSkill"
+                },
+                "VECTOR_MEMORY_NATIVE_SKILL_RULE_2": {
+                    "type": "string",
+                    "description": "Custom CRITICAL rule #2 for VectorMemoryNativeSkill"
+                },
                 "VECTOR_TASK_MCP_GUIDELINE_0": {
                     "type": "string",
                     "description": "Custom guideline #0 for VectorTaskMcp"
@@ -1941,6 +1976,34 @@
                 "VECTOR_TASK_MCP_RULE_2": {
                     "type": "string",
                     "description": "Custom CRITICAL rule #2 for VectorTaskMcp"
+                },
+                "VECTOR_TASK_NATIVE_SKILL_GUIDELINE_0": {
+                    "type": "string",
+                    "description": "Custom guideline #0 for VectorTaskNativeSkill"
+                },
+                "VECTOR_TASK_NATIVE_SKILL_GUIDELINE_1": {
+                    "type": "string",
+                    "description": "Custom guideline #1 for VectorTaskNativeSkill"
+                },
+                "VECTOR_TASK_NATIVE_SKILL_GUIDELINE_2": {
+                    "type": "string",
+                    "description": "Custom guideline #2 for VectorTaskNativeSkill"
+                },
+                "VECTOR_TASK_NATIVE_SKILL_MODEL": {
+                    "type": "string",
+                    "description": "Model override for VectorTaskNativeSkill"
+                },
+                "VECTOR_TASK_NATIVE_SKILL_RULE_0": {
+                    "type": "string",
+                    "description": "Custom CRITICAL rule #0 for VectorTaskNativeSkill"
+                },
+                "VECTOR_TASK_NATIVE_SKILL_RULE_1": {
+                    "type": "string",
+                    "description": "Custom CRITICAL rule #1 for VectorTaskNativeSkill"
+                },
+                "VECTOR_TASK_NATIVE_SKILL_RULE_2": {
+                    "type": "string",
+                    "description": "Custom CRITICAL rule #2 for VectorTaskNativeSkill"
                 },
                 "WEB_RESEARCH_MASTER_GUIDELINE_0": {
                     "type": "string",
@@ -2000,26 +2063,26 @@
                 }
             },
             "examples": [
-                "AGENTS_AGENT_MASTER_DISABLE",
                 "AGENTS_DOCUMENTATION_MASTER_DISABLE",
                 "AGENTS_EXPLORE_MASTER_DISABLE",
-                "AGENTS_PROMPT_MASTER_DISABLE",
-                "AGENTS_SCRIPT_MASTER_DISABLE",
                 "AGENTS_VECTOR_MASTER_DISABLE",
                 "AGENTS_WEB_RESEARCH_MASTER_DISABLE",
-                "AGENT_MASTER_GUIDELINE_0",
-                "AGENT_MASTER_GUIDELINE_1",
-                "AGENT_MASTER_GUIDELINE_2",
-                "AGENT_MASTER_MODEL",
-                "AGENT_MASTER_RULE_0",
-                "AGENT_MASTER_RULE_1",
-                "AGENT_MASTER_RULE_2",
                 "ASYNC_COMMAND_GUIDELINE_0",
                 "ASYNC_COMMAND_GUIDELINE_1",
                 "ASYNC_COMMAND_GUIDELINE_2",
                 "ASYNC_COMMAND_MODEL",
                 "ASYNC_COMMAND_RULE_0",
-                "ASYNC_COMMAND_RULE_1"
+                "ASYNC_COMMAND_RULE_1",
+                "ASYNC_COMMAND_RULE_2",
+                "BRAINSTORM_COMMAND_GUIDELINE_0",
+                "BRAINSTORM_COMMAND_GUIDELINE_1",
+                "BRAINSTORM_COMMAND_GUIDELINE_2",
+                "BRAINSTORM_COMMAND_MODEL",
+                "BRAINSTORM_COMMAND_RULE_0",
+                "BRAINSTORM_COMMAND_RULE_1",
+                "BRAINSTORM_COMMAND_RULE_2",
+                "BRAIN_DISABLE",
+                "BRAIN_GUIDELINE_0"
             ]
         },
         "envVariablePatterns": {

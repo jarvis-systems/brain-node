@@ -20,7 +20,7 @@ DESC
 )]
 #[Purpose(<<<'PURPOSE'
 Master agent for designing, creating, optimizing, and maintaining Brain ecosystem agents.
-Leverages CompilationSystemKnowledge for PHP API and AgentLifecycleFramework for 4-phase lifecycle.
+Uses brain-prompt-dsl-generation skill for PHP API details and AgentLifecycleFramework for 4-phase lifecycle.
 Specializes in include strategy, naming conventions, and multi-agent orchestration.
 PURPOSE
 )]
@@ -28,6 +28,11 @@ PURPOSE
 #[Includes(AgentMasterInclude::class)]
 class AgentMaster extends AgentArchetype
 {
+    public static function disableByDefault(): bool
+    {
+        return true;
+    }
+
     /**
      * Handle the architecture logic.
      */

@@ -7,16 +7,16 @@ description: "Canonical reference for compiled brain instruction surfaces, manda
 
 ## Surface Map
 
-Brain compiles to 4 instruction surfaces (standard mode):
+Brain compiles to 4 compact baseline instruction surfaces (standard mode):
 
-| Surface | Target Clients | Lines | Rules | H1 Sections |
-|---------|---------------|-------|-------|-------------|
-| `.claude/CLAUDE.md` | Claude Code | 316 | 39 | 18 |
-| `AGENTS.md` | Codex, OpenCode | 316 | 39 | 18 |
-| `GEMINI.md` | Gemini CLI | 316 | 34 | 17 |
-| `QWEN.md` | Qwen CLI | 316 | 34 | 17 |
+| Surface | Target Clients | Lines | H2 Sections |
+|---------|---------------|-------|-------------|
+| `.claude/CLAUDE.md` | Claude Code | 268 | 29 |
+| `AGENTS.md` | Codex, OpenCode | 268 | 29 |
+| `GEMINI.md` | Gemini CLI | 232 | 24 |
+| `QWEN.md` | Qwen CLI | 232 | 24 |
 
-All surfaces are uniform in standard mode. Premium mode (paranoid/exhaustive) adds ~282 lines via additional iron rules and expanded cookbook presets.
+Skills-first compilation keeps long procedures out of baseline surfaces. Premium mode (paranoid/exhaustive) now adds only Brain orchestration depth; cookbook, self-dev, Laravel Boost, and structured reasoning references live in skills.
 
 ## Mandatory Invariants
 
@@ -28,7 +28,6 @@ These sections MUST be present in every surface, every tier, every mode. Absence
 | No-secret-output | CRITICAL | Secret redaction policy |
 | Quality-gates-mandatory | CRITICAL | Test + PHPStan gates |
 | Compile-single-writer | CRITICAL | Compilation mutex |
-| Cookbook-governance | CRITICAL | Cookbook call discipline |
 | Mcp-json-only | CRITICAL | MCP payload format |
 | Mandatory-source-scanning | CRITICAL | Source-first code generation |
 | Never-write-compiled | CRITICAL | Compiled artifact protection |
@@ -37,13 +36,13 @@ These sections MUST be present in every surface, every tier, every mode. Absence
 
 These sections scale with model cognitive budget. Same H2 header IDs across tiers, different body depth.
 
-| Section Category | Economy (~330 lines) | Standard (~316 lines) | Premium (~598 lines) |
+| Section Category | Economy (~232-268 lines) | Standard (~232-268 lines) | Premium (~274-402 lines) |
 |-----------------|---------------------|----------------------|----------------------|
 | Authority levels | brain + specialist | brain + specialist + tool | All 4 levels |
 | Workflow phases | delegate + validate | 3 phases | All 5 phases |
 | Error handling | 3 critical fallbacks | 5 scenarios | All 8 scenarios |
 | Validation | semantic only | semantic + structural | Full chain (6 checks) |
-| Rule detail | id + text + why | + short onViolation | + detailed onViolation |
+| Skill references | external skills | external skills | external skills |
 
 ## Model-Tier Mapping
 
@@ -73,10 +72,10 @@ Invariant sections use identical source text (byte-for-byte) across all surfaces
 
 | Mode | Min Lines | Max Lines | Rationale |
 |------|-----------|-----------|-----------|
-| Standard | — | 400 | Economy tier; gated content excluded |
-| Exhaustive | 550 | — | Premium tier; full iron rules + expanded cookbook |
+| Standard | — | 300 | Skills-first baseline; long procedures excluded |
+| Exhaustive | 380 | 450 | Premium Brain orchestration only; long procedures remain in skills |
 
-Thresholds are calibrated to actual compiled output (~316 standard, ~598 exhaustive) with headroom for growth.
+Thresholds are calibrated to actual compiled output (~268 standard Claude/Codex, ~232 Gemini/Qwen, ~402 exhaustive Claude/Codex) with headroom for growth.
 
 ### Canonical Enabled Agents (agent-schema.json)
 
@@ -165,9 +164,9 @@ Different clients have different token budgets and cognitive capabilities. The c
 
 | Tier | Line Target | Rule Detail Level | Suitable For |
 |------|------------|-------------------|-------------|
-| Economy (~330 lines) | Minimal | id + text + why | Haiku, Flash, small models |
-| Standard (~316 lines) | Moderate | + short onViolation | Sonnet, Pro, Codex |
-| Premium (~598 lines) | Full | + detailed onViolation + all scenarios | Opus, Ultra |
+| Economy (~232-268 lines) | Minimal | baseline rules + skills | Haiku, Flash, small models |
+| Standard (~232-268 lines) | Moderate | baseline rules + skills | Sonnet, Pro, Codex |
+| Premium (~274-402 lines) | Full | orchestration depth + skills | Opus, Ultra |
 
 ### Compile Knob Presets
 
@@ -203,12 +202,12 @@ The compile system enforces these via environment variables. Changing tier mid-s
 
 | Surface | Target | Standard (lines) | Economy (lines) | Premium (lines) | Tier |
 |---------|--------|:-:|:-:|:-:|:---:|
-| `.claude/CLAUDE.md` | Claude Code | 316 | 330 | 598 | 1 |
-| `AGENTS.md` | Codex, OpenCode | 316 | 330 | 598 | 1 |
-| `GEMINI.md` | Gemini CLI | 316 | 330 | 598 | 2 |
-| `QWEN.md` | Qwen CLI | 316 | 330 | 598 | 2 |
+| `.claude/CLAUDE.md` | Claude Code | 268 | 268 | 402 | 1 |
+| `AGENTS.md` | Codex, OpenCode | 268 | 268 | 402 | 1 |
+| `GEMINI.md` | Gemini CLI | 232 | 232 | 274 | 2 |
+| `QWEN.md` | Qwen CLI | 232 | 232 | 274 | 2 |
 
-Economy adds ~14 lines (strict-only rules) while reducing cognitive depth. Premium adds ~282 lines via additional iron rules and expanded cookbook presets. All surfaces are now uniform in size per mode (tier 1/2 distinction removed).
+Economy and standard currently share the same compact baseline. Premium adds Brain orchestration depth only; moved procedures are activated through skills instead of permanent context.
 
 ## Client Format Compatibility Matrix
 
@@ -218,7 +217,7 @@ Economy adds ~14 lines (strict-only rules) while reducing cognitive depth. Premi
 | Qwen | .toml | .md (YAML FM) | .md (YAML FM) | QWEN.md | Optional |
 | Gemini | .toml | .md (YAML FM) | .md (YAML FM) | GEMINI.md | Optional |
 | OpenCode | .md (YAML FM) | .md (YAML FM) | .md (YAML FM) | AGENTS.md + settings.json | Required: provider/model |
-| Codex | .md (prompts/) | N/A | SKILL.md | AGENTS.md (trust_level) | Optional |
+| Codex | .md (prompts/) | N/A | .codex/skills/*/SKILL.md | AGENTS.md (trust_level) | Optional |
 
 ### Known Pitfalls
 

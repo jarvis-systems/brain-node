@@ -25,6 +25,11 @@ PURPOSE
 #[Includes(ScriptMasterInclude::class)]
 class ScriptMaster extends AgentArchetype
 {
+    public static function disableByDefault(): bool
+    {
+        return true;
+    }
+
     protected function handle(): void
     {
         //

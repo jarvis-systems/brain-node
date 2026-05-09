@@ -24,6 +24,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 CLAUDE_DIR="$PROJECT_ROOT/.claude"
 AGENTS_DIR="$CLAUDE_DIR/agents"
+CLAUDE_SKILLS_DIR="$CLAUDE_DIR/skills"
 CLAUDE_MD="$CLAUDE_DIR/CLAUDE.md"
 CORE_DIR="$PROJECT_ROOT/core"
 
@@ -152,17 +153,12 @@ $JSON_MODE || echo -e "\n${CYAN}Scenario 7: Always-on content present${NC}"
 ALWAYS_BRAIN=$(grep -ciE 'Delegation-limit|Escalation policy' "$CLAUDE_MD" 2>/dev/null || true)
 check "S07a" "operational constraints in Brain" 0 "$ALWAYS_BRAIN" "gt"
 
-# SequentialReasoning compact (in agents, not Brain)
-SEQ_COMPACT=0
-for agent_file in "$AGENTS_DIR"/*.md; do
-    c=$(grep -ciE 'Strict sequential execution' "$agent_file" 2>/dev/null || true)
-    SEQ_COMPACT=$((SEQ_COMPACT + c))
-done
-check "S07b" "compact phase-flow in agents" 0 "$SEQ_COMPACT" "gt"
+# Skills-first native workflows
+STRUCTURED_REASONING_SKILL=$([ -f "$CLAUDE_SKILLS_DIR/structured-reasoning.md" ] && echo 1 || echo 0)
+check "S07b" "structured reasoning skill compiled" 0 "$STRUCTURED_REASONING_SKILL" "gt"
 
-# Cookbook governance
-GOV=$(grep -ciE 'Cookbook calls ONLY via' "$CLAUDE_MD" 2>/dev/null || true)
-check "S07c" "cookbook governance in Brain" 0 "$GOV" "gt"
+VECTOR_MEMORY_SKILL=$([ -f "$CLAUDE_SKILLS_DIR/vector-memory.md" ] && echo 1 || echo 0)
+check "S07c" "vector memory skill compiled" 0 "$VECTOR_MEMORY_SKILL" "gt"
 
 # ============================================================
 # SCENARIO 8: MCP syntax - no legacy
@@ -229,7 +225,8 @@ check "S12" "compile is idempotent" 1 "$IDEM"
 # ============================================================
 $JSON_MODE || echo -e "\n${CYAN}Scenario 13: Agent count${NC}"
 AGENT_COUNT=$(ls "$AGENTS_DIR"/*.md 2>/dev/null | wc -l | tr -d ' ')
-check "S13" "agent count = 5" 5 "$AGENT_COUNT"
+check "S13a" "core execution agents present" 4 "$AGENT_COUNT" "ge"
+check "S13b" "agent count <= 7" 7 "$AGENT_COUNT" "le"
 
 # ============================================================
 # SCENARIO 14: Mode delta (exhaustive > standard)
@@ -239,17 +236,17 @@ STRICT_MODE=paranoid COGNITIVE_LEVEL=exhaustive php "$PROJECT_ROOT/cli/bin/brain
 LINES_EXH=$(wc -l < "$CLAUDE_MD" | tr -d ' ')
 DELTA=$((LINES_EXH - BRAIN_LINES))
 check "S14a" "exhaustive > standard" 0 "$DELTA" "gt"
-check "S14b" "delta >= 300 (gating effective)" 300 "$DELTA" "ge"
+check "S14b" "delta >= 100 (gating effective)" 100 "$DELTA" "ge"
 
 # Restore standard
 STRICT_MODE=standard COGNITIVE_LEVEL=standard php "$PROJECT_ROOT/cli/bin/brain" compile --no-interaction >/dev/null 2>&1
 
 # ============================================================
-# SCENARIO 15: Gate 5 reinterpretation present
+# SCENARIO 15: Native Brain DSL skill present
 # ============================================================
-$JSON_MODE || echo -e "\n${CYAN}Scenario 15: Gate 5 reinterpretation${NC}"
-GATE5=$(grep -ciE 'NOT a runtime uncertainty trigger' "$CLAUDE_MD" 2>/dev/null || true)
-check "S15" "gate5 reinterpretation in Brain" 0 "$GATE5" "gt"
+$JSON_MODE || echo -e "\n${CYAN}Scenario 15: Native Brain DSL skill${NC}"
+BRAIN_DSL_SKILL=$([ -f "$CLAUDE_SKILLS_DIR/brain-prompt-dsl-generation.md" ] && echo 1 || echo 0)
+check "S15" "brain-prompt-dsl-generation skill compiled" 0 "$BRAIN_DSL_SKILL" "gt"
 
 # ============================================================
 # SUMMARY

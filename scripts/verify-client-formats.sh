@@ -459,9 +459,9 @@ if [ -d "$PROJECT_ROOT/.codex/prompts" ]; then
 else
     skip "codex prompts — .codex/prompts/ not found"
 fi
-# Codex skills use subdirectory format: .agents/skills/<name>/SKILL.md
-if [ -d "$PROJECT_ROOT/.agents/skills" ]; then
-    CODEX_SKILL_COUNT=$(find "$PROJECT_ROOT/.agents/skills" -name "SKILL.md" 2>/dev/null | wc -l | tr -d ' ')
+# Codex skills use subdirectory format: .codex/skills/<name>/SKILL.md
+if [ -d "$PROJECT_ROOT/.codex/skills" ]; then
+    CODEX_SKILL_COUNT=$(find "$PROJECT_ROOT/.codex/skills" -name "SKILL.md" 2>/dev/null | wc -l | tr -d ' ')
     if [ "$CODEX_SKILL_COUNT" -gt 0 ]; then
         pass "codex skills have SKILL.md ($CODEX_SKILL_COUNT files)"
         # Check each SKILL.md has required YAML front matter keys
@@ -503,16 +503,16 @@ if [ -d "$PROJECT_ROOT/.agents/skills" ]; then
                 fail "codex skill $skill_name — missing keys: ${missing[*]}"
                 skill_errors=$((skill_errors + 1))
             fi
-        done < <(find "$PROJECT_ROOT/.agents/skills" -name "SKILL.md" 2>/dev/null)
+        done < <(find "$PROJECT_ROOT/.codex/skills" -name "SKILL.md" 2>/dev/null)
         
         if [ "$skill_errors" -eq 0 ]; then
             pass "codex skills required keys — all $CODEX_SKILL_COUNT skill(s) have name + description"
         fi
     else
-        fail "codex skills — .agents/skills/ exists but no SKILL.md found"
+        fail "codex skills — .codex/skills/ exists but no SKILL.md found"
     fi
 else
-    skip "codex skills — .agents/skills/ not found"
+    skip "codex skills — .codex/skills/ not found"
 fi
 # Trust stanza: ensures Codex runs non-interactive (no "trust this directory?" prompt)
 CODEX_TOML="$PROJECT_ROOT/.codex/config.toml"
