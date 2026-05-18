@@ -83,8 +83,8 @@
         },
         "commandReference": {
             "type": "string",
-            "description": "Reference to a compiled command. Available commands: async-command, brainstorm-command, sync-command, test-validate-command, validate-command, do-command, work-command, init-agents-command, init-brain-command, init-docs-command, init-task-command, init-vector-command, cleanup-command, get-command, list-command, search-command, stats-command, store-command, apply-command, deprecate-command, edit-command, learn-command, list-command, new-command, reject-command, review-command, async-command, brainstorm-command, create-command, decompose-command, list-command, status-command, sync-command, test-validate-command, validate-command, validate-sync-command",
-            "pattern": "^(async\\-command|brainstorm\\-command|sync\\-command|test\\-validate\\-command|validate\\-command|do\\-command|work\\-command|init\\-agents\\-command|init\\-brain\\-command|init\\-docs\\-command|init\\-task\\-command|init\\-vector\\-command|cleanup\\-command|get\\-command|list\\-command|search\\-command|stats\\-command|store\\-command|apply\\-command|deprecate\\-command|edit\\-command|learn\\-command|list\\-command|new\\-command|reject\\-command|review\\-command|async\\-command|brainstorm\\-command|create\\-command|decompose\\-command|list\\-command|status\\-command|sync\\-command|test\\-validate\\-command|validate\\-command|validate\\-sync\\-command)$",
+            "description": "Reference to a compiled command. Available commands: async-command, brainstorm-command, sync-command, test-validate-command, validate-command, do-command, work-command, init-agents-command, init-brain-command, init-docs-command, init-task-command, init-vector-command, cleanup-command, get-command, list-command, search-command, stats-command, store-command, deprecate-command, edit-command, learn-command, new-command, async-command, brainstorm-command, create-command, decompose-command, list-command, status-command, sync-command, test-validate-command, validate-command, validate-sync-command",
+            "pattern": "^(async\\-command|brainstorm\\-command|sync\\-command|test\\-validate\\-command|validate\\-command|do\\-command|work\\-command|init\\-agents\\-command|init\\-brain\\-command|init\\-docs\\-command|init\\-task\\-command|init\\-vector\\-command|cleanup\\-command|get\\-command|list\\-command|search\\-command|stats\\-command|store\\-command|deprecate\\-command|edit\\-command|learn\\-command|new\\-command|async\\-command|brainstorm\\-command|create\\-command|decompose\\-command|list\\-command|status\\-command|sync\\-command|test\\-validate\\-command|validate\\-command|validate\\-sync\\-command)$",
             "examples": [
                 "async-command",
                 "brainstorm-command",
@@ -697,34 +697,6 @@
                     "type": "string",
                     "description": "Disable WebResearchMaster from compilation (true/false)"
                 },
-                "APPLY_COMMAND_GUIDELINE_0": {
-                    "type": "string",
-                    "description": "Custom guideline #0 for ApplyCommand"
-                },
-                "APPLY_COMMAND_GUIDELINE_1": {
-                    "type": "string",
-                    "description": "Custom guideline #1 for ApplyCommand"
-                },
-                "APPLY_COMMAND_GUIDELINE_2": {
-                    "type": "string",
-                    "description": "Custom guideline #2 for ApplyCommand"
-                },
-                "APPLY_COMMAND_MODEL": {
-                    "type": "string",
-                    "description": "Model override for ApplyCommand"
-                },
-                "APPLY_COMMAND_RULE_0": {
-                    "type": "string",
-                    "description": "Custom CRITICAL rule #0 for ApplyCommand"
-                },
-                "APPLY_COMMAND_RULE_1": {
-                    "type": "string",
-                    "description": "Custom CRITICAL rule #1 for ApplyCommand"
-                },
-                "APPLY_COMMAND_RULE_2": {
-                    "type": "string",
-                    "description": "Custom CRITICAL rule #2 for ApplyCommand"
-                },
                 "ASYNC_COMMAND_GUIDELINE_0": {
                     "type": "string",
                     "description": "Custom guideline #0 for AsyncCommand"
@@ -905,10 +877,6 @@
                     "type": "string",
                     "description": "Default model for Codex CLI agents"
                 },
-                "COMMANDS_APPLY_COMMAND_DISABLE": {
-                    "type": "string",
-                    "description": "Disable ApplyCommand from compilation (true/false)"
-                },
                 "COMMANDS_ASYNC_COMMAND_DISABLE": {
                     "type": "string",
                     "description": "Disable AsyncCommand from compilation (true/false)"
@@ -976,14 +944,6 @@
                 "COMMANDS_NEW_COMMAND_DISABLE": {
                     "type": "string",
                     "description": "Disable NewCommand from compilation (true/false)"
-                },
-                "COMMANDS_REJECT_COMMAND_DISABLE": {
-                    "type": "string",
-                    "description": "Disable RejectCommand from compilation (true/false)"
-                },
-                "COMMANDS_REVIEW_COMMAND_DISABLE": {
-                    "type": "string",
-                    "description": "Disable ReviewCommand from compilation (true/false)"
                 },
                 "COMMANDS_SEARCH_COMMAND_DISABLE": {
                     "type": "string",
@@ -1681,34 +1641,6 @@
                     "type": "string",
                     "description": "Default model for Qwen CLI agents"
                 },
-                "REJECT_COMMAND_GUIDELINE_0": {
-                    "type": "string",
-                    "description": "Custom guideline #0 for RejectCommand"
-                },
-                "REJECT_COMMAND_GUIDELINE_1": {
-                    "type": "string",
-                    "description": "Custom guideline #1 for RejectCommand"
-                },
-                "REJECT_COMMAND_GUIDELINE_2": {
-                    "type": "string",
-                    "description": "Custom guideline #2 for RejectCommand"
-                },
-                "REJECT_COMMAND_MODEL": {
-                    "type": "string",
-                    "description": "Model override for RejectCommand"
-                },
-                "REJECT_COMMAND_RULE_0": {
-                    "type": "string",
-                    "description": "Custom CRITICAL rule #0 for RejectCommand"
-                },
-                "REJECT_COMMAND_RULE_1": {
-                    "type": "string",
-                    "description": "Custom CRITICAL rule #1 for RejectCommand"
-                },
-                "REJECT_COMMAND_RULE_2": {
-                    "type": "string",
-                    "description": "Custom CRITICAL rule #2 for RejectCommand"
-                },
                 "REPO_BOUNDARY_PREFLIGHT_SKILL_GUIDELINE_0": {
                     "type": "string",
                     "description": "Custom guideline #0 for RepoBoundaryPreflightSkill"
@@ -1736,34 +1668,6 @@
                 "REPO_BOUNDARY_PREFLIGHT_SKILL_RULE_2": {
                     "type": "string",
                     "description": "Custom CRITICAL rule #2 for RepoBoundaryPreflightSkill"
-                },
-                "REVIEW_COMMAND_GUIDELINE_0": {
-                    "type": "string",
-                    "description": "Custom guideline #0 for ReviewCommand"
-                },
-                "REVIEW_COMMAND_GUIDELINE_1": {
-                    "type": "string",
-                    "description": "Custom guideline #1 for ReviewCommand"
-                },
-                "REVIEW_COMMAND_GUIDELINE_2": {
-                    "type": "string",
-                    "description": "Custom guideline #2 for ReviewCommand"
-                },
-                "REVIEW_COMMAND_MODEL": {
-                    "type": "string",
-                    "description": "Model override for ReviewCommand"
-                },
-                "REVIEW_COMMAND_RULE_0": {
-                    "type": "string",
-                    "description": "Custom CRITICAL rule #0 for ReviewCommand"
-                },
-                "REVIEW_COMMAND_RULE_1": {
-                    "type": "string",
-                    "description": "Custom CRITICAL rule #1 for ReviewCommand"
-                },
-                "REVIEW_COMMAND_RULE_2": {
-                    "type": "string",
-                    "description": "Custom CRITICAL rule #2 for ReviewCommand"
                 },
                 "SEARCH_COMMAND_GUIDELINE_0": {
                     "type": "string",
@@ -2291,13 +2195,6 @@
                 "AGENTS_EXPLORE_MASTER_DISABLE",
                 "AGENTS_VECTOR_MASTER_DISABLE",
                 "AGENTS_WEB_RESEARCH_MASTER_DISABLE",
-                "APPLY_COMMAND_GUIDELINE_0",
-                "APPLY_COMMAND_GUIDELINE_1",
-                "APPLY_COMMAND_GUIDELINE_2",
-                "APPLY_COMMAND_MODEL",
-                "APPLY_COMMAND_RULE_0",
-                "APPLY_COMMAND_RULE_1",
-                "APPLY_COMMAND_RULE_2",
                 "ASYNC_COMMAND_GUIDELINE_0",
                 "ASYNC_COMMAND_GUIDELINE_1",
                 "ASYNC_COMMAND_GUIDELINE_2",
@@ -2306,7 +2203,14 @@
                 "ASYNC_COMMAND_RULE_1",
                 "ASYNC_COMMAND_RULE_2",
                 "BRAINSTORM_COMMAND_GUIDELINE_0",
-                "BRAINSTORM_COMMAND_GUIDELINE_1"
+                "BRAINSTORM_COMMAND_GUIDELINE_1",
+                "BRAINSTORM_COMMAND_GUIDELINE_2",
+                "BRAINSTORM_COMMAND_MODEL",
+                "BRAINSTORM_COMMAND_RULE_0",
+                "BRAINSTORM_COMMAND_RULE_1",
+                "BRAINSTORM_COMMAND_RULE_2",
+                "BRAIN_DISABLE",
+                "BRAIN_GUIDELINE_0"
             ]
         },
         "envVariablePatterns": {
